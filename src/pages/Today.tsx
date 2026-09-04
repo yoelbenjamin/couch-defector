@@ -178,14 +178,18 @@ export default function Today() {
           </Button>
         </div>
       ) : (
-        <Card className="border-primary/40 bg-primary/10 py-4">
+        <Card className="py-3">
           <CardContent className="px-4">
-            <div className="text-xs text-primary">Up next</div>
-            <div className="mt-0.5 text-xl font-bold">{plan.day.name}</div>
-            {coachCopy && <p className="mt-1 text-sm text-muted-foreground">{upNextCopy}</p>}
-            <Button size="lg" className="mt-4 h-12 w-full" onClick={() => nav(`/log/${plan.dayIndex}`)}>
-              Start workout
-            </Button>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-xs text-muted-foreground">Up next</div>
+                <div className="truncate text-lg font-bold">{plan.day.name}</div>
+              </div>
+              <Button size="sm" className="h-9 shrink-0 px-4" onClick={() => nav(`/log/${plan.dayIndex}`)}>
+                Start workout
+              </Button>
+            </div>
+            {coachCopy && <p className="mt-2 text-sm text-muted-foreground">{upNextCopy}</p>}
           </CardContent>
         </Card>
       )}
