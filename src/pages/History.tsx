@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { fmtDate } from '@/lib/schedule'
 import { fmtSets } from '@/lib/stats'
 import { useStore } from '@/lib/store'
@@ -27,7 +28,17 @@ export default function History() {
 
   return (
     <div>
-      <PageHeader title="History" sub={`${sessions.length} session${sessions.length === 1 ? '' : 's'} logged`} />
+      <PageHeader
+        title="History"
+        sub={`${sessions.length} session${sessions.length === 1 ? '' : 's'} logged`}
+        action={
+          <Button variant="ghost" size="icon" className="rounded-full" asChild>
+            <Link to="/" aria-label="Back to today">
+              <X className="size-5" />
+            </Link>
+          </Button>
+        }
+      />
       {sessions.length === 0 && (
         <Card className="py-4">
           <CardContent className="px-4 text-center text-sm text-muted-foreground">Nothing yet. Your first workout will show up here.</CardContent>

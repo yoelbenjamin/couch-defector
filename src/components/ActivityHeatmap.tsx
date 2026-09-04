@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/types'
 
@@ -42,7 +44,7 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className }: { s
   const inRange = [...counts.entries()].filter(([k]) => k >= start && k <= today).reduce((t, [, c]) => t + c, 0)
 
   return (
-    <div className={className}>
+    <Link to="/history" className={cn('block', className)} aria-label="Open history">
       <div
         className="grid grid-flow-col gap-[3px]"
         style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` }}
@@ -62,8 +64,11 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className }: { s
       </div>
       <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
         <span>Last {weeks} weeks</span>
-        <span className="tabular-nums">{inRange} sessions</span>
+        <span className="flex items-center gap-0.5 tabular-nums">
+          {inRange} sessions
+          <ChevronRight className="size-3" />
+        </span>
       </div>
-    </div>
+    </Link>
   )
 }
