@@ -12,6 +12,13 @@ function weekStart(d: Date) {
   return t.getTime()
 }
 
+/** Day-key bounds of the grid: first Monday shown through today, plus the number of days elapsed. */
+export function heatmapRange(weeks = 26, now = new Date()) {
+  const today = dayKey(now)
+  const start = weekStart(now) - (weeks - 1) * 7 * DAY
+  return { start, today, days: Math.round((today - start) / DAY) + 1 }
+}
+
 interface Props {
   sessions: Session[]
   weeks?: number

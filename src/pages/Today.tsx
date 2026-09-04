@@ -8,7 +8,7 @@ import { bestSet, checkGoal, fmtSets, recentEntriesForSlot, streakWeeks, totalRe
 import { useStore } from '@/lib/store'
 import { useIdea } from '@/dev/proto'
 import PageHeader from '@/components/PageHeader'
-import ActivityHeatmap from '@/components/ActivityHeatmap'
+import ActivityHeatmap, { heatmapRange } from '@/components/ActivityHeatmap'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,6 +20,11 @@ export default function Today() {
   const program = getProgram(data.programId)
   const plan = planToday(program, data.sessions)
   const streak = streakWeeks(data.sessions)
+  const range = heatmapRange()
+  const sessionsInRange = data.sessions.filter((x) => {
+    const k = dayKey(new Date(x.date))
+    return k >= range.start && k <= range.today
+  }).length
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
@@ -59,7 +64,7 @@ export default function Today() {
         <>
       {statsRow && (
         <section className="mb-5 grid grid-cols-3 gap-2">
-          <Stat label="Sessions" value={data.sessions.length} />
+          <Stat label={`of ${range.days} days`} value={sessionsInRange} />
           <Stat label="Week streak" value={streak} />
           <Stat label="Program" value={program.name.split(' ')[0]} small />
         </section>
