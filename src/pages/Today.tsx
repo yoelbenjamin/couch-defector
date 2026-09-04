@@ -68,17 +68,19 @@ export default function Today() {
         }
       />
 
-      <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-5" />
+      <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-1.5" />
+      {statsRow ? (
+        <p className="mb-5 text-xs text-muted-foreground tabular-nums">
+          {sessionsInRange} session{sessionsInRange === 1 ? '' : 's'} in the last {range.days} days
+        </p>
+      ) : (
+        <div className="mb-3.5" />
+      )}
 
       {selectedDay !== null ? (
         <DayDetail dateKey={selectedDay} sessions={selectedSessions} onClose={() => setSelectedDay(null)} />
       ) : (
         <>
-      {statsRow && (
-        <section className="mb-5">
-          <Stat label={`sessions in the last ${range.days} days`} value={sessionsInRange} />
-        </section>
-      )}
       {!cloud && (
         <div className="mb-3 rounded-xl border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
           Device-only mode. Your log lives in this browser until sign-in is set up.
@@ -259,16 +261,5 @@ function DayDetail({ dateKey, sessions, onClose }: { dateKey: number; sessions: 
         <Link to="/history">All sessions</Link>
       </Button>
     </div>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: number | string }) {
-  return (
-    <Card className="py-3">
-      <CardContent className="flex items-baseline gap-2 px-4">
-        <div className="text-2xl font-bold tabular-nums">{value}</div>
-        <div className="text-sm text-muted-foreground">{label}</div>
-      </CardContent>
-    </Card>
   )
 }
