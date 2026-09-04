@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { ProgressionId } from '@/types'
 
 function levelBadge(level: number) {
-  if (level <= 2) return <Badge className="bg-emerald-100 text-emerald-800">Beginner</Badge>
-  if (level <= 3) return <Badge className="bg-amber-100 text-amber-800">Intermediate</Badge>
+  if (level <= 2) return <Badge variant="secondary">Beginner</Badge>
+  if (level <= 3) return <Badge variant="secondary">Intermediate</Badge>
   return <Badge variant="secondary">Advanced</Badge>
 }
 

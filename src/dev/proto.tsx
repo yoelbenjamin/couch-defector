@@ -125,7 +125,7 @@ export function ProtoFrame({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-full items-center justify-center bg-neutral-200 p-6">
       <div
-        className="relative overflow-hidden rounded-[2.5rem] border-[10px] border-neutral-900 bg-background shadow-2xl"
+        className="relative overflow-hidden rounded-[2.5rem] border-[10px] border-neutral-900 bg-background"
         style={{ width: 390, height: 'min(844px, 100%)', contain: 'layout paint' }}
       >
         {children}

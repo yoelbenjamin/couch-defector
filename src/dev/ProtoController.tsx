@@ -56,7 +56,7 @@ function Controller() {
         aria-label="Prototype controller"
         onClick={() => setOpen(true)}
         className={cn(
-          'fixed bottom-20 left-3 z-50 flex size-9 items-center justify-center rounded-full border bg-card/90 text-muted-foreground shadow-md backdrop-blur transition hover:text-foreground',
+          'fixed bottom-20 left-3 z-50 flex size-9 items-center justify-center rounded-full border bg-card/90 text-muted-foreground backdrop-blur transition hover:text-foreground',
           proto.enabled && 'border-primary/50 text-primary',
         )}
       >
@@ -173,7 +173,7 @@ function StatesTab({ close }: { close: () => void }) {
 
       {SCENARIO_GROUPS.map((g) => (
         <section key={g}>
-          <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{g}</h3>
+          <h3 className="mb-2 text-xs font-semibold text-muted-foreground">{g}</h3>
           <div className="space-y-1.5">
             {SCENARIOS.filter((s) => s.group === g).map((s) => {
               const active = proto.enabled && activeId === s.id
@@ -221,7 +221,7 @@ function IdeasTab() {
       </div>
       {areas.map((area) => (
         <section key={area}>
-          <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{area}</h3>
+          <h3 className="mb-2 text-xs font-semibold text-muted-foreground">{area}</h3>
           <div className="space-y-3">
             {IDEA_KEYS.filter((k) => IDEAS[k].area === area).map((k) => (
               <IdeaRow key={k} k={k} />
@@ -292,7 +292,7 @@ function GoTab({ close }: { close: () => void }) {
   return (
     <div className="space-y-5">
       <section>
-        <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Screens</h3>
+        <h3 className="mb-2 text-xs font-semibold text-muted-foreground">Screens</h3>
         <div className="grid grid-cols-2 gap-2">
           {routes.map(([to, label]) => (
             <Button key={to} variant="outline" onClick={() => go(to)}>
@@ -302,7 +302,7 @@ function GoTab({ close }: { close: () => void }) {
         </div>
       </section>
       <section>
-        <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Log a day · {program.name}</h3>
+        <h3 className="mb-2 text-xs font-semibold text-muted-foreground">Log a day · {program.name}</h3>
         <div className="grid grid-cols-2 gap-2">
           {workoutDays(program).map((d) => (
             <Button key={d.index} variant="outline" onClick={() => go(`/log/${d.index}`)}>
@@ -313,7 +313,7 @@ function GoTab({ close }: { close: () => void }) {
         {!proto.enabled && <p className="mt-2 text-[11px] text-muted-foreground">Uses the program from your live data.</p>}
       </section>
       <section>
-        <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Gated screens</h3>
+        <h3 className="mb-2 text-xs font-semibold text-muted-foreground">Gated screens</h3>
         <p className="text-xs text-muted-foreground">
           Sign-in and Onboarding are reached through state, not routes. Load “Signed out” or “New account” from States.
         </p>
@@ -403,7 +403,7 @@ function DataTab() {
       </section>
 
       <section>
-        <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Current steps</h3>
+        <h3 className="mb-2 text-xs font-semibold text-muted-foreground">Current steps</h3>
         <div className="space-y-2">
           {PROGRESSION_IDS.map((pid: ProgressionId) => (
             <div key={pid} className="flex items-center justify-between gap-3">
@@ -429,7 +429,7 @@ function DataTab() {
       </section>
 
       <section>
-        <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Sessions · {proto.data.sessions.length}</h3>
+        <h3 className="mb-2 text-xs font-semibold text-muted-foreground">Sessions · {proto.data.sessions.length}</h3>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" size="sm" onClick={logToday} disabled={!plan}>
             Log today

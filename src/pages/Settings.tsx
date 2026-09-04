@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { X } from 'lucide-react'
 import { getProgram, PROGRAMS } from '@/data/programs'
 import { useStore } from '@/lib/store'
 import PageHeader from '@/components/PageHeader'
@@ -19,11 +21,20 @@ export default function Settings() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Settings" />
+      <PageHeader
+        title="Settings"
+        action={
+          <Button variant="ghost" size="icon" className="rounded-full" asChild>
+            <Link to="/" aria-label="Close settings">
+              <X className="size-5" />
+            </Link>
+          </Button>
+        }
+      />
 
       <Card className="gap-3 py-4">
         <CardHeader className="px-4">
-          <CardTitle className="text-xs tracking-wide text-muted-foreground uppercase">Account</CardTitle>
+          <CardTitle className="text-xs text-muted-foreground">Account</CardTitle>
         </CardHeader>
         <CardContent className="px-4">
           {cloud && user ? (
@@ -44,7 +55,7 @@ export default function Settings() {
 
       <Card className="gap-3 py-4">
         <CardHeader className="px-4">
-          <CardTitle className="text-xs tracking-wide text-muted-foreground uppercase">Program</CardTitle>
+          <CardTitle className="text-xs text-muted-foreground">Program</CardTitle>
         </CardHeader>
         <CardContent className="px-4">
           <Select value={program.id} onValueChange={setProgram}>
@@ -68,7 +79,7 @@ export default function Settings() {
       {uniqueCustom.length > 0 && (
         <Card className="gap-3 py-4">
           <CardHeader className="px-4">
-            <CardTitle className="text-xs tracking-wide text-muted-foreground uppercase">Your exercise picks</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">Your exercise picks</CardTitle>
             <CardDescription className="text-xs">Name the movement you use for each open slot.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 px-4">
@@ -89,7 +100,7 @@ export default function Settings() {
 
       <Card className="gap-3 py-4">
         <CardHeader className="px-4">
-          <CardTitle className="text-xs tracking-wide text-muted-foreground uppercase">Backup</CardTitle>
+          <CardTitle className="text-xs text-muted-foreground">Backup</CardTitle>
         </CardHeader>
         <CardContent className="px-4">
           <div className="flex gap-2">
@@ -132,7 +143,7 @@ export default function Settings() {
 
       <Card className="gap-3 py-4">
         <CardHeader className="px-4">
-          <CardTitle className="text-xs tracking-wide text-muted-foreground uppercase">How it works</CardTitle>
+          <CardTitle className="text-xs text-muted-foreground">How it works</CardTitle>
         </CardHeader>
         <CardContent className="px-4">
           <ul className="space-y-1.5 text-sm text-muted-foreground">

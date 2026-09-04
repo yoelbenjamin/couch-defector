@@ -223,8 +223,8 @@ export default function Log() {
                     + Add set
                   </Button>
                   <div className="flex gap-1.5">
-                    {goal?.reached && <Badge className="bg-emerald-100 text-emerald-800">Goal hit, move up next time</Badge>}
-                    {goal?.overBand && !goal.reached && <Badge className="bg-amber-100 text-amber-800">Over 20, try a harder step</Badge>}
+                    {goal?.reached && <Badge variant="secondary">Goal hit, move up next time</Badge>}
+                    {goal?.overBand && !goal.reached && <Badge variant="secondary">Over 20, try a harder step</Badge>}
                   </div>
                 </div>
               </CardContent>
@@ -234,7 +234,7 @@ export default function Log() {
 
         <Card className="py-4">
           <CardContent className="px-4">
-            <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Note</label>
+            <label className="text-xs font-semibold text-muted-foreground">Note</label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="How did it feel? Anything to change next time?" className="mt-1 resize-none" />
           </CardContent>
         </Card>

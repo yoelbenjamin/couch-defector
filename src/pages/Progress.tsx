@@ -57,12 +57,12 @@ export default function Progress() {
         <CardContent className="px-4">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-xs tracking-wide text-muted-foreground uppercase">Current step</div>
+              <div className="text-xs text-muted-foreground">Current step</div>
               <div className="text-lg font-bold">
                 {curN}. {cur.name}
               </div>
             </div>
-            {goal?.reached && <Badge className="bg-emerald-100 text-emerald-800">Ready</Badge>}
+            {goal?.reached && <Badge variant="secondary">Ready</Badge>}
           </div>
           <div className="mt-3">
             <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
@@ -88,13 +88,13 @@ export default function Progress() {
 
       <Card className="mt-3 py-4">
         <CardContent className="px-4">
-          <div className="mb-1 text-xs tracking-wide text-muted-foreground uppercase">Best hard set per session</div>
+          <div className="mb-1 text-xs text-muted-foreground">Best hard set per session</div>
           <Chart points={points} unit={unit} />
         </CardContent>
       </Card>
 
       <section className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">Ladder</h2>
+        <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Ladder</h2>
         <Card className="gap-0 overflow-hidden py-0">
           {p.steps.map((s) => {
             const done = s.n < curN
@@ -108,7 +108,7 @@ export default function Progress() {
                 <span
                   className={cn(
                     'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                    done ? 'bg-emerald-100 text-emerald-800' : active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground',
+                    done ? 'bg-foreground text-background' : active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground',
                   )}
                 >
                   {done ? <Check className="size-4" /> : s.n}
@@ -127,7 +127,7 @@ export default function Progress() {
 
       {history.length > 0 && (
         <section className="mt-6">
-          <h2 className="mb-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">Recent</h2>
+          <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Recent</h2>
           <div className="space-y-1.5">
             {[...history].reverse().slice(0, 8).map((h) => (
               <div key={h.session.id + h.entry.slotKey} className="flex items-center justify-between rounded-xl bg-card px-3 py-2 text-sm">

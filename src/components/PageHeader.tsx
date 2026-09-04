@@ -1,10 +1,50 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import { User } from 'lucide-react'
+import { useStore } from '@/lib/store'
 
-export default function PageHeader({ title, sub }: { title: ReactNode; sub?: ReactNode }) {
+/**
+ * Page title with an action slot top right.
+ * Default action is the profile button, which opens Settings. Pass `action={null}` to hide it.
+ */
+export default function PageHeader({ title, sub, action }: { title: ReactNode; sub?: ReactNode; action?: ReactNode | null }) {
   return (
-    <header className="mb-4">
-      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-      {sub && <p className="mt-0.5 text-sm text-muted-foreground">{sub}</p>}
+    <header className="mb-4 flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        {sub && <p className="mt-0.5 text-sm text-muted-foreground">{sub}</p>}
+      </div>
+      <div className="shrink-0">{action === undefined ? <ProfileButton /> : action}</div>
     </header>
+  )
+}
+
+function initials(name?: string | null, email?: string | null) {
+  const src = name?.trim() || email?.split('@')[0] || ''
+  const parts = src.split(/[\s._-]+/).filter(Boolean)
+  return parts
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join('')
+}
+
+export function ProfileButton() {
+  const { user } = useStore()
+  const label = user ? `${user.displayName ?? user.email ?? 'Account'} · Settings` : 'Settings'
+  const text = user ? initials(user.displayName, user.email) : ''
+  return (
+    <Link
+      to="/settings"
+      aria-label={label}
+      className="flex size-9 items-center justify-center overflow-hidden rounded-full border bg-secondary text-xs font-semibold text-secondary-foreground"
+    >
+      {user?.photoURL ? (
+        <img src={user.photoURL} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
+      ) : text ? (
+        text
+      ) : (
+        <User className="size-4 text-muted-foreground" />
+      )}
+    </Link>
   )
 }

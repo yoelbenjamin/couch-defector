@@ -7,6 +7,7 @@ import { bestSet, checkGoal, fmtSets, recentEntriesForSlot, streakWeeks, totalRe
 import { useStore } from '@/lib/store'
 import { useIdea } from '@/dev/proto'
 import PageHeader from '@/components/PageHeader'
+import ActivityHeatmap from '@/components/ActivityHeatmap'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -46,6 +47,8 @@ export default function Today() {
     <div>
       <PageHeader title="Today" sub={today} />
 
+      <ActivityHeatmap sessions={data.sessions} className="mb-5" />
+
       {!cloud && (
         <div className="mb-3 rounded-xl border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
           Device-only mode. Your log lives in this browser until sign-in is set up.
@@ -53,14 +56,14 @@ export default function Today() {
       )}
 
       {plan.doneToday ? (
-        <Card className="border-emerald-200 bg-emerald-50 py-4">
+        <Card className="py-4">
           <CardContent className="px-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs tracking-wide text-emerald-700 uppercase">Done today</div>
+                <div className="text-xs text-muted-foreground">Done today</div>
                 <div className="mt-0.5 text-xl font-bold">{plan.doneToday.dayName}</div>
               </div>
-              <Badge className="bg-emerald-100 text-emerald-800">{plan.doneToday.entries.length} exercises</Badge>
+              <Badge variant="secondary">{plan.doneToday.entries.length} exercises</Badge>
             </div>
             <ul className="mt-3 space-y-1 text-sm">
               {plan.doneToday.entries.map((e) => (
@@ -74,9 +77,9 @@ export default function Today() {
           </CardContent>
         </Card>
       ) : plan.restSuggested ? (
-        <Card className="border-sky-200 bg-sky-50 py-4">
+        <Card className="py-4">
           <CardContent className="px-4">
-            <div className="text-xs tracking-wide text-sky-700 uppercase">Rest day</div>
+            <div className="text-xs text-muted-foreground">Rest day</div>
             <div className="mt-0.5 text-xl font-bold">Recover</div>
             <p className="mt-2 text-sm">
               You trained {plan.daysSince === 1 ? 'yesterday' : `${plan.daysSince} days ago`}. Next up is <span className="font-semibold">{plan.day.name}</span>.
@@ -88,7 +91,7 @@ export default function Today() {
         </Card>
       ) : hero === 'bold' ? (
         <div className="py-2">
-          <div className="text-xs font-semibold tracking-wide text-primary uppercase">Up next</div>
+          <div className="text-xs font-semibold text-primary">Up next</div>
           <div className="mt-1 text-4xl leading-tight font-black tracking-tight">{plan.day.name}</div>
           {coachCopy && <p className="mt-2 text-sm text-muted-foreground">{upNextCopy}</p>}
           <Button size="lg" className="mt-5 h-14 w-full text-base" onClick={() => nav(`/log/${plan.dayIndex}`)}>
@@ -98,7 +101,7 @@ export default function Today() {
       ) : (
         <Card className="border-primary/40 bg-primary/10 py-4">
           <CardContent className="px-4">
-            <div className="text-xs tracking-wide text-primary uppercase">Up next</div>
+            <div className="text-xs text-primary">Up next</div>
             <div className="mt-0.5 text-xl font-bold">{plan.day.name}</div>
             {coachCopy && <p className="mt-1 text-sm text-muted-foreground">{upNextCopy}</p>}
             <Button size="lg" className="mt-4 h-12 w-full" onClick={() => nav(`/log/${plan.dayIndex}`)}>
@@ -110,7 +113,7 @@ export default function Today() {
 
       <section className="mt-6">
         <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">{plan.day.name}</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground">{plan.day.name}</h2>
           <span className="text-xs text-muted-foreground">last time</span>
         </div>
         <div className="space-y-2">
@@ -136,8 +139,8 @@ export default function Today() {
                       {last && sameStep ? (
                         <>
                           <div className="flex items-center justify-end gap-1 font-semibold tabular-nums">
-                            {trend > 0 && <ArrowUpRight className="size-4 text-emerald-600" />}
-                            {trend < 0 && <ArrowDownRight className="size-4 text-amber-600" />}
+                            {trend > 0 && <ArrowUpRight className="size-4 text-foreground" />}
+                            {trend < 0 && <ArrowDownRight className="size-4 text-muted-foreground" />}
                             {fmtLast(last.entry)}
                           </div>
                           <div className="text-[11px] text-muted-foreground">{relativeDay(last.session.date)}</div>
@@ -153,8 +156,8 @@ export default function Today() {
                         Move up at {step.goal.sets} × {step.goal.reps}
                         {step.unit === 'seconds' ? 's' : ''}
                       </span>
-                      {goal?.reached && sameStep && <Badge className="bg-emerald-100 text-emerald-800">Ready to move up</Badge>}
-                      {goal?.overBand && !goal.reached && sameStep && <Badge className="bg-amber-100 text-amber-800">Over 20 reps</Badge>}
+                      {goal?.reached && sameStep && <Badge variant="secondary">Ready to move up</Badge>}
+                      {goal?.overBand && !goal.reached && sameStep && <Badge variant="secondary">Over 20 reps</Badge>}
                     </div>
                   )}
                 </CardContent>
@@ -166,7 +169,7 @@ export default function Today() {
 
       {workoutDays(program).length > 1 && (
         <section className="mt-6">
-          <h2 className="mb-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">Other days</h2>
+          <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Other days</h2>
           <div className="flex flex-wrap gap-2">
             {workoutDays(program)
               .filter((d) => d.index !== plan.dayIndex)
