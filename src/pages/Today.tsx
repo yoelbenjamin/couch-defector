@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { getProgram, workoutDays } from '@/data/programs'
@@ -25,9 +25,21 @@ export default function Today() {
     const k = dayKey(new Date(x.date))
     return k >= range.start && k <= range.today
   }).length
-  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+  const now = new Date()
+  const weekday = now.toLocaleDateString(undefined, { weekday: 'long' })
+  const monthDay = now.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const heatRef = useRef<HTMLDivElement>(null)
+  // Tapping anywhere outside the grid leaves the historical view.
+  useEffect(() => {
+    if (selectedDay === null) return
+    const onDown = (e: PointerEvent) => {
+      if (!heatRef.current?.contains(e.target as Node)) setSelectedDay(null)
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [selectedDay])
   const selectedSessions = selectedDay === null ? [] : data.sessions.filter((x) => dayKey(new Date(x.date)) === selectedDay)
 
   const hero = useIdea('todayHero')
@@ -55,7 +67,12 @@ export default function Today() {
   return (
     <div>
       <PageHeader
-        title={today}
+        title={
+          <>
+            <span className="block">{weekday}</span>
+            <span className="block">{monthDay}</span>
+          </>
+        }
         sub={
           streak > 0 ? (
             <Badge variant="secondary" className="mt-1">
@@ -65,7 +82,9 @@ export default function Today() {
         }
       />
 
-      <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-1.5" />
+      <div ref={heatRef}>
+        <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-1.5" />
+      </div>
       {statsRow ? (
         <p className="mb-5 text-xs text-muted-foreground tabular-nums">
           {sessionsInRange} session{sessionsInRange === 1 ? '' : 's'} in the last {range.days} days

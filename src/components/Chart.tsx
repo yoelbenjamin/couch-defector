@@ -37,8 +37,8 @@ export default function Chart({ points, height = 140, unit = '' }: { points: Poi
       ))}
       {stepChanges.map((p) => (
         <g key={p.x}>
-          <line x1={xs(p.x)} x2={xs(p.x)} y1={padT} y2={height - padB} stroke={primary} strokeDasharray="3 3" strokeWidth="1" opacity="0.6" />
-          <text x={xs(p.x) + 3} y={padT + 8} fontSize="9" fill={primary}>
+          <line x1={xs(p.x)} x2={xs(p.x)} y1={padT} y2={height - padB} stroke={muted} strokeDasharray="3 3" strokeWidth="1" opacity="0.6" />
+          <text x={xs(p.x) + 3} y={padT + 8} fontSize="9" fill={muted}>
             step {p.step}
           </text>
         </g>
