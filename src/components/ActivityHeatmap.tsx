@@ -48,12 +48,13 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
   }, [sessions])
 
   const cells: { key: number; count: number; future: boolean; isToday: boolean; delay: number }[] = []
-  // Random per-cell jitter, fixed for the life of the component so re-renders don't replay the shimmer.
-  const jitter = useMemo(() => Array.from({ length: weeks * 7 }, () => Math.random() * 140), [weeks])
+  // Random per-cell timing, fixed for the life of the component so re-renders don't replay the shimmer.
+  // About 60% of tiles flash, each at a random moment within the first ~1.1s; the rest stay still.
+  const timing = useMemo(() => Array.from({ length: weeks * 7 }, () => (Math.random() < 0.6 ? Math.random() * 1100 : -1)), [weeks])
   for (let w = 0; w < weeks; w++) {
     for (let d = 0; d < 7; d++) {
       const key = start + (w * 7 + d) * DAY
-      cells.push({ key, count: counts.get(key) ?? 0, future: key > today, isToday: key === today, delay: w * 32 + jitter[w * 7 + d] })
+      cells.push({ key, count: counts.get(key) ?? 0, future: key > today, isToday: key === today, delay: timing[w * 7 + d] })
     }
   }
 
@@ -66,9 +67,10 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
     >
       {cells.map((c) => {
         const isSelected = selected === c.key
-        const style = { '--shimmer-delay': `${Math.round(c.delay)}ms` } as CSSProperties
+        const style = { '--shimmer-delay': `${Math.round(Math.max(0, c.delay))}ms` } as CSSProperties
         const cls = cn(
-          'heat-cell aspect-square rounded-[2px]',
+          'aspect-square rounded-[2px]',
+          c.delay >= 0 && !c.future && 'heat-cell',
           c.future ? 'bg-transparent' : c.count === 0 ? 'bg-foreground/[0.07]' : 'bg-foreground/80',
           c.isToday && c.count === 0 && 'ring-1 ring-foreground/40 ring-inset',
           isSelected && 'bg-foreground ring-2 ring-foreground ring-offset-1 ring-offset-background',
