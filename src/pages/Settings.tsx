@@ -1,21 +1,18 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { getProgram, PROGRAMS } from '@/data/programs'
+import { PROGRESSION_IDS, PROGRESSIONS } from '@/data/progressions'
 import { useStore } from '@/lib/store'
 import PageHeader from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import type { Slot } from '@/types'
 
 export default function Settings() {
-  const { data, cloud, user, signOut, setProgram, setCustomName, exportJson, importJson } = useStore()
+  const { data, cloud, user, signOut, setProgram, setStep, setCustomName } = useStore()
   const program = getProgram(data.programId)
-  const [importText, setImportText] = useState('')
-  const [msg, setMsg] = useState<string | null>(null)
   const customSlots = program.cycle.flatMap((c) => ('rest' in c && c.rest ? [] : c.day.slots.filter((s): s is Slot & { kind: 'custom' } => s.kind === 'custom')))
   const uniqueCustom = customSlots.filter((s, i, a) => a.findIndex((x) => x.key === s.key) === i)
 
@@ -48,7 +45,7 @@ export default function Settings() {
               </Button>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Device-only mode. Data is stored in this browser. Export below to back it up.</p>
+            <p className="text-sm text-muted-foreground">Device-only mode. Data is stored in this browser.</p>
           )}
         </CardContent>
       </Card>
@@ -76,6 +73,32 @@ export default function Settings() {
         </CardContent>
       </Card>
 
+      <Card className="gap-3 py-4">
+        <CardHeader className="px-4">
+          <CardTitle className="text-xs text-muted-foreground">Starting point</CardTitle>
+          <CardDescription className="text-xs">Where you are on each of the six movements. Pick the hardest step you can do for at least a few clean reps.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 px-4">
+          {PROGRESSION_IDS.map((pid) => (
+            <div key={pid} className="flex items-center justify-between gap-3">
+              <span className="text-sm">{PROGRESSIONS[pid].name}</span>
+              <Select value={String(data.steps[pid] ?? 1)} onValueChange={(v) => setStep(pid, Number(v))}>
+                <SelectTrigger className="h-9 w-48 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROGRESSIONS[pid].steps.map((st) => (
+                    <SelectItem key={st.n} value={String(st.n)} className="text-xs">
+                      {st.n}. {st.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       {uniqueCustom.length > 0 && (
         <Card className="gap-3 py-4">
           <CardHeader className="px-4">
@@ -97,49 +120,6 @@ export default function Settings() {
           </CardContent>
         </Card>
       )}
-
-      <Card className="gap-3 py-4">
-        <CardHeader className="px-4">
-          <CardTitle className="text-xs text-muted-foreground">Backup</CardTitle>
-        </CardHeader>
-        <CardContent className="px-4">
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              className="flex-1"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(exportJson())
-                  setMsg('Copied your data to the clipboard.')
-                } catch {
-                  setMsg('Clipboard blocked. Long-press the text below to copy.')
-                  setImportText(exportJson())
-                }
-              }}
-            >
-              Copy export
-            </Button>
-            <Button
-              variant="secondary"
-              className="flex-1"
-              disabled={!importText.trim()}
-              onClick={async () => {
-                try {
-                  await importJson(importText)
-                  setImportText('')
-                  setMsg('Imported.')
-                } catch {
-                  setMsg('That did not look like a valid export.')
-                }
-              }}
-            >
-              Import
-            </Button>
-          </div>
-          <Textarea value={importText} onChange={(e) => setImportText(e.target.value)} rows={3} placeholder="Paste an export here to import" className="mt-2 resize-none font-mono text-[11px]" />
-          {msg && <p className="mt-2 text-xs text-muted-foreground">{msg}</p>}
-        </CardContent>
-      </Card>
 
       <Card className="gap-3 py-4">
         <CardHeader className="px-4">
