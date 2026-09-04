@@ -23,13 +23,6 @@ export const IDEAS = {
     options: ['sets', 'best'],
     default: 'sets',
   },
-  trendArrows: {
-    kind: 'toggle',
-    area: 'Today',
-    label: 'Trend arrows',
-    description: 'Arrow next to last time when reps moved vs. the session before.',
-    default: false,
-  },
   coachCopy: {
     kind: 'toggle',
     area: 'Today',

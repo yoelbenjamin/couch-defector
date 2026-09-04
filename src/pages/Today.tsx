@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowDownRight, ArrowUpRight, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram, workoutDays } from '@/data/programs'
-import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { dayKey, planToday, relativeDay } from '@/lib/schedule'
-import { bestSet, checkGoal, fmtSets, recentEntriesForSlot, streakWeeks, totalReps } from '@/lib/stats'
+import { bestSet, fmtSets, streakWeeks } from '@/lib/stats'
 import { useStore } from '@/lib/store'
 import { useIdea } from '@/dev/proto'
 import PageHeader from '@/components/PageHeader'
+import ProgressPanel from '@/components/ProgressPanel'
 import ActivityHeatmap, { heatmapRange } from '@/components/ActivityHeatmap'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import type { Entry, Session, Slot } from '@/types'
+import type { Entry, Session } from '@/types'
 
 export default function Today() {
   const { data, cloud, deleteSession } = useStore()
@@ -65,17 +65,9 @@ export default function Today() {
 
   const hero = useIdea('todayHero')
   const lastTime = useIdea('lastTime')
-  const trendArrows = useIdea('trendArrows')
   const coachCopy = useIdea('coachCopy')
   const statsRow = useIdea('statsRow')
 
-  const slotTitle = (s: Slot) => {
-    if (s.kind === 'progression') {
-      const step = getStep(s.progression, data.steps[s.progression] ?? 1)
-      return { title: step.name, sub: `${PROGRESSIONS[s.progression].name} · step ${step.n}` }
-    }
-    return { title: data.customNames[s.key] || s.label, sub: 'Your pick' }
-  }
   const fmtLast = (e: Entry) => (lastTime === 'best' ? `${bestSet(e)}${e.unit === 'seconds' ? 's' : ''} best` : fmtSets(e))
 
   const upNextCopy =
@@ -194,64 +186,9 @@ export default function Today() {
         </Card>
       )}
 
-      <section className="mt-6">
-        <div className="mb-2">
-          <h2 className="text-sm font-semibold">{plan.doneToday ? `What you did · ${plan.day.name}` : `What you'll do · ${plan.day.name}`}</h2>
-          <p className="text-xs text-muted-foreground">Each exercise at your current step, with your numbers from last time beside it.</p>
-        </div>
-        <div className="space-y-2">
-          {plan.day.slots.map((s) => {
-            const { title, sub } = slotTitle(s)
-            const recent = recentEntriesForSlot(data.sessions, program.id, s.key, 2)
-            const last = recent[0] ?? null
-            const prev = recent[1] ?? null
-            const goal = last ? checkGoal(last.entry) : null
-            const step = s.kind === 'progression' ? getStep(s.progression, data.steps[s.progression] ?? 1) : null
-            const sameStep = last && s.kind === 'progression' ? last.entry.step === (data.steps[s.progression] ?? 1) : true
-            const trend =
-              trendArrows && last && prev && prev.entry.step === last.entry.step ? Math.sign(totalReps(last.entry) - totalReps(prev.entry)) : 0
-            return (
-              <Card key={s.key} className="py-3">
-                <CardContent className="px-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate font-semibold">{title}</div>
-                      <div className="text-xs text-muted-foreground">{sub}</div>
-                    </div>
-                    <div className="text-right">
-                      {last && sameStep ? (
-                        <>
-                          <div className="flex items-center justify-end gap-1 font-semibold tabular-nums">
-                            {trend > 0 && <ArrowUpRight className="size-4 text-foreground" />}
-                            {trend < 0 && <ArrowDownRight className="size-4 text-muted-foreground" />}
-                            {fmtLast(last.entry)}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground">last time · {relativeDay(last.session.date).toLowerCase()}</div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="font-semibold text-muted-foreground tabular-nums">{step ? `${step.goal.sets} × ${step.start}` : '—'}</div>
-                          <div className="text-[11px] text-muted-foreground">{step ? 'suggested start' : 'first time'}</div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {step && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="text-[11px] text-muted-foreground">
-                        Move up at {step.goal.sets} × {step.goal.reps}
-                        {step.unit === 'seconds' ? 's' : ''}
-                      </span>
-                      {goal?.reached && sameStep && <Badge variant="secondary">Ready to move up</Badge>}
-                      {goal?.overBand && !goal.reached && sameStep && <Badge variant="secondary">Over 20 reps</Badge>}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      </section>
+      <div className="mt-6">
+        <ProgressPanel />
+      </div>
 
       {workoutDays(program).length > 1 && (
         <section className="mt-6">
