@@ -191,9 +191,9 @@ export default function Today() {
       )}
 
       <section className="mt-6">
-        <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-muted-foreground">{plan.day.name}</h2>
-          <span className="text-xs text-muted-foreground">last time</span>
+        <div className="mb-2">
+          <h2 className="text-sm font-semibold">{plan.doneToday ? `What you did · ${plan.day.name}` : `What you'll do · ${plan.day.name}`}</h2>
+          <p className="text-xs text-muted-foreground">Each exercise at your current step, with your numbers from last time beside it.</p>
         </div>
         <div className="space-y-2">
           {plan.day.slots.map((s) => {
@@ -222,10 +222,13 @@ export default function Today() {
                             {trend < 0 && <ArrowDownRight className="size-4 text-muted-foreground" />}
                             {fmtLast(last.entry)}
                           </div>
-                          <div className="text-[11px] text-muted-foreground">{relativeDay(last.session.date)}</div>
+                          <div className="text-[11px] text-muted-foreground">last time · {relativeDay(last.session.date).toLowerCase()}</div>
                         </>
                       ) : (
-                        <div className="text-sm text-muted-foreground">{step ? `try ${step.goal.sets} × ${step.start}` : 'new'}</div>
+                        <>
+                          <div className="font-semibold text-muted-foreground tabular-nums">{step ? `${step.goal.sets} × ${step.start}` : '—'}</div>
+                          <div className="text-[11px] text-muted-foreground">{step ? 'suggested start' : 'first time'}</div>
+                        </>
                       )}
                     </div>
                   </div>

@@ -23,16 +23,8 @@ export function ProfileButton() {
   const { user } = useStore()
   const label = user ? `${user.displayName ?? user.email ?? 'Account'} · Settings` : 'Settings'
   return (
-    <Link
-      to="/settings"
-      aria-label={label}
-      className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-foreground text-background"
-    >
-      {user?.photoURL ? (
-        <img src={user.photoURL} alt="" className="size-full object-cover grayscale contrast-125" referrerPolicy="no-referrer" />
-      ) : (
-        <User className="size-4" />
-      )}
+    <Link to="/settings" aria-label={label} className="flex size-9 items-center justify-center rounded-full bg-secondary text-muted-foreground">
+      <User className="size-4" />
     </Link>
   )
 }
