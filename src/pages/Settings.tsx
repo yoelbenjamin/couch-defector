@@ -121,20 +121,6 @@ export default function Settings() {
         </Card>
       )}
 
-      <Card className="gap-3 py-4">
-        <CardHeader className="px-4">
-          <CardTitle className="text-xs text-muted-foreground">How it works</CardTitle>
-        </CardHeader>
-        <CardContent className="px-4">
-          <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li>Warm up, then two hard sets per exercise. Stop a rep or two short of failure.</li>
-            <li>Work in the 6–20 rep range. Around 10 is the sweet spot for building muscle.</li>
-            <li>Beat last time by at least one rep. When you hit a step’s goal, move up.</li>
-            <li>Never train the same muscles two days in a row. Take at least two days off a week.</li>
-            <li>Sleep and eat. You grow between sessions.</li>
-          </ul>
-        </CardContent>
-      </Card>
       <p className="pt-3 text-center text-[11px] text-muted-foreground/60">Couch Defector · v0.1</p>
     </div>
   )

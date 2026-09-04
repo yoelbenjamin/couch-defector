@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Pencil, Trash2 } from 'lucide-react'
+import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram, workoutDays } from '@/data/programs'
 import { dayKey, planToday, relativeDay } from '@/lib/schedule'
@@ -189,6 +189,20 @@ export default function Today() {
       <div className="mt-6">
         <ProgressPanel />
       </div>
+
+      <details className="group mt-8 mb-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-muted-foreground">
+          How it works
+          <ChevronDown className="size-4 transition group-open:rotate-180" />
+        </summary>
+        <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+          <li>Warm up, then two hard sets per exercise. Stop a rep or two short of failure.</li>
+          <li>Work in the 6–20 rep range. Around 10 is the sweet spot for building muscle.</li>
+          <li>Beat last time by at least one rep. When you hit a step’s goal, move up.</li>
+          <li>Never train the same muscles two days in a row. Take at least two days off a week.</li>
+          <li>Sleep and eat. You grow between sessions.</li>
+        </ul>
+      </details>
 
       {workoutDays(program).length > 1 && (
         <section className="mt-6">
