@@ -240,7 +240,7 @@ export default function Log() {
         </Card>
       </main>
 
-      <div className="safe-bottom fixed inset-x-0 bottom-0 border-t bg-background/95 p-4 backdrop-blur">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 mx-auto max-w-md px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] [&>*]:pointer-events-auto">
         <div className="mx-auto max-w-md">
           <Button size="lg" className="h-12 w-full" disabled={saving} onClick={finish}>
             {saving ? 'Saving…' : 'Finish workout'}
