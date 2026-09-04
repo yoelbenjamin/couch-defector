@@ -69,7 +69,7 @@ export default function Today() {
       <PageHeader
         title={
           <>
-            <span className="block">{weekday}</span>
+            <span className="block">{weekday},</span>
             <span className="block">{monthDay}</span>
           </>
         }
