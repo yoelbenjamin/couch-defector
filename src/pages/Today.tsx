@@ -55,16 +55,13 @@ export default function Today() {
   return (
     <div>
       <PageHeader
-        title="Today"
+        title={today}
         sub={
-          <div>
-            <div>{today}</div>
-            {streak > 0 && (
-              <Badge variant="secondary" className="mt-1.5">
-                {streak} week streak
-              </Badge>
-            )}
-          </div>
+          streak > 0 ? (
+            <Badge variant="secondary" className="mt-1">
+              {streak} week streak
+            </Badge>
+          ) : undefined
         }
       />
 
