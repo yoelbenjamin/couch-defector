@@ -110,7 +110,7 @@ export default function Log() {
 
   return (
     <div className="mx-auto flex h-full max-w-md flex-col">
-      <header className="safe-top sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-2 py-2 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-2 pb-2 pt-[calc(env(safe-area-inset-top,0px)+8px)] backdrop-blur">
         <Button variant="ghost" size="sm" onClick={() => nav(-1)}>
           <ChevronLeft /> Back
         </Button>

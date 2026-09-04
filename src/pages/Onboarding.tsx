@@ -24,7 +24,7 @@ export default function Onboarding() {
 
   if (phase === 'steps') {
     return (
-      <div className="safe-top safe-bottom mx-auto flex h-full max-w-md flex-col px-4 py-6">
+      <div className="mx-auto flex h-full max-w-md flex-col px-4 pt-[calc(env(safe-area-inset-top,0px)+32px)] pb-[calc(env(safe-area-inset-bottom,0px)+24px)]">
         <h1 className="text-2xl font-bold">Where are you starting?</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Pick the hardest variation you can do for about 10 clean reps. When in doubt, start lower and move up fast.
@@ -74,7 +74,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="safe-top safe-bottom mx-auto flex h-full max-w-md flex-col px-4 py-6">
+    <div className="mx-auto flex h-full max-w-md flex-col px-4 pt-[calc(env(safe-area-inset-top,0px)+32px)] pb-[calc(env(safe-area-inset-bottom,0px)+24px)]">
       <h1 className="text-2xl font-bold">Pick a program</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Simpler programs build muscle faster. Start low, move up only when the basics get too easy to recover from.

@@ -14,9 +14,11 @@ export interface TodayPlan {
   trainedYesterday: boolean
 }
 
-function startOfDay(d: Date) {
+/** Local midnight for a date, as a number. Stable key for grouping by day. */
+export function dayKey(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
 }
+const startOfDay = dayKey
 
 export function daysBetween(a: Date, b: Date) {
   return Math.round((startOfDay(b) - startOfDay(a)) / 86400000)

@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, X } from 'lucide-react'
 import { getProgram, workoutDays } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
-import { planToday, relativeDay } from '@/lib/schedule'
+import { dayKey, planToday, relativeDay } from '@/lib/schedule'
 import { bestSet, checkGoal, fmtSets, recentEntriesForSlot, streakWeeks, totalReps } from '@/lib/stats'
 import { useStore } from '@/lib/store'
 import { useIdea } from '@/dev/proto'
@@ -11,7 +12,7 @@ import ActivityHeatmap from '@/components/ActivityHeatmap'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import type { Entry, Slot } from '@/types'
+import type { Entry, Session, Slot } from '@/types'
 
 export default function Today() {
   const { data, cloud } = useStore()
@@ -20,6 +21,9 @@ export default function Today() {
   const plan = planToday(program, data.sessions)
   const streak = streakWeeks(data.sessions)
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const selectedSessions = selectedDay === null ? [] : data.sessions.filter((x) => dayKey(new Date(x.date)) === selectedDay)
 
   const hero = useIdea('todayHero')
   const lastTime = useIdea('lastTime')
@@ -47,8 +51,12 @@ export default function Today() {
     <div>
       <PageHeader title="Today" sub={today} />
 
-      <ActivityHeatmap sessions={data.sessions} className="mb-5" />
+      <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-5" />
 
+      {selectedDay !== null ? (
+        <DayDetail dateKey={selectedDay} sessions={selectedSessions} onClose={() => setSelectedDay(null)} />
+      ) : (
+        <>
       {!cloud && (
         <div className="mb-3 rounded-xl border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
           Device-only mode. Your log lives in this browser until sign-in is set up.
@@ -189,6 +197,52 @@ export default function Today() {
           <Stat label="Program" value={program.name.split(' ')[0]} small />
         </section>
       )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function DayDetail({ dateKey, sessions, onClose }: { dateKey: number; sessions: Session[]; onClose: () => void }) {
+  const d = new Date(dateKey)
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs text-muted-foreground">{relativeDay(d.toISOString())}</div>
+          <div className="truncate text-xl font-bold">{d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+        </div>
+        <Button variant="outline" size="sm" className="shrink-0 rounded-full" onClick={onClose}>
+          <X className="size-4" /> Today
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {sessions.map((s) => (
+          <Card key={s.id} className="py-3">
+            <CardContent className="px-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="font-semibold">{s.dayName}</div>
+                <span className="text-xs text-muted-foreground">{new Date(s.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
+              </div>
+              <ul className="mt-2 space-y-1 text-sm">
+                {s.entries.map((e) => (
+                  <li key={e.slotKey} className="flex justify-between gap-3">
+                    <span className="min-w-0 truncate">
+                      {e.name}
+                      {e.step ? <span className="text-muted-foreground"> · step {e.step}</span> : null}
+                    </span>
+                    <span className="text-muted-foreground tabular-nums">{fmtSets(e)}</span>
+                  </li>
+                ))}
+              </ul>
+              {s.note && <p className="mt-2 text-sm text-muted-foreground">{s.note}</p>}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Button asChild variant="ghost" size="sm" className="mt-2">
+        <Link to="/history">All sessions</Link>
+      </Button>
     </div>
   )
 }

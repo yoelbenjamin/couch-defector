@@ -19,26 +19,20 @@ export default function PageHeader({ title, sub, action }: { title: ReactNode; s
   )
 }
 
-function initials(name?: string | null, email?: string | null) {
-  const src = name?.trim() || email?.split('@')[0] || ''
-  const parts = src.split(/[\s._-]+/).filter(Boolean)
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0]!.toUpperCase())
-    .join('')
-}
-
 export function ProfileButton() {
   const { user } = useStore()
   const label = user ? `${user.displayName ?? user.email ?? 'Account'} · Settings` : 'Settings'
-  const text = user ? initials(user.displayName, user.email) : ''
   return (
     <Link
       to="/settings"
       aria-label={label}
-      className="flex size-9 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background"
+      className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-foreground text-background"
     >
-      {text || <User className="size-4" />}
+      {user?.photoURL ? (
+        <img src={user.photoURL} alt="" className="size-full object-cover grayscale contrast-125" referrerPolicy="no-referrer" />
+      ) : (
+        <User className="size-4" />
+      )}
     </Link>
   )
 }

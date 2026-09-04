@@ -7,7 +7,7 @@ export default function SignIn() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   return (
-    <div className="safe-top safe-bottom mx-auto flex h-full max-w-md flex-col justify-between px-6 py-10">
+    <div className="mx-auto flex h-full max-w-md flex-col justify-between px-6 pt-[calc(env(safe-area-inset-top,0px)+40px)] pb-[calc(env(safe-area-inset-bottom,0px)+40px)]">
       <div className="pt-10">
         <img src="/icon.svg" alt="" className="mb-6 size-16 rounded-2xl" />
         <h1 className="text-3xl font-bold tracking-tight">Couch Defector</h1>
