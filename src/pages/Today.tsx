@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Pencil, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { getProgram, workoutDays } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { dayKey, planToday, relativeDay } from '@/lib/schedule'
@@ -12,10 +13,21 @@ import ActivityHeatmap, { heatmapRange } from '@/components/ActivityHeatmap'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import type { Entry, Session, Slot } from '@/types'
 
 export default function Today() {
-  const { data, cloud } = useStore()
+  const { data, cloud, deleteSession } = useStore()
   const nav = useNavigate()
   const program = getProgram(data.programId)
   const plan = planToday(program, data.sessions)
@@ -30,17 +42,26 @@ export default function Today() {
   const monthDay = now.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const selectedSessions = selectedDay === null ? [] : data.sessions.filter((x) => dayKey(new Date(x.date)) === selectedDay)
   const heatRef = useRef<HTMLDivElement>(null)
-  // Tapping anywhere outside the grid leaves the historical view.
+  const detailRef = useRef<HTMLDivElement>(null)
+  // Tapping anywhere outside the grid, the day view, or a dialog leaves the historical view.
   useEffect(() => {
     if (selectedDay === null) return
     const onDown = (e: PointerEvent) => {
-      if (!heatRef.current?.contains(e.target as Node)) setSelectedDay(null)
+      const t = e.target as Element | null
+      if (!t) return
+      if (heatRef.current?.contains(t) || detailRef.current?.contains(t)) return
+      if (t.closest?.('[data-slot^="alert-dialog"]')) return
+      setSelectedDay(null)
     }
     document.addEventListener('pointerdown', onDown)
     return () => document.removeEventListener('pointerdown', onDown)
   }, [selectedDay])
-  const selectedSessions = selectedDay === null ? [] : data.sessions.filter((x) => dayKey(new Date(x.date)) === selectedDay)
+  // Nothing left on that day (last session deleted): back to today.
+  useEffect(() => {
+    if (selectedDay !== null && selectedSessions.length === 0) setSelectedDay(null)
+  }, [selectedDay, selectedSessions.length])
 
   const hero = useIdea('todayHero')
   const lastTime = useIdea('lastTime')
@@ -94,7 +115,17 @@ export default function Today() {
       )}
 
       {selectedDay !== null ? (
-        <DayDetail dateKey={selectedDay} sessions={selectedSessions} />
+        <div ref={detailRef}>
+          <DayDetail
+            dateKey={selectedDay}
+            sessions={selectedSessions}
+            onEdit={(x) => nav(`/log/${x.dayIndex}?session=${x.id}`)}
+            onDelete={async (x) => {
+              await deleteSession(x.id)
+              toast('Session deleted')
+            }}
+          />
+        </div>
       ) : (
         <>
       {!cloud && (
@@ -236,7 +267,17 @@ export default function Today() {
   )
 }
 
-function DayDetail({ dateKey, sessions }: { dateKey: number; sessions: Session[] }) {
+function DayDetail({
+  dateKey,
+  sessions,
+  onEdit,
+  onDelete,
+}: {
+  dateKey: number
+  sessions: Session[]
+  onEdit: (s: Session) => void
+  onDelete: (s: Session) => void | Promise<void>
+}) {
   const d = new Date(dateKey)
   return (
     <div>
@@ -266,6 +307,30 @@ function DayDetail({ dateKey, sessions }: { dateKey: number; sessions: Session[]
                 ))}
               </ul>
               {s.note && <p className="mt-2 text-sm text-muted-foreground">{s.note}</p>}
+              <div className="mt-3 flex items-center justify-end gap-1">
+                <Button variant="ghost" size="sm" onClick={() => onEdit(s)}>
+                  <Pencil className="size-3.5" /> Edit
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground">
+                      <Trash2 className="size-3.5" /> Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this session?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {s.dayName} on {new Date(s.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })} will be removed from your log. This cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => void onDelete(s)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </CardContent>
           </Card>
         ))}

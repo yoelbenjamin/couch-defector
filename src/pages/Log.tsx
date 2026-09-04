@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, X } from 'lucide-react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
@@ -42,13 +42,22 @@ export default function Log() {
   const { dayIndex: dayIndexParam } = useParams()
   const dayIndex = Number(dayIndexParam)
   const nav = useNavigate()
+  const [params] = useSearchParams()
   const { data, saveSession, setStep } = useStore()
   const program = getProgram(data.programId)
   const cycleDay = program.cycle[dayIndex]
   const day = cycleDay && !('rest' in cycleDay && cycleDay.rest) ? cycleDay.day : null
   const draftKey = `draft:${program.id}:${dayIndex}`
+  /** When ?session=<id> is present we are editing that logged session in place. */
+  const editing = useMemo(() => {
+    const id = params.get('session')
+    return id ? (data.sessions.find((x) => x.id === id) ?? null) : null
+  }, [params, data.sessions])
+  // "Last time" should not point at the session being edited.
+  const others = useMemo(() => (editing ? data.sessions.filter((x) => x.id !== editing.id) : data.sessions), [data.sessions, editing])
 
   const [entries, setEntries] = useState<Entry[]>(() => {
+    if (editing) return editing.entries.map((e) => ({ ...e, sets: e.sets.map((x) => ({ ...x })) }))
     try {
       const raw = sessionStorage.getItem(draftKey)
       if (raw) return JSON.parse(raw) as Entry[]
@@ -57,18 +66,19 @@ export default function Log() {
     }
     return day ? day.slots.map((s) => initialEntry(s, data, program.id)) : []
   })
-  const [note, setNote] = useState('')
+  const [note, setNote] = useState(editing?.note ?? '')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    if (editing) return
     sessionStorage.setItem(draftKey, JSON.stringify(entries))
-  }, [entries, draftKey])
+  }, [entries, draftKey, editing])
 
   const lastBySlot = useMemo(() => {
     const m = new Map<string, ReturnType<typeof lastEntryForSlot>>()
-    for (const e of entries) m.set(e.slotKey, lastEntryForSlot(data.sessions, program.id, e.slotKey))
+    for (const e of entries) m.set(e.slotKey, lastEntryForSlot(others, program.id, e.slotKey))
     return m
-  }, [entries, data.sessions, program.id])
+  }, [entries, others, program.id])
 
   if (!day) {
     return (
@@ -93,18 +103,23 @@ export default function Log() {
 
   const finish = async () => {
     setSaving(true)
-    const session: Session = {
-      id: newId(),
-      date: new Date().toISOString(),
-      programId: program.id,
-      dayIndex,
-      dayName: day.name,
-      entries: entries.filter((e) => e.sets.some((s) => s.reps > 0)),
-      ...(note.trim() ? { note: note.trim() } : {}),
-    }
+    const kept = entries.filter((e) => e.sets.some((s) => s.reps > 0))
+    const trimmed = note.trim()
+    const session: Session = editing
+      ? { ...editing, entries: kept, ...(trimmed ? { note: trimmed } : { note: undefined }) }
+      : {
+          id: newId(),
+          date: new Date().toISOString(),
+          programId: program.id,
+          dayIndex,
+          dayName: day.name,
+          entries: kept,
+          ...(trimmed ? { note: trimmed } : {}),
+        }
+    if (session.note === undefined) delete session.note
     await saveSession(session)
-    sessionStorage.removeItem(draftKey)
-    toast.success('Workout saved', { description: `${session.entries.length} exercises logged for ${day.name}.` })
+    if (!editing) sessionStorage.removeItem(draftKey)
+    toast.success(editing ? 'Workout updated' : 'Workout saved', { description: `${session.entries.length} exercises logged for ${day.name}.` })
     nav('/', { replace: true })
   }
 
@@ -114,12 +129,20 @@ export default function Log() {
         <Button variant="ghost" size="sm" onClick={() => nav(-1)}>
           <ChevronLeft /> Back
         </Button>
-        <div className="font-semibold">{day.name}</div>
+        <div className="font-semibold">
+          {day.name}
+          {editing && <span className="ml-1.5 text-xs font-normal text-muted-foreground">{relativeDay(editing.date)}</span>}
+        </div>
         <Button
           variant="ghost"
           size="sm"
           className="text-muted-foreground"
           onClick={() => {
+            if (editing) {
+              setEntries(editing.entries.map((e) => ({ ...e, sets: e.sets.map((x) => ({ ...x })) })))
+              setNote(editing.note ?? '')
+              return
+            }
             sessionStorage.removeItem(draftKey)
             setEntries(day.slots.map((s) => initialEntry(s, data, program.id)))
           }}
@@ -243,7 +266,7 @@ export default function Log() {
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 mx-auto max-w-md px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] [&>*]:pointer-events-auto">
         <div className="mx-auto max-w-md">
           <Button size="lg" className="h-12 w-full" disabled={saving} onClick={finish}>
-            {saving ? 'Saving…' : 'Finish workout'}
+            {saving ? 'Saving…' : editing ? 'Save changes' : 'Finish workout'}
           </Button>
         </div>
       </div>
