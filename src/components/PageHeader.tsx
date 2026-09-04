@@ -36,15 +36,9 @@ export function ProfileButton() {
     <Link
       to="/settings"
       aria-label={label}
-      className="flex size-9 items-center justify-center overflow-hidden rounded-full border bg-secondary text-xs font-semibold text-secondary-foreground"
+      className="flex size-9 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background"
     >
-      {user?.photoURL ? (
-        <img src={user.photoURL} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
-      ) : text ? (
-        text
-      ) : (
-        <User className="size-4 text-muted-foreground" />
-      )}
+      {text || <User className="size-4" />}
     </Link>
   )
 }
