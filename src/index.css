@@ -64,3 +64,24 @@
 
 input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 button { touch-action: manipulation; }
+
+/* Heatmap load shimmer: a brief highlight sweeps across the tiles, staggered by column with random jitter. */
+.heat-cell { position: relative; overflow: hidden; }
+.heat-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--foreground);
+  opacity: 0;
+  pointer-events: none;
+  animation: heat-shimmer 460ms ease-out var(--shimmer-delay, 0ms) 1 both;
+}
+.heat-cell[data-filled]::after { background: var(--background); }
+@keyframes heat-shimmer {
+  0% { opacity: 0; }
+  35% { opacity: 0.45; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .heat-cell::after { animation: none; }
+}

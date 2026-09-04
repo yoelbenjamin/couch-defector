@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import { dayKey } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/types'
@@ -47,11 +47,13 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
     return m
   }, [sessions])
 
-  const cells: { key: number; count: number; future: boolean; isToday: boolean }[] = []
+  const cells: { key: number; count: number; future: boolean; isToday: boolean; delay: number }[] = []
+  // Random per-cell jitter, fixed for the life of the component so re-renders don't replay the shimmer.
+  const jitter = useMemo(() => Array.from({ length: weeks * 7 }, () => Math.random() * 140), [weeks])
   for (let w = 0; w < weeks; w++) {
     for (let d = 0; d < 7; d++) {
       const key = start + (w * 7 + d) * DAY
-      cells.push({ key, count: counts.get(key) ?? 0, future: key > today, isToday: key === today })
+      cells.push({ key, count: counts.get(key) ?? 0, future: key > today, isToday: key === today, delay: w * 32 + jitter[w * 7 + d] })
     }
   }
 
@@ -64,13 +66,14 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
     >
       {cells.map((c) => {
         const isSelected = selected === c.key
+        const style = { '--shimmer-delay': `${Math.round(c.delay)}ms` } as CSSProperties
         const cls = cn(
-          'aspect-square rounded-[2px]',
+          'heat-cell aspect-square rounded-[2px]',
           c.future ? 'bg-transparent' : c.count === 0 ? 'bg-foreground/[0.07]' : 'bg-foreground/80',
           c.isToday && c.count === 0 && 'ring-1 ring-foreground/40 ring-inset',
           isSelected && 'bg-foreground ring-2 ring-foreground ring-offset-1 ring-offset-background',
         )
-        if (c.count === 0 || !onSelect) return <div key={c.key} className={cls} />
+        if (c.count === 0 || !onSelect) return <div key={c.key} className={cls} style={style} data-filled={c.count > 0 ? '' : undefined} />
         const label = new Date(c.key).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
         return (
           <button
@@ -80,6 +83,8 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
             aria-pressed={isSelected}
             onClick={() => onSelect(isSelected ? null : c.key)}
             className={cls}
+            style={style}
+            data-filled=""
           />
         )
       })}
