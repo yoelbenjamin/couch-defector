@@ -13,16 +13,18 @@ export default function Layout() {
       <main className="flex-1 overflow-y-auto px-4 pb-24 pt-[calc(env(safe-area-inset-top,0px)+32px)]">
         <Outlet />
       </main>
-      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-10 border-t bg-background/95 backdrop-blur">
-        <div className="mx-auto grid max-w-md grid-cols-2">
+      <nav className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom,0px)+16px)] z-10 flex justify-center pointer-events-none">
+        <div className="pointer-events-auto inline-flex rounded-lg border bg-background/95 p-1 backdrop-blur">
           {tabs.map(({ to, label, Icon }) => (
             <NavLink
               key={to}
               to={to}
               end
-              className={({ isActive }) => cn('flex flex-col items-center gap-1 py-2.5 text-[11px]', isActive ? 'text-primary' : 'text-muted-foreground')}
+              className={({ isActive }) =>
+                cn('flex items-center gap-2 rounded-md px-4 py-2 text-sm', isActive ? 'bg-foreground text-background' : 'text-muted-foreground')
+              }
             >
-              <Icon className="size-5" />
+              <Icon className="size-4" />
               {label}
             </NavLink>
           ))}

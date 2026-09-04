@@ -57,6 +57,13 @@ export default function Today() {
         <DayDetail dateKey={selectedDay} sessions={selectedSessions} onClose={() => setSelectedDay(null)} />
       ) : (
         <>
+      {statsRow && (
+        <section className="mb-5 grid grid-cols-3 gap-2">
+          <Stat label="Sessions" value={data.sessions.length} />
+          <Stat label="Week streak" value={streak} />
+          <Stat label="Program" value={program.name.split(' ')[0]} small />
+        </section>
+      )}
       {!cloud && (
         <div className="mb-3 rounded-xl border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
           Device-only mode. Your log lives in this browser until sign-in is set up.
@@ -182,7 +189,7 @@ export default function Today() {
             {workoutDays(program)
               .filter((d) => d.index !== plan.dayIndex)
               .map((d) => (
-                <Button key={d.index} asChild variant="outline" size="sm" className="rounded-full">
+                <Button key={d.index} asChild variant="outline" size="sm">
                   <Link to={`/log/${d.index}`}>{d.day.name}</Link>
                 </Button>
               ))}
@@ -190,13 +197,6 @@ export default function Today() {
         </section>
       )}
 
-      {statsRow && (
-        <section className="mt-6 grid grid-cols-3 gap-2">
-          <Stat label="Sessions" value={data.sessions.length} />
-          <Stat label="Week streak" value={streak} />
-          <Stat label="Program" value={program.name.split(' ')[0]} small />
-        </section>
-      )}
         </>
       )}
     </div>
@@ -212,7 +212,7 @@ function DayDetail({ dateKey, sessions, onClose }: { dateKey: number; sessions: 
           <div className="text-xs text-muted-foreground">{relativeDay(d.toISOString())}</div>
           <div className="truncate text-xl font-bold">{d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
         </div>
-        <Button variant="outline" size="sm" className="shrink-0 rounded-full" onClick={onClose}>
+        <Button variant="outline" size="sm" className="shrink-0" onClick={onClose}>
           <X className="size-4" /> Today
         </Button>
       </div>
