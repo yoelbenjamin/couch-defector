@@ -54,7 +54,19 @@ export default function Today() {
 
   return (
     <div>
-      <PageHeader title="Today" sub={today} />
+      <PageHeader
+        title="Today"
+        sub={
+          <div>
+            <div>{today}</div>
+            {streak > 0 && (
+              <Badge variant="secondary" className="mt-1.5">
+                {streak} week streak
+              </Badge>
+            )}
+          </div>
+        }
+      />
 
       <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-5" />
 
@@ -63,10 +75,8 @@ export default function Today() {
       ) : (
         <>
       {statsRow && (
-        <section className="mb-5 grid grid-cols-3 gap-2">
-          <Stat label={`of ${range.days} days`} value={sessionsInRange} />
-          <Stat label="Week streak" value={streak} />
-          <Stat label="Program" value={program.name.split(' ')[0]} small />
+        <section className="mb-5">
+          <Stat label={`sessions in the last ${range.days} days`} value={sessionsInRange} />
         </section>
       )}
       {!cloud && (
@@ -252,12 +262,12 @@ function DayDetail({ dateKey, sessions, onClose }: { dateKey: number; sessions: 
   )
 }
 
-function Stat({ label, value, small }: { label: string; value: number | string; small?: boolean }) {
+function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <Card className="py-3">
-      <CardContent className="px-2 text-center">
-        <div className={`font-bold tabular-nums ${small ? 'text-base' : 'text-2xl'}`}>{value}</div>
-        <div className="text-[11px] text-muted-foreground">{label}</div>
+      <CardContent className="flex items-baseline gap-2 px-4">
+        <div className="text-2xl font-bold tabular-nums">{value}</div>
+        <div className="text-sm text-muted-foreground">{label}</div>
       </CardContent>
     </Card>
   )

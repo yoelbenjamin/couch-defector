@@ -12,7 +12,7 @@ export default function PageHeader({ title, sub, action }: { title: ReactNode; s
     <header className="mb-4 flex items-start justify-between gap-3">
       <div className="min-w-0">
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        {sub && <p className="mt-0.5 text-sm text-muted-foreground">{sub}</p>}
+        {sub && <div className="mt-0.5 text-sm text-muted-foreground">{sub}</div>}
       </div>
       <div className="shrink-0">{action === undefined ? <ProfileButton /> : action}</div>
     </header>
