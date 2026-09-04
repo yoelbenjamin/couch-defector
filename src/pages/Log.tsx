@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, X } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { relativeDay } from '@/lib/schedule'
@@ -103,6 +104,7 @@ export default function Log() {
     }
     await saveSession(session)
     sessionStorage.removeItem(draftKey)
+    toast.success('Workout saved', { description: `${session.entries.length} exercises logged for ${day.name}.` })
     nav('/', { replace: true })
   }
 

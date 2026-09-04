@@ -7,6 +7,18 @@ import PageHeader from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { toast } from 'sonner'
 
 export default function History() {
   const { data, deleteSession } = useStore()
@@ -51,16 +63,32 @@ export default function History() {
                       ))}
                     </ul>
                     {s.note && <p className="mt-2 rounded-lg bg-background p-2 text-xs text-muted-foreground">{s.note}</p>}
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="mt-3 w-full"
-                      onClick={() => {
-                        if (confirm('Delete this session?')) deleteSession(s.id)
-                      }}
-                    >
-                      Delete session
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="mt-3 w-full">
+                          Delete session
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this session?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {s.dayName} on {fmtDate(s.date)} will be removed from your log. This cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Keep it</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={async () => {
+                              await deleteSession(s.id)
+                              toast('Session deleted')
+                            }}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </>
                 )}
               </CardContent>
