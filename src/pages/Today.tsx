@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowDownRight, ArrowUpRight, X } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { getProgram, workoutDays } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { dayKey, planToday, relativeDay } from '@/lib/schedule'
@@ -75,7 +75,7 @@ export default function Today() {
       )}
 
       {selectedDay !== null ? (
-        <DayDetail dateKey={selectedDay} sessions={selectedSessions} onClose={() => setSelectedDay(null)} />
+        <DayDetail dateKey={selectedDay} sessions={selectedSessions} />
       ) : (
         <>
       {!cloud && (
@@ -217,7 +217,7 @@ export default function Today() {
   )
 }
 
-function DayDetail({ dateKey, sessions, onClose }: { dateKey: number; sessions: Session[]; onClose: () => void }) {
+function DayDetail({ dateKey, sessions }: { dateKey: number; sessions: Session[] }) {
   const d = new Date(dateKey)
   return (
     <div>
@@ -226,9 +226,6 @@ function DayDetail({ dateKey, sessions, onClose }: { dateKey: number; sessions: 
           <div className="text-xs text-muted-foreground">{relativeDay(d.toISOString())}</div>
           <div className="truncate text-xl font-bold">{d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
         </div>
-        <Button variant="outline" size="sm" className="shrink-0" onClick={onClose}>
-          <X className="size-4" /> Today
-        </Button>
       </div>
       <div className="space-y-2">
         {sessions.map((s) => (
@@ -254,9 +251,6 @@ function DayDetail({ dateKey, sessions, onClose }: { dateKey: number; sessions: 
           </Card>
         ))}
       </div>
-      <Button asChild variant="ghost" size="sm" className="mt-2">
-        <Link to="/history">All sessions</Link>
-      </Button>
     </div>
   )
 }

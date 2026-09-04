@@ -6,7 +6,6 @@ import Onboarding from '@/pages/Onboarding'
 import Today from '@/pages/Today'
 import Log from '@/pages/Log'
 import Progress from '@/pages/Progress'
-import History from '@/pages/History'
 import Settings from '@/pages/Settings'
 
 export default function App() {
@@ -27,7 +26,6 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Today />} />
         <Route path="/progress" element={<Progress />} />
-        <Route path="/history" element={<History />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="/log/:dayIndex" element={<Log />} />
