@@ -22,6 +22,18 @@ export function lastEntryForSlot(sessions: Session[], programId: string, slotKey
   return null
 }
 
+/** Up to n most recent entries for a slot (same program), newest first. */
+export function recentEntriesForSlot(sessions: Session[], programId: string, slotKey: string, n = 2) {
+  const out: { entry: Entry; session: Session }[] = []
+  for (const s of [...sessions].sort((a, b) => b.date.localeCompare(a.date))) {
+    if (s.programId !== programId) continue
+    const e = s.entries.find((x) => x.slotKey === slotKey)
+    if (e) out.push({ entry: e, session: s })
+    if (out.length >= n) break
+  }
+  return out
+}
+
 /** Most recent entry for a progression at a given step, across programs. */
 export function lastEntryForStep(sessions: Session[], progression: ProgressionId, step: number) {
   const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date))

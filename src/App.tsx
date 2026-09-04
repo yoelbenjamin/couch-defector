@@ -1,5 +1,4 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { firebaseEnabled } from '@/lib/firebase'
 import { useStore } from '@/lib/store'
 import Layout from '@/components/Layout'
 import SignIn from '@/pages/SignIn'
@@ -11,16 +10,16 @@ import History from '@/pages/History'
 import Settings from '@/pages/Settings'
 
 export default function App() {
-  const { ready, user, data } = useStore()
+  const { ready, needsSignIn, data } = useStore()
 
   if (!ready) {
     return (
-      <div className="flex h-full items-center justify-center text-zinc-500">
+      <div className="flex h-full items-center justify-center text-muted-foreground">
         <div className="animate-pulse text-sm">Loading…</div>
       </div>
     )
   }
-  if (firebaseEnabled && !user) return <SignIn />
+  if (needsSignIn) return <SignIn />
   if (!data.programId) return <Onboarding />
 
   return (

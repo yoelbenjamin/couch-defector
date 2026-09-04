@@ -62,7 +62,7 @@ export default function Progress() {
                 {curN}. {cur.name}
               </div>
             </div>
-            {goal?.reached && <Badge className="bg-emerald-500/15 text-emerald-300">Ready</Badge>}
+            {goal?.reached && <Badge className="bg-emerald-100 text-emerald-800">Ready</Badge>}
           </div>
           <div className="mt-3">
             <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
@@ -108,7 +108,7 @@ export default function Progress() {
                 <span
                   className={cn(
                     'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                    done ? 'bg-emerald-500/20 text-emerald-300' : active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground',
+                    done ? 'bg-emerald-100 text-emerald-800' : active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground',
                   )}
                 >
                   {done ? <Check className="size-4" /> : s.n}

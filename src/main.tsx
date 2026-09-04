@@ -6,16 +6,25 @@ import './index.css'
 import App from '@/App'
 import { StoreProvider } from '@/lib/store'
 import { Toaster } from '@/components/ui/sonner'
+import { AgentationDev } from '@/dev/Agentation'
+import { ProtoFrame, ProtoProvider } from '@/dev/proto'
+import { ProtoController } from '@/dev/ProtoController'
 
 registerSW({ immediate: true })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <StoreProvider>
-        <App />
-        <Toaster position="top-center" theme="dark" richColors />
-      </StoreProvider>
+      <ProtoProvider>
+        <StoreProvider>
+          <ProtoFrame>
+            <App />
+          </ProtoFrame>
+          <Toaster position="top-center" richColors />
+          <AgentationDev />
+          <ProtoController />
+        </StoreProvider>
+      </ProtoProvider>
     </BrowserRouter>
   </StrictMode>,
 )

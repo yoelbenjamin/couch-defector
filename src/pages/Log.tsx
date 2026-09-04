@@ -142,7 +142,7 @@ export default function Log() {
                   <div className="min-w-0 flex-1">
                     {e.progression ? (
                       <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
-                        <SelectTrigger className="h-auto w-full border-0 bg-transparent px-0 py-0.5 text-base font-semibold shadow-none dark:bg-transparent dark:hover:bg-transparent">
+                        <SelectTrigger className="h-auto w-full border-0 bg-transparent px-0 py-0.5 text-base font-semibold shadow-none">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -223,8 +223,8 @@ export default function Log() {
                     + Add set
                   </Button>
                   <div className="flex gap-1.5">
-                    {goal?.reached && <Badge className="bg-emerald-500/15 text-emerald-300">Goal hit, move up next time</Badge>}
-                    {goal?.overBand && !goal.reached && <Badge className="bg-yellow-500/15 text-yellow-300">Over 20, try a harder step</Badge>}
+                    {goal?.reached && <Badge className="bg-emerald-100 text-emerald-800">Goal hit, move up next time</Badge>}
+                    {goal?.overBand && !goal.reached && <Badge className="bg-amber-100 text-amber-800">Over 20, try a harder step</Badge>}
                   </div>
                 </div>
               </CardContent>

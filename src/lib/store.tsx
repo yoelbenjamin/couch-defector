@@ -1,14 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut as fbSignOut, type User } from 'firebase/auth'
-import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  setDoc,
-  type DocumentData,
-} from 'firebase/firestore'
+import { collection, deleteDoc, doc, onSnapshot, setDoc, type DocumentData } from 'firebase/firestore'
 import { auth, db, firebaseEnabled, googleProvider } from './firebase'
+import { PROTO_USER, useProtoOptional } from '@/dev/proto'
 import type { Profile, ProgressionId, Session, UserData } from '../types'
 
 const LOCAL_KEY = 'couch-defector:v1'
@@ -17,7 +11,12 @@ const emptyProfile = (): Profile => ({ programId: null, steps: {}, customNames: 
 
 export interface StoreApi {
   ready: boolean
+  /** Data is syncing to the user's account (or the sandbox is pretending it is). */
   cloud: boolean
+  /** Show the sign-in screen. */
+  needsSignIn: boolean
+  /** True while the prototype sandbox is driving the store. */
+  sandbox: boolean
   user: User | null
   data: UserData
   signIn: () => Promise<void>
@@ -69,6 +68,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [sessions, setSessions] = useState<Session[] | null>(null)
   const [local, setLocal] = useState<UserData>(() => readLocal())
+  const proto = useProtoOptional()
+  const sandbox = proto?.enabled ? proto : null
 
   // Auth
   useEffect(() => {
@@ -102,14 +103,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [user])
 
-  const cloud = firebaseEnabled && !!user
+  const liveCloud = firebaseEnabled && !!user
+  const cloud = sandbox ? sandbox.auth === 'signed-in' : liveCloud
   const data: UserData = useMemo(() => {
-    if (cloud) return { ...(profile ?? emptyProfile()), sessions: sessions ?? [] }
+    if (sandbox) return sandbox.data
+    if (liveCloud) return { ...(profile ?? emptyProfile()), sessions: sessions ?? [] }
     return local
-  }, [cloud, profile, sessions, local])
-  const ready = firebaseEnabled ? authReady && (!user || (profile !== null && sessions !== null)) : true
+  }, [sandbox, liveCloud, profile, sessions, local])
+  const ready = sandbox ? true : firebaseEnabled ? authReady && (!user || (profile !== null && sessions !== null)) : true
+  const needsSignIn = sandbox ? sandbox.auth === 'signed-out' : firebaseEnabled && !user
+  const effectiveUser = sandbox ? (sandbox.auth === 'signed-in' ? PROTO_USER : null) : user
 
   const updateLocal = (fn: (d: UserData) => UserData) => {
+    if (sandbox) {
+      sandbox.setData(fn)
+      return
+    }
     setLocal((prev) => {
       const next = fn(prev)
       writeLocal(next)
@@ -118,7 +127,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }
 
   const writeProfile = async (patch: Partial<Profile>) => {
-    if (cloud && db && user) {
+    if (!sandbox && liveCloud && db && user) {
       await setDoc(doc(db, 'users', user.uid), { ...emptyProfile(), ...(profile ?? {}), ...patch }, { merge: true })
     } else {
       updateLocal((d) => ({ ...d, ...patch }))
@@ -128,9 +137,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const api: StoreApi = {
     ready,
     cloud,
-    user,
+    needsSignIn,
+    sandbox: !!sandbox,
+    user: effectiveUser,
     data,
     signIn: async () => {
+      if (sandbox) {
+        sandbox.setAuth('signed-in')
+        return
+      }
       if (!auth) return
       try {
         await signInWithPopup(auth, googleProvider)
@@ -139,13 +154,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
     },
     signOut: async () => {
+      if (sandbox) {
+        sandbox.setAuth('signed-out')
+        return
+      }
       if (auth) await fbSignOut(auth)
     },
     setProgram: (id) => writeProfile({ programId: id }),
     setStep: (p, step) => writeProfile({ steps: { ...data.steps, [p]: step } }),
     setCustomName: (key, name) => writeProfile({ customNames: { ...data.customNames, [key]: name } }),
     saveSession: async (s) => {
-      if (cloud && db && user) {
+      if (!sandbox && liveCloud && db && user) {
         await setDoc(doc(db, 'users', user.uid, 'sessions', s.id), s)
       } else {
         updateLocal((d) => ({
@@ -155,7 +174,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
     },
     deleteSession: async (id) => {
-      if (cloud && db && user) {
+      if (!sandbox && liveCloud && db && user) {
         await deleteDoc(doc(db, 'users', user.uid, 'sessions', id))
       } else {
         updateLocal((d) => ({ ...d, sessions: d.sessions.filter((x) => x.id !== id) }))
@@ -165,7 +184,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     importJson: async (json) => {
       const parsed = JSON.parse(json) as Partial<UserData>
       const incoming: UserData = { ...emptyProfile(), sessions: [], ...parsed }
-      if (cloud && db && user) {
+      if (!sandbox && liveCloud && db && user) {
         const { sessions: ss, ...prof } = incoming
         await setDoc(doc(db, 'users', user.uid), prof, { merge: true })
         for (const s of ss) await setDoc(doc(db, 'users', user.uid, 'sessions', s.id), s)
