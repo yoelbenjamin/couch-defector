@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/types'
 
@@ -41,7 +40,6 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className }: { s
       cells.push({ key, count: counts.get(key) ?? 0, future: key > today, isToday: key === today })
     }
   }
-  const inRange = [...counts.entries()].filter(([k]) => k >= start && k <= today).reduce((t, [, c]) => t + c, 0)
 
   return (
     <Link to="/history" className={cn('block', className)} aria-label="Open history">
@@ -61,13 +59,6 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className }: { s
             )}
           />
         ))}
-      </div>
-      <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
-        <span>Last {weeks} weeks</span>
-        <span className="flex items-center gap-0.5 tabular-nums">
-          {inRange} sessions
-          <ChevronRight className="size-3" />
-        </span>
       </div>
     </Link>
   )
