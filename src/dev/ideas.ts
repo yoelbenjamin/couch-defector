@@ -7,14 +7,6 @@ export type IdeaDef =
   | { kind: 'choice'; area: string; label: string; description: string; options: readonly string[]; default: string }
 
 export const IDEAS = {
-  todayHero: {
-    kind: 'choice',
-    area: 'Today',
-    label: 'Up-next block',
-    description: 'Card keeps it contained. Bold makes the day name the headline.',
-    options: ['card', 'bold'],
-    default: 'card',
-  },
   lastTime: {
     kind: 'choice',
     area: 'Today',

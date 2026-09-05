@@ -8,8 +8,7 @@ Progressive bodyweight training tracker. Open it, see what's due today and what 
 
 - **Six movements, ten steps each.** Push-up, squat, pull-up, leg raise, bridge, and handstand each progress through ten steps from easy variations to the hard one-limb versions. Hit the goal reps for your step and the app tells you to move up.
 - **Programs.** Pick a training split that matches your level, from a three-exercise full-body day up to four-day splits. The app tracks where you are in the cycle and suggests rest days.
-- **Today.** One screen: an activity grid of the last 26 weeks, the workout that's due, your progress panel, and a start button. Tap a filled day in the grid to see or edit that session.
-- **Log.** Each exercise is prefilled with last time's sets. Bump reps with a stepper, finish, done.
+- **Today.** One screen: an activity grid of the last 26 weeks, then today's workout with logging right there. Each exercise is prefilled with last time's sets. Bump reps with a stepper, hit Finish, done. Tap a filled day in the grid to see or edit that session.
 - **Sign in with Google** to sync across devices. Without sign-in configured, the app runs in device-only mode and keeps data in the browser.
 
 Monochrome, light only, no shadows, installable on a phone home screen.
@@ -40,8 +39,8 @@ Copy `.env.example` to `.env.local` and fill in the Firebase values to enable Go
 src/
   data/         progressions (steps and goals) and programs (training splits)
   lib/          store (local or Firestore), schedule, stats, firebase
-  pages/        Today, Log, Progress, Settings, SignIn, Onboarding
-  components/   heatmap, chart, progress panel, header, shadcn/ui
+  pages/        Today, Log (other days and editing), Settings, SignIn, Onboarding
+  components/   workout form, heatmap, header, shadcn/ui
   dev/          prototype controller, scenarios, idea flags, Agentation
 design/         alternate icon concepts
 ```

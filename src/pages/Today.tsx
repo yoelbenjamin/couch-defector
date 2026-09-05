@@ -4,12 +4,12 @@ import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram, workoutDays } from '@/data/programs'
 import { dayKey, planToday, relativeDay } from '@/lib/schedule'
-import { bestSet, fmtSets, streakWeeks } from '@/lib/stats'
+import { fmtSets, streakWeeks } from '@/lib/stats'
 import { useStore } from '@/lib/store'
 import { useIdea } from '@/dev/proto'
 import PageHeader from '@/components/PageHeader'
-import ProgressPanel from '@/components/ProgressPanel'
 import ActivityHeatmap, { heatmapRange } from '@/components/ActivityHeatmap'
+import WorkoutForm from '@/components/WorkoutForm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -24,8 +24,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import type { Entry, Session } from '@/types'
+import type { Session } from '@/types'
 
+/**
+ * Today: the activity grid, then the workout that is due with logging inline. No start button, no detour.
+ * Rest day: a short note with the workout one tap away. Done today: the summary with Edit.
+ */
 export default function Today() {
   const { data, cloud, deleteSession } = useStore()
   const nav = useNavigate()
@@ -42,6 +46,7 @@ export default function Today() {
   const monthDay = now.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const [trainAnyway, setTrainAnyway] = useState(false)
   const selectedSessions = selectedDay === null ? [] : data.sessions.filter((x) => dayKey(new Date(x.date)) === selectedDay)
   const heatRef = useRef<HTMLDivElement>(null)
   const detailRef = useRef<HTMLDivElement>(null)
@@ -63,19 +68,17 @@ export default function Today() {
     if (selectedDay !== null && selectedSessions.length === 0) setSelectedDay(null)
   }, [selectedDay, selectedSessions.length])
 
-  const hero = useIdea('todayHero')
-  const lastTime = useIdea('lastTime')
   const coachCopy = useIdea('coachCopy')
   const statsRow = useIdea('statsRow')
 
-  const fmtLast = (e: Entry) => (lastTime === 'best' ? `${bestSet(e)}${e.unit === 'seconds' ? 's' : ''} best` : fmtSets(e))
-
-  const upNextCopy =
+  const intro =
     plan.daysSince === null
       ? 'First session. Warm up, then two hard sets per exercise.'
       : plan.trainedYesterday
         ? 'You trained yesterday. Only go if you feel fresh.'
         : `Last session ${plan.daysSince} days ago. Beat it by a rep.`
+
+  const showForm = !plan.doneToday && (!plan.restSuggested || trainAnyway)
 
   return (
     <div>
@@ -120,105 +123,88 @@ export default function Today() {
         </div>
       ) : (
         <>
-      {!cloud && (
-        <div className="mb-3 rounded-xl border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
-          Device-only mode. Your log lives in this browser until sign-in is set up.
-        </div>
-      )}
-
-      {plan.doneToday ? (
-        <Card className="py-4">
-          <CardContent className="px-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-muted-foreground">Done today</div>
-                <div className="mt-0.5 text-xl font-bold">{plan.doneToday.dayName}</div>
-              </div>
-              <Badge variant="secondary">{plan.doneToday.entries.length} exercises</Badge>
+          {!cloud && (
+            <div className="mb-3 rounded-xl border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
+              Device-only mode. Your log lives in this browser until sign-in is set up.
             </div>
-            <ul className="mt-3 space-y-1 text-sm">
-              {plan.doneToday.entries.map((e) => (
-                <li key={e.slotKey} className="flex justify-between">
-                  <span>{e.name}</span>
-                  <span className="text-muted-foreground tabular-nums">{fmtLast(e)}</span>
-                </li>
-              ))}
+          )}
+
+          {plan.doneToday ? (
+            <Card className="py-4">
+              <CardContent className="px-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Done today</div>
+                    <div className="mt-0.5 text-xl font-bold">{plan.doneToday.dayName}</div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => nav(`/log/${plan.doneToday!.dayIndex}?session=${plan.doneToday!.id}`)}>
+                    <Pencil className="size-3.5" /> Edit
+                  </Button>
+                </div>
+                <ul className="mt-3 space-y-1 text-sm">
+                  {plan.doneToday.entries.map((e) => (
+                    <li key={e.slotKey} className="flex justify-between">
+                      <span>{e.name}</span>
+                      <span className="text-muted-foreground tabular-nums">{fmtSets(e)}</span>
+                    </li>
+                  ))}
+                </ul>
+                {coachCopy && <div className="mt-4 text-xs text-muted-foreground">Rest up. Muscle is built between sessions, not during them.</div>}
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {plan.restSuggested && !trainAnyway ? (
+                <Card className="py-4">
+                  <CardContent className="px-4">
+                    <div className="text-xs text-muted-foreground">Rest day</div>
+                    <div className="mt-0.5 text-xl font-bold">Recover</div>
+                    <p className="mt-2 text-sm">
+                      You trained {plan.daysSince === 1 ? 'yesterday' : `${plan.daysSince} days ago`}. Next up is <span className="font-semibold">{plan.day.name}</span>.
+                    </p>
+                    <Button variant="secondary" size="lg" className="mt-4 h-12 w-full" onClick={() => setTrainAnyway(true)}>
+                      Train anyway
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="mb-3">
+                  <h2 className="text-xl font-bold">{plan.day.name}</h2>
+                  {coachCopy && <p className="mt-0.5 text-sm text-muted-foreground">{intro}</p>}
+                </div>
+              )}
+              {showForm && <WorkoutForm key={`${program.id}:${plan.dayIndex}`} dayIndex={plan.dayIndex} onSaved={() => setTrainAnyway(false)} />}
+            </>
+          )}
+
+          {workoutDays(program).length > 1 && (
+            <section className="mt-8">
+              <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Other days</h2>
+              <div className="flex flex-wrap gap-2">
+                {workoutDays(program)
+                  .filter((d) => d.index !== plan.dayIndex)
+                  .map((d) => (
+                    <Button key={d.index} asChild variant="outline" size="sm">
+                      <Link to={`/log/${d.index}`}>{d.day.name}</Link>
+                    </Button>
+                  ))}
+              </div>
+            </section>
+          )}
+
+          <details className="group mt-8 mb-4">
+            <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-muted-foreground">
+              How it works
+              <ChevronDown className="size-4 transition group-open:rotate-180" />
+            </summary>
+            <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+              <li>Warm up, then two hard sets per exercise. Stop a rep or two short of failure.</li>
+              <li>Work in the 6–20 rep range. Around 10 is the sweet spot for building muscle.</li>
+              <li>Beat last time by at least one rep. When you hit a step’s goal, move up.</li>
+              <li>Never train the same muscles two days in a row. Take at least two days off a week.</li>
+              <li>Sleep and eat. You grow between sessions.</li>
             </ul>
-            {coachCopy && <div className="mt-4 text-xs text-muted-foreground">Rest up. Muscle is built between sessions, not during them.</div>}
-          </CardContent>
-        </Card>
-      ) : plan.restSuggested ? (
-        <Card className="py-4">
-          <CardContent className="px-4">
-            <div className="text-xs text-muted-foreground">Rest day</div>
-            <div className="mt-0.5 text-xl font-bold">Recover</div>
-            <p className="mt-2 text-sm">
-              You trained {plan.daysSince === 1 ? 'yesterday' : `${plan.daysSince} days ago`}. Next up is <span className="font-semibold">{plan.day.name}</span>.
-            </p>
-            <Button variant="secondary" size="lg" className="mt-4 h-12 w-full" onClick={() => nav(`/log/${plan.dayIndex}`)}>
-              Train anyway
-            </Button>
-          </CardContent>
-        </Card>
-      ) : hero === 'bold' ? (
-        <div className="py-2">
-          <div className="text-xs font-semibold text-primary">Up next</div>
-          <div className="mt-1 text-4xl leading-tight font-black tracking-tight">{plan.day.name}</div>
-          {coachCopy && <p className="mt-2 text-sm text-muted-foreground">{upNextCopy}</p>}
-          <Button size="lg" className="mt-5 h-14 w-full text-base" onClick={() => nav(`/log/${plan.dayIndex}`)}>
-            Start workout
-          </Button>
-        </div>
-      ) : (
-        <Card className="py-3">
-          <CardContent className="px-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-xs text-muted-foreground">Up next</div>
-                <div className="truncate text-lg font-bold">{plan.day.name}</div>
-              </div>
-              <Button size="sm" className="h-9 shrink-0 px-4" onClick={() => nav(`/log/${plan.dayIndex}`)}>
-                Start workout
-              </Button>
-            </div>
-            {coachCopy && <p className="mt-2 text-sm text-muted-foreground">{upNextCopy}</p>}
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="mt-6">
-        <ProgressPanel />
-      </div>
-
-      <details className="group mt-8 mb-4">
-        <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-muted-foreground">
-          How it works
-          <ChevronDown className="size-4 transition group-open:rotate-180" />
-        </summary>
-        <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
-          <li>Warm up, then two hard sets per exercise. Stop a rep or two short of failure.</li>
-          <li>Work in the 6–20 rep range. Around 10 is the sweet spot for building muscle.</li>
-          <li>Beat last time by at least one rep. When you hit a step’s goal, move up.</li>
-          <li>Never train the same muscles two days in a row. Take at least two days off a week.</li>
-          <li>Sleep and eat. You grow between sessions.</li>
-        </ul>
-      </details>
-
-      {workoutDays(program).length > 1 && (
-        <section className="mt-6">
-          <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Other days</h2>
-          <div className="flex flex-wrap gap-2">
-            {workoutDays(program)
-              .filter((d) => d.index !== plan.dayIndex)
-              .map((d) => (
-                <Button key={d.index} asChild variant="outline" size="sm">
-                  <Link to={`/log/${d.index}`}>{d.day.name}</Link>
-                </Button>
-              ))}
-          </div>
-        </section>
-      )}
-
+          </details>
         </>
       )}
     </div>

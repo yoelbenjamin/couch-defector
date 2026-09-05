@@ -285,7 +285,6 @@ function GoTab({ close }: { close: () => void }) {
   }
   const routes = [
     ['/', 'Today'],
-    ['/progress', 'Progress'],
     ['/settings', 'Settings'],
   ] as const
   return (
