@@ -1,10 +1,20 @@
 import type { Program, Session, WorkoutDay } from '../types'
 
+export const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+export const WEEKDAY_LONG = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+/** Index into a Monday-first week for a date. */
+export function weekdayIndex(d: Date) {
+  return (d.getDay() + 6) % 7
+}
+
 export interface TodayPlan {
-  /** Index into program.cycle of the next workout to do. */
+  /** Index into program.cycle (Monday = 0) of the workout to show. Today's, or the next one on a rest day. */
   dayIndex: number
   day: WorkoutDay
-  /** True when the cycle says to rest today. */
+  /** Weekday name of `day`. */
+  weekday: string
+  /** True when the schedule says to rest today. */
   restSuggested: boolean
   /** Days since the last logged session, or null when none. */
   daysSince: number | null
@@ -14,11 +24,13 @@ export interface TodayPlan {
   trainedYesterday: boolean
 }
 
-/** Local midnight for a date, as a number. Stable key for grouping by day. */
-export function dayKey(d: Date) {
+function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
 }
-const startOfDay = dayKey
+
+export function dayKey(d: Date) {
+  return startOfDay(d)
+}
 
 export function daysBetween(a: Date, b: Date) {
   return Math.round((startOfDay(b) - startOfDay(a)) / 86400000)
@@ -28,45 +40,29 @@ export function isRest(c: Program['cycle'][number]): c is { rest: true } {
   return 'rest' in c && c.rest === true
 }
 
-export function firstWorkoutIndex(program: Program) {
-  return program.cycle.findIndex((c) => !isRest(c))
-}
-
+/** The programs are weekday schedules: today's slot decides, and a rest day points at the next workout. */
 export function planToday(program: Program, sessions: Session[], now = new Date()): TodayPlan {
-  const mine = sessions.filter((s) => s.programId === program.id).sort((a, b) => b.date.localeCompare(a.date))
-  const last = mine[0] ?? null
+  const todayIdx = weekdayIndex(now)
   const lastAny = [...sessions].sort((a, b) => b.date.localeCompare(a.date))[0] ?? null
   const daysSince = lastAny ? daysBetween(new Date(lastAny.date), now) : null
-  const doneToday = mine.find((s) => daysBetween(new Date(s.date), now) === 0) ?? null
+  const doneToday = sessions.find((s) => s.programId === program.id && daysBetween(new Date(s.date), now) === 0) ?? null
 
-  if (!last) {
-    const idx = firstWorkoutIndex(program)
-    return {
-      dayIndex: idx,
-      day: (program.cycle[idx] as { day: WorkoutDay }).day,
-      restSuggested: false,
-      daysSince,
-      doneToday,
-      trainedYesterday: daysSince === 1,
+  let idx = todayIdx
+  const restToday = isRest(program.cycle[idx])
+  if (restToday) {
+    for (let k = 1; k <= 7; k++) {
+      const j = (todayIdx + k) % 7
+      if (!isRest(program.cycle[j])) {
+        idx = j
+        break
+      }
     }
   }
-
-  // Walk the cycle after the last session; count rest days before the next workout.
-  const len = program.cycle.length
-  let i = (last.dayIndex + 1) % len
-  let restDays = 0
-  while (isRest(program.cycle[i])) {
-    restDays++
-    i = (i + 1) % len
-    if (restDays > len) break
-  }
-  const sinceProgram = daysBetween(new Date(last.date), now)
-  const restSuggested = !doneToday && sinceProgram <= restDays && sinceProgram >= 0
-
   return {
-    dayIndex: i,
-    day: (program.cycle[i] as { day: WorkoutDay }).day,
-    restSuggested,
+    dayIndex: idx,
+    day: (program.cycle[idx] as { day: WorkoutDay }).day,
+    weekday: WEEKDAY_LONG[idx],
+    restSuggested: restToday && !doneToday,
     daysSince,
     doneToday,
     trainedYesterday: daysSince === 1,

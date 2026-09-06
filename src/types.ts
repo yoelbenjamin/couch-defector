@@ -48,6 +48,9 @@ export interface Program {
   tagline: string
   level: 1 | 2 | 3 | 4 | 5
   note?: string
+  /** Default number of hard (non warm-up) sets when there is no previous session to copy. */
+  workSets: number
+  /** One entry per weekday, Monday first. */
   cycle: CycleDay[]
 }
 

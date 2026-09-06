@@ -13,25 +13,25 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import type { Entry, ProgressionId, Session, SetEntry, Slot, UserData } from '@/types'
+import type { Entry, Program, ProgressionId, Session, SetEntry, Slot, UserData } from '@/types'
 
-function setsForStep(progression: ProgressionId, stepN: number, sessions: Session[]): SetEntry[] {
+function setsForStep(progression: ProgressionId, stepN: number, sessions: Session[], workSets: number): SetEntry[] {
   const step = getStep(progression, stepN)
   const last = lastEntryForStep(sessions, progression, stepN)
   const hard: SetEntry[] = last
     ? last.entry.sets.filter((s) => !s.warmup).map((s) => ({ reps: s.reps }))
-    : Array.from({ length: Math.max(2, step.goal.sets) }, () => ({ reps: step.start }))
+    : Array.from({ length: Math.max(workSets, step.goal.sets) }, () => ({ reps: step.start }))
   if (step.unit !== 'reps') return hard
   return [{ reps: Math.max(1, Math.round((hard[0]?.reps ?? step.start) / 2)), warmup: true }, ...hard]
 }
 
-function initialEntry(slot: Slot, data: UserData, programId: string): Entry {
+function initialEntry(slot: Slot, data: UserData, program: Program): Entry {
   if (slot.kind === 'progression') {
     const stepN = data.steps[slot.progression] ?? 1
     const step = getStep(slot.progression, stepN)
-    return { slotKey: slot.key, name: step.name, unit: step.unit, progression: slot.progression, step: stepN, sets: setsForStep(slot.progression, stepN, data.sessions) }
+    return { slotKey: slot.key, name: step.name, unit: step.unit, progression: slot.progression, step: stepN, sets: setsForStep(slot.progression, stepN, data.sessions, program.workSets) }
   }
-  const last = lastEntryForSlot(data.sessions, programId, slot.key)
+  const last = lastEntryForSlot(data.sessions, program.id, slot.key)
   const name = data.customNames[slot.key] || slot.label
   const sets: SetEntry[] = last ? last.entry.sets.map((s) => ({ ...s })) : [{ reps: 10 }, { reps: 10 }]
   return { slotKey: slot.key, name, unit: slot.unit ?? 'reps', sets }
@@ -71,7 +71,7 @@ export default function WorkoutForm({
     } catch {
       /* ignore */
     }
-    return day ? day.slots.map((s) => initialEntry(s, data, program.id)) : []
+    return day ? day.slots.map((s) => initialEntry(s, data, program)) : []
   })
   const [note, setNote] = useState(editing?.note ?? '')
   const [saving, setSaving] = useState(false)
@@ -96,7 +96,7 @@ export default function WorkoutForm({
     if (!e.progression) return
     await setStep(e.progression, stepN)
     const step = getStep(e.progression, stepN)
-    update(i, (x) => ({ ...x, step: stepN, name: step.name, unit: step.unit, sets: setsForStep(e.progression!, stepN, data.sessions) }))
+    update(i, (x) => ({ ...x, step: stepN, name: step.name, unit: step.unit, sets: setsForStep(e.progression!, stepN, data.sessions, program.workSets) }))
   }
 
   const reset = () => {
@@ -106,7 +106,7 @@ export default function WorkoutForm({
       return
     }
     sessionStorage.removeItem(draftKey)
-    setEntries(day.slots.map((s) => initialEntry(s, data, program.id)))
+    setEntries(day.slots.map((s) => initialEntry(s, data, program)))
     setNote('')
   }
 

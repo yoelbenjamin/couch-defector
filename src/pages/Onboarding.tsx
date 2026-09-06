@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { DEFAULT_PROGRAM_ID, PROGRAMS, progressionsIn } from '@/data/programs'
 import { PROGRESSIONS } from '@/data/progressions'
 import { useStore } from '@/lib/store'
+import { WEEKDAY_SHORT } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -96,7 +97,10 @@ export default function Onboarding() {
               </div>
               <div className="mt-1 text-sm text-muted-foreground">{p.tagline}</div>
               <div className="mt-2 text-xs text-muted-foreground/70">
-                {p.cycle.map((c) => ('rest' in c && c.rest ? 'Rest' : c.day.name)).join(' → ')} → repeat
+                {p.cycle
+                  .map((c, i) => ('rest' in c && c.rest ? null : `${WEEKDAY_SHORT[i]} ${c.day.name}`))
+                  .filter(Boolean)
+                  .join(' · ')}
               </div>
             </CardContent>
           </Card>

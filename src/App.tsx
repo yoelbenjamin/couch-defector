@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useStore } from '@/lib/store'
+import { isProgramId } from '@/data/programs'
 import Layout from '@/components/Layout'
 import SignIn from '@/pages/SignIn'
 import Onboarding from '@/pages/Onboarding'
@@ -18,7 +19,7 @@ export default function App() {
     )
   }
   if (needsSignIn) return <SignIn />
-  if (!data.programId) return <Onboarding />
+  if (!isProgramId(data.programId)) return <Onboarding />
 
   return (
     <Routes>

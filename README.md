@@ -7,7 +7,7 @@ Progressive bodyweight training tracker. Open it, see what's due today and what 
 ## How it works
 
 - **Six movements, ten steps each.** Push-up, squat, pull-up, leg raise, bridge, and handstand each progress through ten steps from easy variations to the hard one-limb versions. Hit the goal reps for your step and the app tells you to move up.
-- **Programs.** Pick a training split that matches your level, from a three-exercise full-body day up to four-day splits. The app tracks where you are in the cycle and suggests rest days.
+- **Programs.** The five Convict Conditioning routines as weekday schedules: New Blood (Mon/Fri), Good Behavior (Mon/Tue/Fri), Veterano (one movement a day, six days), Solitary Confinement (six days, each movement twice), Supermax (all six, six days). The app shows today's workout, or the next one on a rest day.
 - **Today.** One screen: an activity grid of the last 26 weeks, then today's workout with logging right there. Each exercise is prefilled with last time's sets. Bump reps with a stepper, hit Finish, done. Tap a filled day in the grid to see or edit that session.
 - **Sign in with Google** to sync across devices. Without sign-in configured, the app runs in device-only mode and keeps data in the browser.
 
@@ -37,7 +37,7 @@ Copy `.env.example` to `.env.local` and fill in the Firebase values to enable Go
 
 ```
 src/
-  data/         progressions (steps and goals) and programs (training splits)
+  data/         progressions (steps and goals) and programs (weekday routines)
   lib/          store (local or Firestore), schedule, stats, firebase
   pages/        Today, Log (other days and editing), Settings, SignIn, Onboarding
   components/   workout form, heatmap, header, shadcn/ui

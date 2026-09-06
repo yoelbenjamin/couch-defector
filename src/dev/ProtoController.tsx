@@ -4,7 +4,7 @@ import { FlaskConical, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram, PROGRAMS, workoutDays } from '@/data/programs'
 import { getStep, PROGRESSION_IDS, PROGRESSIONS } from '@/data/progressions'
-import { planToday } from '@/lib/schedule'
+import { planToday, WEEKDAY_SHORT } from '@/lib/schedule'
 import { newId } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -303,8 +303,8 @@ function GoTab({ close }: { close: () => void }) {
         <h3 className="mb-2 text-xs font-semibold text-muted-foreground">Log a day · {program.name}</h3>
         <div className="grid grid-cols-2 gap-2">
           {workoutDays(program).map((d) => (
-            <Button key={d.index} variant="outline" onClick={() => go(`/log/${d.index}`)}>
-              {d.day.name}
+            <Button key={d.index} variant="outline" className="h-auto justify-start py-2 text-left text-xs" onClick={() => go(`/log/${d.index}`)}>
+              {WEEKDAY_SHORT[d.index]} · {d.day.name}
             </Button>
           ))}
         </div>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram, workoutDays } from '@/data/programs'
-import { dayKey, planToday, relativeDay } from '@/lib/schedule'
+import { dayKey, planToday, relativeDay, WEEKDAY_SHORT } from '@/lib/schedule'
 import { fmtSets, streakWeeks } from '@/lib/stats'
 import { useStore } from '@/lib/store'
 import { useIdea } from '@/dev/proto'
@@ -160,7 +160,7 @@ export default function Today() {
                     <div className="text-xs text-muted-foreground">Rest day</div>
                     <div className="mt-0.5 text-xl font-bold">Recover</div>
                     <p className="mt-2 text-sm">
-                      You trained {plan.daysSince === 1 ? 'yesterday' : `${plan.daysSince} days ago`}. Next up is <span className="font-semibold">{plan.day.name}</span>.
+                      You trained {plan.daysSince === 1 ? 'yesterday' : `${plan.daysSince} days ago`}. Next up is <span className="font-semibold">{plan.day.name}</span> on {plan.weekday}.
                     </p>
                     <Button variant="secondary" size="lg" className="mt-4 h-12 w-full" onClick={() => setTrainAnyway(true)}>
                       Train anyway
@@ -179,13 +179,15 @@ export default function Today() {
 
           {workoutDays(program).length > 1 && (
             <section className="mt-8">
-              <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Other days</h2>
+              <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Other days this week</h2>
               <div className="flex flex-wrap gap-2">
                 {workoutDays(program)
                   .filter((d) => d.index !== plan.dayIndex)
                   .map((d) => (
                     <Button key={d.index} asChild variant="outline" size="sm">
-                      <Link to={`/log/${d.index}`}>{d.day.name}</Link>
+                      <Link to={`/log/${d.index}`}>
+                        {WEEKDAY_SHORT[d.index]} · {d.day.name}
+                      </Link>
                     </Button>
                   ))}
               </div>
