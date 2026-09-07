@@ -7,8 +7,6 @@ import Onboarding from '@/pages/Onboarding'
 import Today from '@/pages/Today'
 import Log from '@/pages/Log'
 import Settings from '@/pages/Settings'
-import Variants from '@/dev/Variants'
-import { PROTO_AVAILABLE } from '@/dev/proto'
 
 export default function App() {
   const { ready, needsSignIn, data } = useStore()
@@ -30,7 +28,6 @@ export default function App() {
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="/log/:dayIndex" element={<Log />} />
-      {PROTO_AVAILABLE && <Route path="/variants" element={<Variants />} />}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

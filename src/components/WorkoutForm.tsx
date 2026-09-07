@@ -72,7 +72,6 @@ export default function WorkoutForm({
   onSaved?: (s: Session) => void
 }) {
   const { data, saveSession, setStep } = useStore()
-  const setLayout = useIdea('setLayout')
   const prevSet = useIdea('prevSet')
   const program = getProgram(data.programId)
   const cycleDay = program.cycle[dayIndex]
@@ -218,7 +217,6 @@ export default function WorkoutForm({
                   previous={last && sameStep ? hardSets(last.entry).map((x) => x.reps) : undefined}
                   prevMode={prevSet}
                   suffix={suffix}
-                  variant={setLayout}
                   onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
                 />
 

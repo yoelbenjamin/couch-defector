@@ -311,12 +311,6 @@ function GoTab({ close }: { close: () => void }) {
         {!proto.enabled && <p className="mt-2 text-[11px] text-muted-foreground">Uses the program from your live data.</p>}
       </section>
       <section>
-        <h3 className="mb-2 text-xs font-semibold text-muted-foreground">Explorations</h3>
-        <Button variant="outline" className="w-full" onClick={() => go('/variants')}>
-          Compare set-logging layouts
-        </Button>
-      </section>
-      <section>
         <h3 className="mb-2 text-xs font-semibold text-muted-foreground">Gated screens</h3>
         <p className="text-xs text-muted-foreground">
           Sign-in and Onboarding are reached through state, not routes. Load “Signed out” or “New account” from States.
