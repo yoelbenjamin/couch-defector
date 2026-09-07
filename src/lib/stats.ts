@@ -67,7 +67,8 @@ export function checkGoal(entry: Entry): GoalCheck | null {
   const hs = hardSets(entry)
   const setsAtGoal = hs.filter((s) => s.reps >= step.goal.reps).length
   const reached = setsAtGoal >= step.goal.sets
-  const overBand = step.unit === 'reps' && hs.length > 0 && hs.every((s) => s.reps > REP_BAND.max)
+  // Only meaningful when the step itself lives inside the muscle-building band; early rungs ask for far more reps by design.
+  const overBand = step.unit === 'reps' && step.goal.reps <= REP_BAND.max && hs.length > 0 && hs.every((s) => s.reps > REP_BAND.max)
   return { step, setsAtGoal, reached, overBand }
 }
 
