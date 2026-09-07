@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { X } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
+import { RULES, TECHNIQUE } from '@/data/technique'
 import { relativeDay } from '@/lib/schedule'
 import { checkGoal, fmtSets, lastEntryForSlot, lastEntryForStep } from '@/lib/stats'
 import { newId, useStore } from '@/lib/store'
@@ -178,7 +179,6 @@ export default function WorkoutForm({
                       'First time'
                     )}
                   </div>
-                  {step?.cue && <div className="mt-1 text-xs text-muted-foreground">{step.cue}</div>}
                 </div>
                 {step && (
                   <div className="shrink-0 text-right text-[11px] text-muted-foreground">
@@ -190,6 +190,50 @@ export default function WorkoutForm({
                   </div>
                 )}
               </div>
+
+              {e.progression && step && (
+                <details className="group mt-3 rounded-lg border">
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-medium">
+                    How to do it
+                    <ChevronDown className="size-4 text-muted-foreground transition group-open:rotate-180" />
+                  </summary>
+                  <div className="space-y-3 border-t px-3 py-3 text-sm">
+                    {step.image && <img src={step.image} alt={step.name} className="w-full rounded-md" />}
+                    <div>
+                      <div className="font-medium">{step.name}</div>
+                      {step.cue && <p className="mt-0.5 text-muted-foreground">{step.cue}</p>}
+                      {step.how && (
+                        <ul className="mt-1.5 list-disc space-y-1 pl-4 text-muted-foreground">
+                          {step.how.map((h) => (
+                            <li key={h}>{h}</li>
+                          ))}
+                        </ul>
+                      )}
+                      <p className="mt-1.5 text-xs text-muted-foreground">
+                        Move up at {step.goal.sets} × {step.goal.reps}
+                        {suffix}.
+                      </p>
+                    </div>
+                    <div>
+                      <div className="font-medium">{PROGRESSIONS[e.progression].name}</div>
+                      <p className="mt-0.5 text-muted-foreground">{TECHNIQUE[e.progression].why}</p>
+                      <ul className="mt-1.5 list-disc space-y-1 pl-4 text-muted-foreground">
+                        {TECHNIQUE[e.progression].points.map((h) => (
+                          <li key={h}>{h}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-medium">Every set</div>
+                      <ul className="mt-1.5 list-disc space-y-1 pl-4 text-muted-foreground">
+                        {RULES.map((h) => (
+                          <li key={h}>{h}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </details>
+              )}
 
               <div className="mt-3 space-y-2">
                 {e.sets.map((s, k) => (

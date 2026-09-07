@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { getProgram, workoutDays } from '@/data/programs'
-import { dayKey, planToday, relativeDay, WEEKDAY_SHORT } from '@/lib/schedule'
+import { getProgram } from '@/data/programs'
+import { dayKey, isRest, planToday, relativeDay, weekdayIndex } from '@/lib/schedule'
 import { fmtSets, streakWeeks } from '@/lib/stats'
 import { useStore } from '@/lib/store'
 import { useIdea } from '@/dev/proto'
@@ -35,6 +35,8 @@ export default function Today() {
   const nav = useNavigate()
   const program = getProgram(data.programId)
   const plan = planToday(program, data.sessions)
+  const tomorrowSlot = program.cycle[(weekdayIndex(new Date()) + 1) % 7]
+  const tomorrow = isRest(tomorrowSlot) ? null : tomorrowSlot.day
   const streak = streakWeeks(data.sessions)
   const range = heatmapRange()
   const sessionsInRange = data.sessions.filter((x) => {
@@ -177,36 +179,10 @@ export default function Today() {
             </>
           )}
 
-          {workoutDays(program).length > 1 && (
-            <section className="mt-8">
-              <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Other days this week</h2>
-              <div className="flex flex-wrap gap-2">
-                {workoutDays(program)
-                  .filter((d) => d.index !== plan.dayIndex)
-                  .map((d) => (
-                    <Button key={d.index} asChild variant="outline" size="sm">
-                      <Link to={`/log/${d.index}`}>
-                        {WEEKDAY_SHORT[d.index]} · {d.day.name}
-                      </Link>
-                    </Button>
-                  ))}
-              </div>
-            </section>
-          )}
+          <p className="mt-8 text-sm text-muted-foreground">
+            Tomorrow: <span className="font-medium text-foreground">{tomorrow ? tomorrow.name : 'Rest day'}</span>
+          </p>
 
-          <details className="group mt-8 mb-4">
-            <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-muted-foreground">
-              How it works
-              <ChevronDown className="size-4 transition group-open:rotate-180" />
-            </summary>
-            <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
-              <li>Warm up, then two hard sets per exercise. Stop a rep or two short of failure.</li>
-              <li>Work in the 6–20 rep range. Around 10 is the sweet spot for building muscle.</li>
-              <li>Beat last time by at least one rep. When you hit a step’s goal, move up.</li>
-              <li>Never train the same muscles two days in a row. Take at least two days off a week.</li>
-              <li>Sleep and eat. You grow between sessions.</li>
-            </ul>
-          </details>
         </>
       )}
     </div>

@@ -22,6 +22,10 @@ export interface Step {
   /** A reasonable first-session target. */
   start: number
   cue?: string
+  /** Step-by-step performance notes, when a shared source provides them. */
+  how?: string[]
+  /** Path under /public to a demonstration image, when available. */
+  image?: string
 }
 
 export interface Progression {
