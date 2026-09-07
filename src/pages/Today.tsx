@@ -158,11 +158,7 @@ export default function Today() {
                     </Button>
                   </CardContent>
                 </Card>
-              ) : (
-                <div className="mb-3">
-                  <h2 className="text-xl font-bold">{plan.day.name}</h2>
-                </div>
-              )}
+              ) : null}
               {showForm && <WorkoutForm key={`${program.id}:${plan.dayIndex}`} dayIndex={plan.dayIndex} onSaved={() => setTrainAnyway(false)} />}
             </>
           )}

@@ -3,8 +3,7 @@ import { Info, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
-import { relativeDay } from '@/lib/schedule'
-import { checkGoal, fmtSets, hardSets, lastEntryForSlot, lastEntryForStep } from '@/lib/stats'
+import { checkGoal, hardSets, lastEntryForSlot, lastEntryForStep } from '@/lib/stats'
 import { newId, useStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import { useIdea } from '@/dev/proto'
@@ -170,11 +169,6 @@ export default function WorkoutForm({
                     </Select>
                   ) : (
                     <div className="font-semibold">{e.name}</div>
-                  )}
-                  {last && sameStep && (
-                    <div className="mt-0.5 text-xs text-muted-foreground">
-                      Last time <span className="text-foreground">{fmtSets(last.entry)}</span> · {relativeDay(last.session.date)}
-                    </div>
                   )}
                 </div>
                 {e.progression && step && (
