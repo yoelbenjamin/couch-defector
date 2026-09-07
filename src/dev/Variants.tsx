@@ -26,7 +26,9 @@ export default function Variants() {
         </Link>
       </Button>
       <h1 className="text-2xl font-bold">Set logging layouts</h1>
-      <p className="mt-1 mb-5 text-sm text-muted-foreground">Same exercise, four ways to log it. Pick one in the flask panel under Ideas to use it everywhere.</p>
+      <p className="mt-1 mb-5 text-sm text-muted-foreground">
+        Same exercise, four ways to log it. Pick one in the flask panel under Ideas to use it everywhere.
+      </p>
       <div className="space-y-4">
         {LAYOUTS.map((l) => (
           <section key={l.id}>
@@ -42,7 +44,13 @@ export default function Variants() {
                 </div>
                 <SetEditor sets={sets[l.id]} previous={[12, 11, 11]} prevMode="beside" variant={l.id} onChange={(s) => setSets((x) => ({ ...x, [l.id]: s }))} />
                 <div className="mt-3">
-                  <Button type="button" variant="link" size="sm" className="px-0" onClick={() => setSets((x) => ({ ...x, [l.id]: [...x[l.id], { reps: 11 }] }))}>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="px-0"
+                    onClick={() => setSets((x) => ({ ...x, [l.id]: [...x[l.id], { reps: 11 }] }))}
+                  >
                     + Add set
                   </Button>
                 </div>
