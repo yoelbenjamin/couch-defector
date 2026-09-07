@@ -84,19 +84,17 @@ export default function Today() {
             <span className="block">{monthDay}</span>
           </>
         }
-        sub={
-          streak > 0 ? (
-            <Badge variant="secondary" className="mt-1">
-              {streak} week streak
-            </Badge>
-          ) : undefined
-        }
       />
 
-      {statsRow && (
-        <p className="mb-1.5 text-xs text-muted-foreground tabular-nums">
-          {sessionsInRange} session{sessionsInRange === 1 ? '' : 's'} in the last {range.days} days
-        </p>
+      {(streak > 0 || statsRow) && (
+        <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
+          {streak > 0 && <Badge variant="secondary">{streak} week streak</Badge>}
+          {statsRow && (
+            <span>
+              {sessionsInRange} session{sessionsInRange === 1 ? '' : 's'} · {range.days} days
+            </span>
+          )}
+        </div>
       )}
       <div ref={heatRef}>
         <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-5" />

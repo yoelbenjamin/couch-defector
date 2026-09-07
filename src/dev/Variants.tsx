@@ -40,7 +40,7 @@ export default function Variants() {
                 <div className="mt-0.5 text-xs text-muted-foreground">
                   Last time <span className="text-foreground">12 / 11 / 11</span> · 4 days ago
                 </div>
-                <SetEditor sets={sets[l.id]} variant={l.id} onChange={(s) => setSets((x) => ({ ...x, [l.id]: s }))} />
+                <SetEditor sets={sets[l.id]} previous={[12, 11, 11]} prevMode="beside" variant={l.id} onChange={(s) => setSets((x) => ({ ...x, [l.id]: s }))} />
                 <div className="mt-3">
                   <Button type="button" variant="link" size="sm" className="px-0" onClick={() => setSets((x) => ({ ...x, [l.id]: [...x[l.id], { reps: 11 }] }))}>
                     + Add set

@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown, Plus } from 'lucide-react'
+import { Info, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
-import { RULES, TECHNIQUE } from '@/data/technique'
 import { relativeDay } from '@/lib/schedule'
-import { checkGoal, fmtSets, lastEntryForSlot, lastEntryForStep } from '@/lib/stats'
+import { checkGoal, fmtSets, hardSets, lastEntryForSlot, lastEntryForStep } from '@/lib/stats'
 import { newId, useStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import { useIdea } from '@/dev/proto'
 import SetEditor from '@/components/SetEditor'
+import TechniqueSheet from '@/components/TechniqueSheet'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -59,6 +59,7 @@ export default function WorkoutForm({
 }) {
   const { data, saveSession, setStep } = useStore()
   const setLayout = useIdea('setLayout')
+  const prevSet = useIdea('prevSet')
   const program = getProgram(data.programId)
   const cycleDay = program.cycle[dayIndex]
   const day = cycleDay && !('rest' in cycleDay && cycleDay.rest) ? cycleDay.day : null
@@ -78,6 +79,7 @@ export default function WorkoutForm({
   })
   const [note, setNote] = useState(editing?.note ?? '')
   const [showNote, setShowNote] = useState(false)
+  const [info, setInfo] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -175,63 +177,31 @@ export default function WorkoutForm({
                     </div>
                   )}
                 </div>
+                {e.progression && step && (
+                  <Button type="button" variant="ghost" size="icon-sm" className="-mr-2 shrink-0 text-muted-foreground" aria-label="How to do it" onClick={() => setInfo(i)}>
+                    <Info className="size-4" />
+                  </Button>
+                )}
               </div>
 
-              {e.progression && step && (
-                <details className="group mt-3 rounded-lg border">
-                  <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-medium">
-                    How to do it
-                    <ChevronDown className="size-4 text-muted-foreground transition group-open:rotate-180" />
-                  </summary>
-                  <div className="space-y-3 border-t px-3 py-3 text-sm">
-                    {step.image && <img src={step.image} alt={step.name} className="w-full rounded-md" />}
-                    <div>
-                      <div className="font-medium">{step.name}</div>
-                      {step.cue && <p className="mt-0.5 text-muted-foreground">{step.cue}</p>}
-                      {step.how && (
-                        <ul className="mt-1.5 list-disc space-y-1 pl-4 text-muted-foreground">
-                          {step.how.map((h) => (
-                            <li key={h}>{h}</li>
-                          ))}
-                        </ul>
-                      )}
-                      <p className="mt-1.5 text-xs text-muted-foreground">
-                        Move up at {step.goal.sets} × {step.goal.reps}
-                        {suffix}.
-                      </p>
-                    </div>
-                    <div>
-                      <div className="font-medium">{PROGRESSIONS[e.progression].name}</div>
-                      <p className="mt-0.5 text-muted-foreground">{TECHNIQUE[e.progression].why}</p>
-                      <ul className="mt-1.5 list-disc space-y-1 pl-4 text-muted-foreground">
-                        {TECHNIQUE[e.progression].points.map((h) => (
-                          <li key={h}>{h}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <div className="font-medium">Every set</div>
-                      <ul className="mt-1.5 list-disc space-y-1 pl-4 text-muted-foreground">
-                        {RULES.map((h) => (
-                          <li key={h}>{h}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </details>
-              )}
-
-              <SetEditor sets={e.sets} suffix={suffix} variant={setLayout} onChange={(sets) => update(i, (x) => ({ ...x, sets }))} />
+              <SetEditor
+                sets={e.sets}
+                previous={last && sameStep ? hardSets(last.entry).map((x) => x.reps) : undefined}
+                prevMode={prevSet}
+                suffix={suffix}
+                variant={setLayout}
+                onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
+              />
 
               <div className="mt-3 flex items-center justify-between">
                 <Button
                   type="button"
-                  variant="link"
+                  variant="ghost"
                   size="sm"
-                  className="px-0"
+                  className="-ml-2 text-muted-foreground"
                   onClick={() => update(i, (x) => ({ ...x, sets: [...x.sets, { reps: x.sets.filter((y) => !y.warmup).at(-1)?.reps ?? 0 }] }))}
                 >
-                  + Add set
+                  <Plus className="size-3.5" /> Add set
                 </Button>
                 <div className="flex gap-1.5">
                   {goal?.reached && <Badge variant="secondary">Goal hit, move up next time</Badge>}
@@ -242,6 +212,8 @@ export default function WorkoutForm({
           </Card>
         )
       })}
+
+      <TechniqueSheet entry={info === null ? null : (entries[info] ?? null)} open={info !== null} onOpenChange={(o) => !o && setInfo(null)} />
 
       {showNote || note ? (
         <Card className="py-4">
@@ -258,7 +230,7 @@ export default function WorkoutForm({
           </CardContent>
         </Card>
       ) : (
-        <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setShowNote(true)}>
+        <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" onClick={() => setShowNote(true)}>
           <Plus className="size-3.5" /> Add note
         </Button>
       )}
