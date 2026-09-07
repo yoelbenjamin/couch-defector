@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { checkGoal, hardSets, lastEntryForSlot, lastEntryForStep } from '@/lib/stats'
+import { dayKey } from '@/lib/schedule'
 import { newId, useStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import { useIdea } from '@/dev/proto'
@@ -55,9 +56,44 @@ function initialEntry(slot: Slot, data: UserData, program: Program): Entry {
 
 const clone = (s: Session) => s.entries.map((e) => ({ ...e, sets: e.sets.map((x) => ({ ...x })) }))
 
+interface Draft {
+  /** Day the draft was started (dayKey). New-session drafts from another day are discarded. */
+  date: number
+  entries: Entry[]
+  note: string
+  /** Ticked sets per slot, by set index. */
+  done: Record<string, boolean[]>
+}
+
+function readDraft(key: string, mustBeToday: boolean): Draft | null {
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return null
+    const d = JSON.parse(raw) as Draft
+    if (!Array.isArray(d.entries)) return null
+    if (mustBeToday && d.date !== dayKey(new Date())) {
+      localStorage.removeItem(key)
+      return null
+    }
+    return { ...d, note: d.note ?? '', done: d.done ?? {} }
+  } catch {
+    return null
+  }
+}
+
+function writeDraft(key: string, d: Draft) {
+  try {
+    localStorage.setItem(key, JSON.stringify(d))
+  } catch {
+    /* storage full or unavailable; the form still works for this visit */
+  }
+}
+
 /**
  * The logging form for one workout day: every exercise prefilled from last time, steppers per set, a note, Finish.
- * Drafts persist in sessionStorage until saved. Pass `editing` to change a logged session in place.
+ * The in-progress draft (reps, ticks, note) persists in localStorage until saved, so leaving the screen or
+ * closing the app mid-workout loses nothing. A new-session draft is only reused on the day it was started.
+ * Pass `editing` to change a logged session in place.
  */
 export default function WorkoutForm({
   dayIndex,
@@ -76,29 +112,25 @@ export default function WorkoutForm({
   const program = getProgram(data.programId)
   const cycleDay = program.cycle[dayIndex]
   const day = cycleDay && !('rest' in cycleDay && cycleDay.rest) ? cycleDay.day : null
-  const draftKey = `draft:${program.id}:${dayIndex}`
+  const draftKey = editing ? `draft:${program.id}:edit:${editing.id}` : `draft:${program.id}:${dayIndex}`
+  const draft = useMemo(() => readDraft(draftKey, !editing), [draftKey, editing])
   // "Last time" should not point at the session being edited.
   const others = useMemo(() => (editing ? data.sessions.filter((x) => x.id !== editing.id) : data.sessions), [data.sessions, editing])
 
   const [entries, setEntries] = useState<Entry[]>(() => {
+    if (draft) return draft.entries
     if (editing) return clone(editing)
-    try {
-      const raw = sessionStorage.getItem(draftKey)
-      if (raw) return JSON.parse(raw) as Entry[]
-    } catch {
-      /* ignore */
-    }
     return day ? day.slots.map((s) => initialEntry(s, data, program)) : []
   })
-  const [note, setNote] = useState(editing?.note ?? '')
-  const [showNote, setShowNote] = useState(false)
+  const [note, setNote] = useState(draft?.note ?? editing?.note ?? '')
+  const [done, setDone] = useState<Record<string, boolean[]>>(draft?.done ?? {})
+  const [showNote, setShowNote] = useState(Boolean(draft?.note))
   const [info, setInfo] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (editing) return
-    sessionStorage.setItem(draftKey, JSON.stringify(entries))
-  }, [entries, draftKey, editing])
+    writeDraft(draftKey, { date: dayKey(new Date()), entries, note, done })
+  }, [entries, note, done, draftKey])
 
   const lastBySlot = useMemo(() => {
     const m = new Map<string, ReturnType<typeof lastEntryForSlot>>()
@@ -125,15 +157,11 @@ export default function WorkoutForm({
   }
 
   const reset = () => {
-    if (editing) {
-      setEntries(clone(editing))
-      setNote(editing.note ?? '')
-      return
-    }
-    sessionStorage.removeItem(draftKey)
-    setEntries(day.slots.map((s) => initialEntry(s, data, program)))
-    setNote('')
-    setShowNote(false)
+    localStorage.removeItem(draftKey)
+    setDone({})
+    setEntries(editing ? clone(editing) : day.slots.map((s) => initialEntry(s, data, program)))
+    setNote(editing?.note ?? '')
+    setShowNote(Boolean(editing?.note))
   }
 
   const finish = async () => {
@@ -154,7 +182,7 @@ export default function WorkoutForm({
       if (trimmed) session.note = trimmed
       else delete session.note
       await saveSession(session)
-      if (!editing) sessionStorage.removeItem(draftKey)
+      localStorage.removeItem(draftKey)
       toast.success(editing ? 'Workout updated' : 'Workout saved', {
         description: `${session.entries.length} exercises logged for ${day.name}.`,
       })
@@ -218,6 +246,8 @@ export default function WorkoutForm({
                   prevMode={prevSet}
                   suffix={suffix}
                   onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
+                  done={done[e.slotKey] ?? []}
+                  onDoneChange={(d) => setDone((all) => ({ ...all, [e.slotKey]: d }))}
                 />
 
                 <div className="mt-3 flex items-center justify-between">

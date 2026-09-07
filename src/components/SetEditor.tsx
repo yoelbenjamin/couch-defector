@@ -14,6 +14,9 @@ interface Props {
   prevMode?: PrevMode
   suffix?: string
   onChange: (sets: SetEntry[]) => void
+  /** Ticked sets by index. Owned by the parent so it can be persisted with the draft. */
+  done: boolean[]
+  onDoneChange: (done: boolean[]) => void
 }
 
 function label(sets: SetEntry[], k: number) {
@@ -38,20 +41,21 @@ function Prev({ prev, cur, mode, className }: { prev?: number; cur: number; mode
 
 /**
  * The sets of one exercise as a checklist: remove on the left, label, last time, the reps, and a tick on the right.
- * Tap the number to adjust just that set. Ticks are session-only, a mid-workout aid, not saved data.
+ * Tap the number to adjust just that set. Ticks are a mid-workout aid kept in the draft, not saved with the session.
  */
-export default function SetEditor({ sets, previous, prevMode = 'beside', suffix, onChange }: Props) {
+export default function SetEditor({ sets, previous, prevMode = 'beside', suffix, onChange, done, onDoneChange }: Props) {
   const setReps = (k: number, v: number) => onChange(sets.map((y, j) => (j === k ? { ...y, reps: Math.max(0, v) } : y)))
   const toggleWarmup = (k: number) => onChange(sets.map((y, j) => (j === k ? { ...y, warmup: !y.warmup } : y)))
-  const remove = (k: number) => onChange(sets.filter((_, j) => j !== k))
-  const [done, setDone] = useState<boolean[]>([])
+  const remove = (k: number) => {
+    onChange(sets.filter((_, j) => j !== k))
+    onDoneChange(done.filter((_, j) => j !== k))
+  }
   const [open, setOpen] = useState<number | null>(null)
-  const toggleDone = (k: number) =>
-    setDone((d) => {
-      const n = [...d]
-      n[k] = !n[k]
-      return n
-    })
+  const toggleDone = (k: number) => {
+    const n = [...done]
+    n[k] = !n[k]
+    onDoneChange(n)
+  }
 
   return (
     <div className="divide-y">
