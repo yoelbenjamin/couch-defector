@@ -73,13 +73,6 @@ export default function Today() {
   const coachCopy = useIdea('coachCopy')
   const statsRow = useIdea('statsRow')
 
-  const intro =
-    plan.daysSince === null
-      ? 'First session. Warm up, then two hard sets per exercise.'
-      : plan.trainedYesterday
-        ? 'You trained yesterday. Only go if you feel fresh.'
-        : `Last session ${plan.daysSince} days ago. Beat it by a rep.`
-
   const showForm = !plan.doneToday && (!plan.restSuggested || trainAnyway)
 
   return (
@@ -100,16 +93,14 @@ export default function Today() {
         }
       />
 
-      <div ref={heatRef}>
-        <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-1.5" />
-      </div>
-      {statsRow ? (
-        <p className="mb-5 text-xs text-muted-foreground tabular-nums">
+      {statsRow && (
+        <p className="mb-1.5 text-xs text-muted-foreground tabular-nums">
           {sessionsInRange} session{sessionsInRange === 1 ? '' : 's'} in the last {range.days} days
         </p>
-      ) : (
-        <div className="mb-3.5" />
       )}
+      <div ref={heatRef}>
+        <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-5" />
+      </div>
 
       {selectedDay !== null ? (
         <div ref={detailRef}>
@@ -172,7 +163,6 @@ export default function Today() {
               ) : (
                 <div className="mb-3">
                   <h2 className="text-xl font-bold">{plan.day.name}</h2>
-                  {coachCopy && <p className="mt-0.5 text-sm text-muted-foreground">{intro}</p>}
                 </div>
               )}
               {showForm && <WorkoutForm key={`${program.id}:${plan.dayIndex}`} dayIndex={plan.dayIndex} onSaved={() => setTrainAnyway(false)} />}

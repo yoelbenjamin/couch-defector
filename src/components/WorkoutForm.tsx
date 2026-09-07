@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown, X } from 'lucide-react'
+import { ChevronDown, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
@@ -75,6 +75,7 @@ export default function WorkoutForm({
     return day ? day.slots.map((s) => initialEntry(s, data, program)) : []
   })
   const [note, setNote] = useState(editing?.note ?? '')
+  const [showNote, setShowNote] = useState(false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -109,6 +110,7 @@ export default function WorkoutForm({
     sessionStorage.removeItem(draftKey)
     setEntries(day.slots.map((s) => initialEntry(s, data, program)))
     setNote('')
+    setShowNote(false)
   }
 
   const finish = async () => {
@@ -165,30 +167,12 @@ export default function WorkoutForm({
                   ) : (
                     <div className="font-semibold">{e.name}</div>
                   )}
-                  <div className="mt-0.5 text-xs text-muted-foreground">
-                    {last && sameStep ? (
-                      <>
-                        Last time <span className="text-foreground">{fmtSets(last.entry)}</span> · {relativeDay(last.session.date)}
-                      </>
-                    ) : step ? (
-                      <>
-                        Suggested start {step.goal.sets} × {step.start}
-                        {suffix}
-                      </>
-                    ) : (
-                      'First time'
-                    )}
-                  </div>
-                </div>
-                {step && (
-                  <div className="shrink-0 text-right text-[11px] text-muted-foreground">
-                    goal
-                    <div className="text-sm font-semibold text-foreground">
-                      {step.goal.sets} × {step.goal.reps}
-                      {suffix}
+                  {last && sameStep && (
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      Last time <span className="text-foreground">{fmtSets(last.entry)}</span> · {relativeDay(last.session.date)}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {e.progression && step && (
@@ -284,12 +268,25 @@ export default function WorkoutForm({
         )
       })}
 
-      <Card className="py-4">
-        <CardContent className="px-4">
-          <label className="text-xs font-semibold text-muted-foreground">Note</label>
-          <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="How did it feel? Anything to change next time?" className="mt-1 resize-none" />
-        </CardContent>
-      </Card>
+      {showNote || note ? (
+        <Card className="py-4">
+          <CardContent className="px-4">
+            <label className="text-xs font-semibold text-muted-foreground">Note</label>
+            <Textarea
+              autoFocus={showNote && !note}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              placeholder="How did it feel? Anything to change next time?"
+              className="mt-1 resize-none"
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setShowNote(true)}>
+          <Plus className="size-3.5" /> Add note
+        </Button>
+      )}
 
       {footer === 'inline' ? (
         <div className="pt-1">
