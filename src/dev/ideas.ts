@@ -29,6 +29,14 @@ export const IDEAS = {
     description: 'Sessions / streak / program tiles at the bottom.',
     default: true,
   },
+  setLayout: {
+    kind: 'choice',
+    area: 'Workout',
+    label: 'Set logging',
+    description: 'Rows: one stepper per set. Tiles: cards with big numbers. Focus: chips plus one stepper. Checklist: tick sets off as you go.',
+    options: ['rows', 'tiles', 'focus', 'checklist'],
+    default: 'rows',
+  },
 } as const satisfies Record<string, IdeaDef>
 
 export type IdeaKey = keyof typeof IDEAS

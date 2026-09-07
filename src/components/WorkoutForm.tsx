@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown, Plus, X } from 'lucide-react'
+import { ChevronDown, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
@@ -8,7 +8,8 @@ import { relativeDay } from '@/lib/schedule'
 import { checkGoal, fmtSets, lastEntryForSlot, lastEntryForStep } from '@/lib/stats'
 import { newId, useStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
-import Stepper from '@/components/Stepper'
+import { useIdea } from '@/dev/proto'
+import SetEditor from '@/components/SetEditor'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -57,6 +58,7 @@ export default function WorkoutForm({
   onSaved?: (s: Session) => void
 }) {
   const { data, saveSession, setStep } = useStore()
+  const setLayout = useIdea('setLayout')
   const program = getProgram(data.programId)
   const cycleDay = program.cycle[dayIndex]
   const day = cycleDay && !('rest' in cycleDay && cycleDay.rest) ? cycleDay.day : null
@@ -219,34 +221,7 @@ export default function WorkoutForm({
                 </details>
               )}
 
-              <div className="mt-3 space-y-2">
-                {e.sets.map((s, k) => (
-                  <div key={k} className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => update(i, (x) => ({ ...x, sets: x.sets.map((y, j) => (j === k ? { ...y, warmup: !y.warmup } : y)) }))}
-                      className={cn(
-                        'w-14 shrink-0 rounded-lg py-1 text-center text-[11px] font-semibold',
-                        s.warmup ? 'bg-secondary text-muted-foreground' : 'bg-foreground text-background',
-                      )}
-                      title="Tap to toggle warm-up"
-                    >
-                      {s.warmup ? 'warm-up' : `set ${e.sets.slice(0, k).filter((y) => !y.warmup).length + 1}`}
-                    </button>
-                    <Stepper value={s.reps} suffix={suffix} onChange={(v) => update(i, (x) => ({ ...x, sets: x.sets.map((y, j) => (j === k ? { ...y, reps: v } : y)) }))} />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="ml-auto text-muted-foreground"
-                      onClick={() => update(i, (x) => ({ ...x, sets: x.sets.filter((_, j) => j !== k) }))}
-                      aria-label="remove set"
-                    >
-                      <X />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <SetEditor sets={e.sets} suffix={suffix} variant={setLayout} onChange={(sets) => update(i, (x) => ({ ...x, sets }))} />
 
               <div className="mt-3 flex items-center justify-between">
                 <Button
