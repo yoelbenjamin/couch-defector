@@ -173,7 +173,7 @@ export default function Today() {
           ) : (
             <>
               {!cloud && (
-                <div className="mb-3 rounded-xl border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
+                <div className="wcard wcard--flat mb-3 px-4 py-2.5 text-xs text-muted-foreground">
                   Device-only mode. Your log lives in this browser until sign-in is set up.
                 </div>
               )}
@@ -205,7 +205,7 @@ export default function Today() {
                 <>
                   {plan.restSuggested && !trainAnyway ? (
                     <>
-                      <Card className="py-4">
+                      <Card variant="flat" className="py-4">
                         <CardContent className="px-4">
                           <div className="text-xs text-muted-foreground">Rest day</div>
                           <div className="mt-0.5 text-xl font-bold">Recover</div>

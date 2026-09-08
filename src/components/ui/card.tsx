@@ -2,12 +2,18 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+function Card({
+  className,
+  variant = "raised",
+  ...props
+}: React.ComponentProps<"div"> & { variant?: "raised" | "flat" }) {
   return (
     <div
       data-slot="card"
+      data-variant={variant}
       className={cn(
-        "flex flex-col gap-6 rounded-xl border bg-card py-6 text-card-foreground",
+        "wcard flex flex-col gap-6 py-6 text-card-foreground",
+        variant === "flat" ? "wcard--flat" : "wcard--raised",
         className
       )}
       {...props}
