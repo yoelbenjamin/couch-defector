@@ -4,7 +4,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { dayKey, isRest, planToday, relativeDay, weekdayIndex } from '@/lib/schedule'
-import { fmtSets, streakWeeks } from '@/lib/stats'
+import { fmtSets, streakInfo } from '@/lib/stats'
 import { useStore } from '@/lib/store'
 import { useSwipe } from '@/lib/useSwipe'
 import { cn } from '@/lib/utils'
@@ -13,7 +13,7 @@ import PageHeader, { ProfileButton } from '@/components/PageHeader'
 import ActivityHeatmap, { heatmapRange } from '@/components/ActivityHeatmap'
 import WorkoutForm from '@/components/WorkoutForm'
 import TrifectaForm from '@/components/TrifectaForm'
-import { Badge } from '@/components/ui/badge'
+import StreakBadge from '@/components/StreakBadge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -50,7 +50,7 @@ export default function Today() {
   const nav = useNavigate()
   const program = getProgram(data.programId)
   const plan = planToday(program, data.sessions)
-  const streak = streakWeeks(data.sessions)
+  const streak = streakInfo(data.sessions)
   const range = heatmapRange()
   const sessionsInRange = data.sessions.filter((x) => {
     const k = dayKey(new Date(x.date))
@@ -133,9 +133,9 @@ export default function Today() {
         }
       />
 
-      {(streak > 0 || statsRow) && (
+      {(streak || statsRow) && (
         <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
-          {streak > 0 && <Badge variant="secondary">{streak} week streak</Badge>}
+          {streak && <StreakBadge streak={streak} />}
           {statsRow && (
             <span>
               {sessionsInRange} session{sessionsInRange === 1 ? '' : 's'} · {range.days} days

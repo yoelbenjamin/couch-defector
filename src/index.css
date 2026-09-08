@@ -133,3 +133,53 @@ button { touch-action: manipulation; }
 .gbtn--blue { --gbtn-bg: #d9deee; --gbtn-bg-hover: #cfd5ea; --gbtn-fg: #4a5f96; --gbtn-border: #8ea3dc; --gbtn-stroke: rgba(255, 255, 255, 0.55); --gbtn-highlight: rgba(255, 255, 255, 0.5); }
 .gbtn--green { --gbtn-bg: #8fb08f; --gbtn-bg-hover: #85a685; --gbtn-fg: #ffffff; --gbtn-border: #4f7a4f; --gbtn-stroke: rgba(255, 255, 255, 0.25); --gbtn-highlight: rgba(255, 255, 255, 0.22); }
 .gbtn--red { --gbtn-bg: #e07866; --gbtn-bg-hover: #d96f5c; --gbtn-fg: #ffffff; --gbtn-border: #b6452f; --gbtn-stroke: rgba(255, 255, 255, 0.25); --gbtn-highlight: rgba(255, 255, 255, 0.22); }
+
+/* Metallic streak badges: gradient fill in the padding box, bevelled gradient rim in the border box. */
+.metal {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  padding: 0 0.7rem;
+  border-radius: 9999px;
+  border: 1.5px solid transparent;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  background:
+    var(--metal-fill) padding-box,
+    var(--metal-rim) border-box;
+  color: var(--metal-fg);
+  text-shadow: var(--metal-text-shadow);
+  box-shadow:
+    inset 0 1px 0 var(--metal-sheen),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.metal--graphite {
+  --metal-fill: linear-gradient(180deg, #4b4b4e 0%, #2b2b2e 100%);
+  --metal-rim: linear-gradient(135deg, #8d8d91 0%, #1b1b1d 45%, #6c6c70 60%, #121213 100%);
+  --metal-fg: #ffffff;
+  --metal-sheen: rgba(255, 255, 255, 0.14);
+  --metal-text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+.metal--steel {
+  --metal-fill: linear-gradient(180deg, #8c9aa4 0%, #5d6b76 100%);
+  --metal-rim: linear-gradient(135deg, #e8eef2 0%, #4a5661 45%, #c6cfd6 60%, #2e3740 100%);
+  --metal-fg: #ffffff;
+  --metal-sheen: rgba(255, 255, 255, 0.28);
+  --metal-text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+.metal--silver {
+  --metal-fill: linear-gradient(180deg, #f3f4f7 0%, #ced1d8 100%);
+  --metal-rim: linear-gradient(135deg, #ffffff 0%, #979da8 45%, #e9ebef 60%, #7b818c 100%);
+  --metal-fg: #585d67;
+  --metal-sheen: rgba(255, 255, 255, 0.9);
+  --metal-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.metal--gold {
+  --metal-fill: linear-gradient(180deg, #f4f0e4 0%, #d8d1bb 100%);
+  --metal-rim: linear-gradient(135deg, #fff9e8 0%, #a59c78 45%, #f0e9d5 60%, #877e5e 100%);
+  --metal-fg: #6a6146;
+  --metal-sheen: rgba(255, 255, 255, 0.9);
+  --metal-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
