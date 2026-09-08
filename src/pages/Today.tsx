@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
-import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { dayKey, isRest, planToday, relativeDay, weekdayIndex } from '@/lib/schedule'
-import { fmtSets, lastEntryForSlot, streakWeeks } from '@/lib/stats'
+import { fmtSets, streakWeeks } from '@/lib/stats'
 import { useStore } from '@/lib/store'
 import { useSwipe } from '@/lib/useSwipe'
 import { cn } from '@/lib/utils'
@@ -13,6 +12,7 @@ import { useIdea } from '@/dev/proto'
 import PageHeader, { ProfileButton } from '@/components/PageHeader'
 import ActivityHeatmap, { heatmapRange } from '@/components/ActivityHeatmap'
 import WorkoutForm from '@/components/WorkoutForm'
+import TrifectaForm from '@/components/TrifectaForm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -29,7 +29,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import type { Program, Session, WorkoutDay } from '@/types'
 
-const MAX_AHEAD = 14
 
 function addDays(key: number, n: number) {
   const d = new Date(key)
@@ -43,8 +42,8 @@ function scheduled(program: Program, key: number): WorkoutDay | null {
 
 /**
  * Today: the activity grid, then the workout that is due with logging inline.
- * Everything under the grid is one day; swipe it left or right (or use the arrow keys) to step
- * through past days and the two weeks ahead. Tapping a grid cell jumps straight to that day.
+ * Everything under the grid is one day; swipe right (or press the left arrow) to step back through
+ * past days, and left to come forward again, never past today. Tapping a grid cell jumps straight to that day.
  */
 export default function Today() {
   const { data, cloud, deleteSession } = useStore()
@@ -55,7 +54,7 @@ export default function Today() {
   const range = heatmapRange()
   const sessionsInRange = data.sessions.filter((x) => {
     const k = dayKey(new Date(x.date))
-    return k >= range.start && k <= range.today
+    return x.kind !== 'mobility' && k >= range.start && k <= range.today
   }).length
   const now = new Date()
   const today = dayKey(now)
@@ -65,6 +64,7 @@ export default function Today() {
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [dir, setDir] = useState<'left' | 'right'>('left')
   const [trainAnyway, setTrainAnyway] = useState(false)
+  const [editMobility, setEditMobility] = useState(false)
   const viewing = selectedDay ?? today
   const viewDate = new Date(viewing)
   const weekday = viewDate.toLocaleDateString(undefined, { weekday: 'long' })
@@ -75,7 +75,7 @@ export default function Today() {
 
   const shift = (n: number) => {
     const next = addDays(viewing, n)
-    if (next > addDays(today, MAX_AHEAD)) return
+    if (next > today) return // history only; the future is not for swiping into
     setDir(n > 0 ? 'left' : 'right')
     setSelectedDay(next === today ? null : next)
   }
@@ -158,9 +158,7 @@ export default function Today() {
       <div ref={detailRef} {...swipe} style={{ touchAction: 'pan-y' }} className="min-h-[40vh]">
         <div key={viewing} className={cn('animate-in fade-in duration-200', dir === 'left' ? 'slide-in-from-right-3' : 'slide-in-from-left-3')}>
           {selectedDay !== null ? (
-            selectedDay > today ? (
-              <DayPreview dateKey={selectedDay} program={program} data={data} />
-            ) : selectedSessions.length > 0 ? (
+            selectedSessions.length > 0 ? (
               <DayDetail
                 sessions={selectedSessions}
                 onEdit={(x) => nav(`/log/${x.dayIndex}?session=${x.id}`)}
@@ -206,19 +204,48 @@ export default function Today() {
               ) : (
                 <>
                   {plan.restSuggested && !trainAnyway ? (
-                    <Card className="py-4">
-                      <CardContent className="px-4">
-                        <div className="text-xs text-muted-foreground">Rest day</div>
-                        <div className="mt-0.5 text-xl font-bold">Recover</div>
-                        <p className="mt-2 text-sm">
-                          You trained {plan.daysSince === 1 ? 'yesterday' : `${plan.daysSince} days ago`}. Next up is{' '}
-                          <span className="font-semibold">{plan.day.name}</span> on {plan.weekday}.
-                        </p>
-                        <Button variant="secondary" size="lg" className="mt-4 h-12 w-full" onClick={() => setTrainAnyway(true)}>
-                          Train anyway
-                        </Button>
-                      </CardContent>
-                    </Card>
+                    <>
+                      <Card className="py-4">
+                        <CardContent className="px-4">
+                          <div className="text-xs text-muted-foreground">Rest day</div>
+                          <div className="mt-0.5 text-xl font-bold">Recover</div>
+                          <p className="mt-2 text-sm">
+                            {plan.daysSince === null ? 'Nothing logged yet.' : `You trained ${plan.daysSince === 1 ? 'yesterday' : `${plan.daysSince} days ago`}.`} Next up is{' '}
+                            <span className="font-semibold">{plan.day.name}</span> on {plan.weekday}.
+                          </p>
+                          <Button variant="ghost" size="sm" className="-ml-2 mt-3 text-muted-foreground" onClick={() => setTrainAnyway(true)}>
+                            Train anyway
+                          </Button>
+                        </CardContent>
+                      </Card>
+
+                      <div className="mt-6 mb-3">
+                        <h2 className="text-lg font-bold">Trifecta</h2>
+                        <p className="mt-0.5 text-sm text-muted-foreground">Three easy holds to keep the joints moving. About twenty seconds each.</p>
+                      </div>
+                      {plan.mobilityToday && !editMobility ? (
+                        <Card className="py-4">
+                          <CardContent className="px-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="text-sm font-semibold">Done today</div>
+                              <Button variant="outline" size="sm" onClick={() => setEditMobility(true)}>
+                                <Pencil className="size-3.5" /> Edit
+                              </Button>
+                            </div>
+                            <ul className="mt-3 space-y-1 text-sm">
+                              {plan.mobilityToday.entries.map((e) => (
+                                <li key={e.slotKey} className="flex justify-between">
+                                  <span>{e.name}</span>
+                                  <span className="text-muted-foreground tabular-nums">{fmtSets(e)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <TrifectaForm key={plan.mobilityToday?.id ?? 'new'} editing={editMobility ? plan.mobilityToday : null} onSaved={() => setEditMobility(false)} />
+                      )}
+                    </>
                   ) : null}
                   {showForm && <WorkoutForm key={`${program.id}:${plan.dayIndex}`} dayIndex={plan.dayIndex} onSaved={() => setTrainAnyway(false)} />}
                 </>
@@ -245,39 +272,6 @@ function DayEmpty({ day }: { day: WorkoutDay | null }) {
           <div className="text-xs text-muted-foreground">{day ? 'Scheduled' : 'Rest day'}</div>
           <div className="mt-0.5 text-xl font-bold">{day ? day.name : 'Recover'}</div>
           <p className="mt-2 text-sm text-muted-foreground">{day ? 'Nothing logged.' : 'Nothing scheduled, nothing logged.'}</p>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-/** A day ahead: what the schedule has planned, with where you stand on each movement. */
-function DayPreview({ dateKey, program, data }: { dateKey: number; program: Program; data: { steps: Record<string, number | undefined>; customNames: Record<string, string>; sessions: Session[] } }) {
-  const day = scheduled(program, dateKey)
-  return (
-    <div>
-      <Card className="py-4">
-        <CardContent className="px-4">
-          <div className="text-xs text-muted-foreground">{day ? 'Scheduled' : 'Rest day'}</div>
-          <div className="mt-0.5 text-xl font-bold">{day ? day.name : 'Recover'}</div>
-          {day && (
-            <ul className="mt-3 space-y-1.5 text-sm">
-              {day.slots.map((s) => {
-                const name = s.kind === 'progression' ? getStep(s.progression, data.steps[s.progression] ?? 1).name : data.customNames[s.key] || s.label
-                const sub = s.kind === 'progression' ? `${PROGRESSIONS[s.progression].name} · step ${data.steps[s.progression] ?? 1}` : 'Your pick'
-                const last = lastEntryForSlot(data.sessions, program.id, s.key)
-                return (
-                  <li key={s.key} className="flex items-baseline justify-between gap-3">
-                    <span className="min-w-0">
-                      <span className="font-medium">{name}</span>
-                      <span className="ml-1.5 text-xs text-muted-foreground">{sub}</span>
-                    </span>
-                    {last && <span className="shrink-0 text-muted-foreground tabular-nums">{fmtSets(last.entry)}</span>}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
         </CardContent>
       </Card>
     </div>

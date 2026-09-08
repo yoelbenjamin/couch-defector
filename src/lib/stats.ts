@@ -89,7 +89,7 @@ export function streakWeeks(sessions: Session[], now = new Date()) {
     t.setDate(t.getDate() - day)
     return new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime()
   }
-  const weeks = new Set(sessions.map((s) => weekKey(new Date(s.date))))
+  const weeks = new Set(sessions.filter((s) => s.kind !== 'mobility').map((s) => weekKey(new Date(s.date))))
   let n = 0
   let cursor = weekKey(now)
   while (weeks.has(cursor)) {

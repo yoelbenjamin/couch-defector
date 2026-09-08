@@ -8,6 +8,9 @@ export type ProgressionId =
 
 export type Unit = 'reps' | 'seconds'
 
+/** The three Trifecta holds from Convict Conditioning 2. */
+export type HoldId = 'bridgehold' | 'lhold' | 'twist'
+
 export interface Standard {
   sets: number
   reps: number
@@ -68,6 +71,8 @@ export interface Entry {
   name: string
   unit: Unit
   progression?: ProgressionId
+  /** Set for Trifecta entries; `step` then indexes that hold's ladder. */
+  hold?: HoldId
   step?: number
   sets: SetEntry[]
 }
@@ -78,6 +83,8 @@ export interface Session {
   programId: string
   dayIndex: number
   dayName: string
+  /** Missing means a strength workout. Mobility sessions never count as training. */
+  kind?: 'workout' | 'mobility'
   entries: Entry[]
   note?: string
 }
@@ -85,6 +92,8 @@ export interface Session {
 export interface Profile {
   programId: string | null
   steps: Partial<Record<ProgressionId, number>>
+  /** Current step on each Trifecta hold. */
+  holdSteps?: Partial<Record<HoldId, number>>
   customNames: Record<string, string>
   createdAt: string
 }

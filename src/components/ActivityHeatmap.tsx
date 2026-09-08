@@ -38,23 +38,25 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
   const today = dayKey(now)
   const start = weekStart(now) - (weeks - 1) * 7 * DAY
 
-  const counts = useMemo(() => {
-    const m = new Map<number, number>()
+  const { counts, mobility } = useMemo(() => {
+    const counts = new Map<number, number>()
+    const mobility = new Set<number>()
     for (const s of sessions) {
       const k = dayKey(new Date(s.date))
-      m.set(k, (m.get(k) ?? 0) + 1)
+      if (s.kind === 'mobility') mobility.add(k)
+      else counts.set(k, (counts.get(k) ?? 0) + 1)
     }
-    return m
+    return { counts, mobility }
   }, [sessions])
 
-  const cells: { key: number; count: number; future: boolean; isToday: boolean; delay: number }[] = []
+  const cells: { key: number; count: number; mob: boolean; future: boolean; isToday: boolean; delay: number }[] = []
   // Random per-cell timing, fixed for the life of the component so re-renders don't replay the shimmer.
   // About 60% of tiles flash, each at a random moment within the first ~1.1s; the rest stay still.
   const timing = useMemo(() => Array.from({ length: weeks * 7 }, () => (Math.random() < 0.6 ? Math.random() * 1100 : -1)), [weeks])
   for (let w = 0; w < weeks; w++) {
     for (let d = 0; d < 7; d++) {
       const key = start + (w * 7 + d) * DAY
-      cells.push({ key, count: counts.get(key) ?? 0, future: key > today, isToday: key === today, delay: timing[w * 7 + d] })
+      cells.push({ key, count: counts.get(key) ?? 0, mob: mobility.has(key), future: key > today, isToday: key === today, delay: timing[w * 7 + d] })
     }
   }
 
@@ -72,17 +74,18 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
         const cls = cn(
           'aspect-square rounded-[2px]',
           c.delay >= 0 && !c.future && 'heat-cell',
-          c.future ? 'bg-transparent' : c.count === 0 ? 'bg-foreground/[0.07]' : 'bg-foreground/80',
-          c.isToday && c.count === 0 && 'ring-1 ring-foreground/40 ring-inset',
+          c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/80' : c.mob ? 'bg-foreground/30' : 'bg-foreground/[0.07]',
+          c.isToday && c.count === 0 && !c.mob && 'ring-1 ring-foreground/40 ring-inset',
           isSelected && 'bg-foreground ring-2 ring-foreground ring-offset-1 ring-offset-background',
         )
-        if (c.count === 0 || !onSelect) return <div key={c.key} className={cls} style={style} data-filled={c.count > 0 ? '' : undefined} />
+        if ((c.count === 0 && !c.mob) || !onSelect) return <div key={c.key} className={cls} style={style} data-filled={c.count > 0 ? '' : undefined} />
         const label = new Date(c.key).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+        const what = c.count > 0 ? `${c.count} session${c.count === 1 ? '' : 's'}` : 'Trifecta'
         return (
           <button
             key={c.key}
             type="button"
-            aria-label={`${label}, ${c.count} session${c.count === 1 ? '' : 's'}`}
+            aria-label={`${label}, ${what}`}
             aria-pressed={isSelected}
             onClick={() => onSelect(isSelected ? null : c.key)}
             className={cls}

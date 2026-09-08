@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { getProgram, PROGRAMS } from '@/data/programs'
+import { HOLD_IDS, HOLDS } from '@/data/trifecta'
 import { PROGRESSION_IDS, PROGRESSIONS } from '@/data/progressions'
 import { useStore } from '@/lib/store'
 import PageHeader from '@/components/PageHeader'
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { Slot } from '@/types'
 
 export default function Settings() {
-  const { data, cloud, user, signOut, setProgram, setStep, setCustomName } = useStore()
+  const { data, cloud, user, signOut, setProgram, setStep, setHoldStep, setCustomName } = useStore()
   const program = getProgram(data.programId)
   const customSlots = program.cycle.flatMap((c) => ('rest' in c && c.rest ? [] : c.day.slots.filter((s): s is Slot & { kind: 'custom' } => s.kind === 'custom')))
   const uniqueCustom = customSlots.filter((s, i, a) => a.findIndex((x) => x.key === s.key) === i)
@@ -88,6 +89,32 @@ export default function Settings() {
                 </SelectTrigger>
                 <SelectContent>
                   {PROGRESSIONS[pid].steps.map((st) => (
+                    <SelectItem key={st.n} value={String(st.n)} className="text-xs">
+                      {st.n}. {st.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card className="gap-3 py-4">
+        <CardHeader className="px-4">
+          <CardTitle className="text-xs text-muted-foreground">Mobility</CardTitle>
+          <CardDescription className="text-xs">Your step on each Trifecta hold. Rest days show these three. Pick the version you can hold comfortably, never the hardest.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 px-4">
+          {HOLD_IDS.map((h) => (
+            <div key={h} className="flex items-center justify-between gap-3">
+              <span className="text-sm">{HOLDS[h].name}</span>
+              <Select value={String(data.holdSteps?.[h] ?? 1)} onValueChange={(v) => setHoldStep(h, Number(v))}>
+                <SelectTrigger className="h-9 w-48 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {HOLDS[h].steps.map((st) => (
                     <SelectItem key={st.n} value={String(st.n)} className="text-xs">
                       {st.n}. {st.name}
                     </SelectItem>

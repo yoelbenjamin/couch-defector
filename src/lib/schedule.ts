@@ -18,8 +18,10 @@ export interface TodayPlan {
   restSuggested: boolean
   /** Days since the last logged session, or null when none. */
   daysSince: number | null
-  /** Session already logged today for this program, if any. */
+  /** Strength session already logged today for this program, if any. */
   doneToday: Session | null
+  /** Trifecta logged today, if any. */
+  mobilityToday: Session | null
   /** Warn when the last session was yesterday. */
   trainedYesterday: boolean
 }
@@ -43,9 +45,11 @@ export function isRest(c: Program['cycle'][number]): c is { rest: true } {
 /** The programs are weekday schedules: today's slot decides, and a rest day points at the next workout. */
 export function planToday(program: Program, sessions: Session[], now = new Date()): TodayPlan {
   const todayIdx = weekdayIndex(now)
-  const lastAny = [...sessions].sort((a, b) => b.date.localeCompare(a.date))[0] ?? null
+  const workouts = sessions.filter((s) => s.kind !== 'mobility')
+  const lastAny = [...workouts].sort((a, b) => b.date.localeCompare(a.date))[0] ?? null
   const daysSince = lastAny ? daysBetween(new Date(lastAny.date), now) : null
-  const doneToday = sessions.find((s) => s.programId === program.id && daysBetween(new Date(s.date), now) === 0) ?? null
+  const doneToday = workouts.find((s) => s.programId === program.id && daysBetween(new Date(s.date), now) === 0) ?? null
+  const mobilityToday = sessions.find((s) => s.kind === 'mobility' && daysBetween(new Date(s.date), now) === 0) ?? null
 
   let idx = todayIdx
   const restToday = isRest(program.cycle[idx])
@@ -65,6 +69,7 @@ export function planToday(program: Program, sessions: Session[], now = new Date(
     restSuggested: restToday && !doneToday,
     daysSince,
     doneToday,
+    mobilityToday,
     trainedYesterday: daysSince === 1,
   }
 }

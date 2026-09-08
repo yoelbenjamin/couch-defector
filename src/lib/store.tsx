@@ -3,7 +3,7 @@ import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut as fbS
 import { collection, deleteDoc, doc, onSnapshot, setDoc, type DocumentData } from 'firebase/firestore'
 import { auth, db, firebaseEnabled, googleProvider } from './firebase'
 import { PROTO_USER, useProtoOptional } from '@/dev/proto'
-import type { Profile, ProgressionId, Session, UserData } from '../types'
+import type { HoldId, Profile, ProgressionId, Session, UserData } from '../types'
 
 const LOCAL_KEY = 'couch-defector:v1'
 
@@ -23,6 +23,7 @@ export interface StoreApi {
   signOut: () => Promise<void>
   setProgram: (id: string) => Promise<void>
   setStep: (p: ProgressionId, step: number) => Promise<void>
+  setHoldStep: (h: HoldId, step: number) => Promise<void>
   setCustomName: (key: string, name: string) => Promise<void>
   saveSession: (s: Session) => Promise<void>
   deleteSession: (id: string) => Promise<void>
@@ -162,6 +163,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     setProgram: (id) => writeProfile({ programId: id }),
     setStep: (p, step) => writeProfile({ steps: { ...data.steps, [p]: step } }),
+    setHoldStep: (h, step) => writeProfile({ holdSteps: { ...(data.holdSteps ?? {}), [h]: step } }),
     setCustomName: (key, name) => writeProfile({ customNames: { ...data.customNames, [key]: name } }),
     saveSession: async (s) => {
       if (!sandbox && liveCloud && db && user) {
