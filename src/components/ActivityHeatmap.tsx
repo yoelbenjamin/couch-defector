@@ -66,7 +66,8 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
       aria-label={`Training activity, last ${weeks} weeks`}
     >
       {cells.map((c) => {
-        const isSelected = selected === c.key
+        // Days ahead stay invisible even when they are the day being viewed.
+        const isSelected = selected === c.key && !c.future
         const style = { '--shimmer-delay': `${Math.round(Math.max(0, c.delay))}ms` } as CSSProperties
         const cls = cn(
           'aspect-square rounded-[2px]',

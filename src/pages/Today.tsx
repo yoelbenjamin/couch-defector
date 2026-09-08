@@ -10,7 +10,7 @@ import { useStore } from '@/lib/store'
 import { useSwipe } from '@/lib/useSwipe'
 import { cn } from '@/lib/utils'
 import { useIdea } from '@/dev/proto'
-import PageHeader from '@/components/PageHeader'
+import PageHeader, { ProfileButton } from '@/components/PageHeader'
 import ActivityHeatmap, { heatmapRange } from '@/components/ActivityHeatmap'
 import WorkoutForm from '@/components/WorkoutForm'
 import { Badge } from '@/components/ui/badge'
@@ -59,8 +59,6 @@ export default function Today() {
   }).length
   const now = new Date()
   const today = dayKey(now)
-  const weekday = now.toLocaleDateString(undefined, { weekday: 'long' })
-  const monthDay = now.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
   const tomorrow = scheduled(program, addDays(today, 1))
 
   /** Day under the grid. null = today. */
@@ -68,6 +66,9 @@ export default function Today() {
   const [dir, setDir] = useState<'left' | 'right'>('left')
   const [trainAnyway, setTrainAnyway] = useState(false)
   const viewing = selectedDay ?? today
+  const viewDate = new Date(viewing)
+  const weekday = viewDate.toLocaleDateString(undefined, { weekday: 'long' })
+  const monthDay = viewDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
   const selectedSessions = selectedDay === null ? [] : data.sessions.filter((x) => dayKey(new Date(x.date)) === selectedDay)
   const heatRef = useRef<HTMLDivElement>(null)
   const detailRef = useRef<HTMLDivElement>(null)
@@ -119,6 +120,17 @@ export default function Today() {
             <span className="block">{monthDay}</span>
           </>
         }
+        sub={selectedDay !== null ? relativeDay(viewDate.toISOString()) : undefined}
+        action={
+          selectedDay !== null ? (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setSelectedDay(null)}>
+                Today
+              </Button>
+              <ProfileButton />
+            </div>
+          ) : undefined
+        }
       />
 
       {(streak > 0 || statsRow) && (
@@ -147,12 +159,10 @@ export default function Today() {
         <div key={viewing} className={cn('animate-in fade-in duration-200', dir === 'left' ? 'slide-in-from-right-3' : 'slide-in-from-left-3')}>
           {selectedDay !== null ? (
             selectedDay > today ? (
-              <DayPreview dateKey={selectedDay} program={program} data={data} onToday={() => setSelectedDay(null)} />
+              <DayPreview dateKey={selectedDay} program={program} data={data} />
             ) : selectedSessions.length > 0 ? (
               <DayDetail
-                dateKey={selectedDay}
                 sessions={selectedSessions}
-                onToday={() => setSelectedDay(null)}
                 onEdit={(x) => nav(`/log/${x.dayIndex}?session=${x.id}`)}
                 onDelete={async (x) => {
                   await deleteSession(x.id)
@@ -160,7 +170,7 @@ export default function Today() {
                 }}
               />
             ) : (
-              <DayEmpty dateKey={selectedDay} day={scheduled(program, selectedDay)} onToday={() => setSelectedDay(null)} />
+              <DayEmpty day={scheduled(program, selectedDay)} />
             )
           ) : (
             <>
@@ -227,25 +237,9 @@ export default function Today() {
 
 /* ---------- other days ---------- */
 
-function DayHeading({ dateKey, onToday }: { dateKey: number; onToday: () => void }) {
-  const d = new Date(dateKey)
-  return (
-    <div className="mb-3 flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <div className="text-xs text-muted-foreground">{relativeDay(d.toISOString())}</div>
-        <div className="truncate text-xl font-bold">{d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
-      </div>
-      <Button variant="outline" size="sm" onClick={onToday}>
-        Today
-      </Button>
-    </div>
-  )
-}
-
-function DayEmpty({ dateKey, day, onToday }: { dateKey: number; day: WorkoutDay | null; onToday: () => void }) {
+function DayEmpty({ day }: { day: WorkoutDay | null }) {
   return (
     <div>
-      <DayHeading dateKey={dateKey} onToday={onToday} />
       <Card className="py-4">
         <CardContent className="px-4">
           <div className="text-xs text-muted-foreground">{day ? 'Scheduled' : 'Rest day'}</div>
@@ -258,11 +252,10 @@ function DayEmpty({ dateKey, day, onToday }: { dateKey: number; day: WorkoutDay 
 }
 
 /** A day ahead: what the schedule has planned, with where you stand on each movement. */
-function DayPreview({ dateKey, program, data, onToday }: { dateKey: number; program: Program; data: { steps: Record<string, number | undefined>; customNames: Record<string, string>; sessions: Session[] }; onToday: () => void }) {
+function DayPreview({ dateKey, program, data }: { dateKey: number; program: Program; data: { steps: Record<string, number | undefined>; customNames: Record<string, string>; sessions: Session[] } }) {
   const day = scheduled(program, dateKey)
   return (
     <div>
-      <DayHeading dateKey={dateKey} onToday={onToday} />
       <Card className="py-4">
         <CardContent className="px-4">
           <div className="text-xs text-muted-foreground">{day ? 'Scheduled' : 'Rest day'}</div>
@@ -292,21 +285,16 @@ function DayPreview({ dateKey, program, data, onToday }: { dateKey: number; prog
 }
 
 function DayDetail({
-  dateKey,
   sessions,
-  onToday,
   onEdit,
   onDelete,
 }: {
-  dateKey: number
   sessions: Session[]
-  onToday: () => void
   onEdit: (s: Session) => void
   onDelete: (s: Session) => void | Promise<void>
 }) {
   return (
     <div>
-      <DayHeading dateKey={dateKey} onToday={onToday} />
       <div className="space-y-2">
         {sessions.map((s) => (
           <Card key={s.id} className="py-3">
