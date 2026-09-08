@@ -85,3 +85,51 @@ button { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   .heat-cell::after { animation: none; }
 }
+
+/* Buttons: pill with an inner stroke and a soft lift, after the gbtn reference. */
+.gbtn {
+  position: relative;
+  isolation: isolate;
+  border-radius: 9999px;
+  border: 1px solid var(--gbtn-border);
+  background: var(--gbtn-bg);
+  color: var(--gbtn-fg);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    0 8px 16px -10px rgba(0, 0, 0, 0.3);
+  transition: background-color 120ms ease, transform 80ms ease, box-shadow 120ms ease;
+}
+.gbtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px var(--gbtn-stroke),
+    inset 0 1px 0 var(--gbtn-highlight);
+}
+.gbtn:hover { background: var(--gbtn-bg-hover); }
+.gbtn:active { transform: translateY(1px); box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12); }
+
+.gbtn--dark {
+  --gbtn-bg: #0b0b0c;
+  --gbtn-bg-hover: #161617;
+  --gbtn-fg: #fafafa;
+  --gbtn-border: rgba(0, 0, 0, 0.9);
+  --gbtn-stroke: rgba(255, 255, 255, 0.12);
+  --gbtn-highlight: rgba(255, 255, 255, 0.08);
+}
+.gbtn--light {
+  --gbtn-bg: #fafafa;
+  --gbtn-bg-hover: #f1f1f1;
+  --gbtn-fg: var(--foreground);
+  --gbtn-border: rgba(0, 0, 0, 0.06);
+  --gbtn-stroke: rgba(255, 255, 255, 0.9);
+  --gbtn-highlight: #ffffff;
+}
+/* Tints, for when a colour earns its place. Border is the tint's darker shade; inner stroke stays white. */
+.gbtn--yellow { --gbtn-bg: #e8e4c0; --gbtn-bg-hover: #e1dcb2; --gbtn-fg: #7a6a2a; --gbtn-border: #cdc27d; --gbtn-stroke: rgba(255, 255, 255, 0.55); --gbtn-highlight: rgba(255, 255, 255, 0.5); }
+.gbtn--blue { --gbtn-bg: #d9deee; --gbtn-bg-hover: #cfd5ea; --gbtn-fg: #4a5f96; --gbtn-border: #8ea3dc; --gbtn-stroke: rgba(255, 255, 255, 0.55); --gbtn-highlight: rgba(255, 255, 255, 0.5); }
+.gbtn--green { --gbtn-bg: #8fb08f; --gbtn-bg-hover: #85a685; --gbtn-fg: #ffffff; --gbtn-border: #4f7a4f; --gbtn-stroke: rgba(255, 255, 255, 0.25); --gbtn-highlight: rgba(255, 255, 255, 0.22); }
+.gbtn--red { --gbtn-bg: #e07866; --gbtn-bg-hover: #d96f5c; --gbtn-fg: #ffffff; --gbtn-border: #b6452f; --gbtn-stroke: rgba(255, 255, 255, 0.25); --gbtn-highlight: rgba(255, 255, 255, 0.22); }

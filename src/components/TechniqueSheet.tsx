@@ -1,5 +1,5 @@
 import { getStep, PROGRESSIONS } from '@/data/progressions'
-import { RULES, TECHNIQUE } from '@/data/technique'
+import { TECHNIQUE } from '@/data/technique'
 import { fmtStandard } from '@/lib/stats'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import type { Entry } from '@/types'
@@ -37,7 +37,7 @@ export default function TechniqueSheet({ entry, open, onOpenChange }: { entry: E
             <div className="mt-5 space-y-6 text-[15px] leading-relaxed">
               <section>
                 <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">This step</h3>
-                {step.cue && <p>{step.cue}</p>}
+                {step.cue ? <p>{step.cue}</p> : <p className="text-muted-foreground">No notes for this step yet.</p>}
                 {step.how && (
                   <ul className="mt-2 list-disc space-y-1.5 pl-5">
                     {step.how.map((h) => (
@@ -48,20 +48,7 @@ export default function TechniqueSheet({ entry, open, onOpenChange }: { entry: E
               </section>
               <section>
                 <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">{PROGRESSIONS[entry.progression].name}</h3>
-                <p>{TECHNIQUE[entry.progression].why}</p>
-                <ul className="mt-2 list-disc space-y-1.5 pl-5">
-                  {TECHNIQUE[entry.progression].points.map((h) => (
-                    <li key={h}>{h}</li>
-                  ))}
-                </ul>
-              </section>
-              <section>
-                <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">Every set</h3>
-                <ul className="list-disc space-y-1.5 pl-5">
-                  {RULES.map((h) => (
-                    <li key={h}>{h}</li>
-                  ))}
-                </ul>
+                <p className="text-muted-foreground">{TECHNIQUE[entry.progression].why}</p>
               </section>
             </div>
           </div>
