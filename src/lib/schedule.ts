@@ -77,6 +77,8 @@ export function relativeDay(iso: string, now = new Date()) {
   const d = daysBetween(new Date(iso), now)
   if (d === 0) return 'Today'
   if (d === 1) return 'Yesterday'
-  if (d < 7) return `${d} days ago`
+  if (d === -1) return 'Tomorrow'
+  if (d < 0 && d > -7) return `In ${-d} days`
+  if (d > 0 && d < 7) return `${d} days ago`
   return fmtDate(iso)
 }

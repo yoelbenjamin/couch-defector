@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
+import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { dayKey, isRest, planToday, relativeDay, weekdayIndex } from '@/lib/schedule'
-import { fmtSets, streakWeeks } from '@/lib/stats'
+import { fmtSets, lastEntryForSlot, streakWeeks } from '@/lib/stats'
 import { useStore } from '@/lib/store'
+import { useSwipe } from '@/lib/useSwipe'
+import { cn } from '@/lib/utils'
 import { useIdea } from '@/dev/proto'
 import PageHeader from '@/components/PageHeader'
 import ActivityHeatmap, { heatmapRange } from '@/components/ActivityHeatmap'
@@ -24,19 +27,30 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import type { Session } from '@/types'
+import type { Program, Session, WorkoutDay } from '@/types'
+
+const MAX_AHEAD = 14
+
+function addDays(key: number, n: number) {
+  const d = new Date(key)
+  d.setDate(d.getDate() + n)
+  return dayKey(d)
+}
+function scheduled(program: Program, key: number): WorkoutDay | null {
+  const slot = program.cycle[weekdayIndex(new Date(key))]
+  return isRest(slot) ? null : slot.day
+}
 
 /**
- * Today: the activity grid, then the workout that is due with logging inline. No start button, no detour.
- * Rest day: a short note with the workout one tap away. Done today: the summary with Edit.
+ * Today: the activity grid, then the workout that is due with logging inline.
+ * Everything under the grid is one day; swipe it left or right (or use the arrow keys) to step
+ * through past days and the two weeks ahead. Tapping a grid cell jumps straight to that day.
  */
 export default function Today() {
   const { data, cloud, deleteSession } = useStore()
   const nav = useNavigate()
   const program = getProgram(data.programId)
   const plan = planToday(program, data.sessions)
-  const tomorrowSlot = program.cycle[(weekdayIndex(new Date()) + 1) % 7]
-  const tomorrow = isRest(tomorrowSlot) ? null : tomorrowSlot.day
   const streak = streakWeeks(data.sessions)
   const range = heatmapRange()
   const sessionsInRange = data.sessions.filter((x) => {
@@ -44,15 +58,41 @@ export default function Today() {
     return k >= range.start && k <= range.today
   }).length
   const now = new Date()
+  const today = dayKey(now)
   const weekday = now.toLocaleDateString(undefined, { weekday: 'long' })
   const monthDay = now.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
+  const tomorrow = scheduled(program, addDays(today, 1))
 
+  /** Day under the grid. null = today. */
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const [dir, setDir] = useState<'left' | 'right'>('left')
   const [trainAnyway, setTrainAnyway] = useState(false)
+  const viewing = selectedDay ?? today
   const selectedSessions = selectedDay === null ? [] : data.sessions.filter((x) => dayKey(new Date(x.date)) === selectedDay)
   const heatRef = useRef<HTMLDivElement>(null)
   const detailRef = useRef<HTMLDivElement>(null)
-  // Tapping anywhere outside the grid, the day view, or a dialog leaves the historical view.
+
+  const shift = (n: number) => {
+    const next = addDays(viewing, n)
+    if (next > addDays(today, MAX_AHEAD)) return
+    setDir(n > 0 ? 'left' : 'right')
+    setSelectedDay(next === today ? null : next)
+  }
+  const swipe = useSwipe((d) => shift(d === 'left' ? 1 : -1))
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return
+      if (e.key === 'ArrowRight') shift(1)
+      if (e.key === 'ArrowLeft') shift(-1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  // Tapping the header or grid margins (not a cell, the day view, or a dialog) returns to today.
   useEffect(() => {
     if (selectedDay === null) return
     const onDown = (e: PointerEvent) => {
@@ -65,14 +105,9 @@ export default function Today() {
     document.addEventListener('pointerdown', onDown)
     return () => document.removeEventListener('pointerdown', onDown)
   }, [selectedDay])
-  // Nothing left on that day (last session deleted): back to today.
-  useEffect(() => {
-    if (selectedDay !== null && selectedSessions.length === 0) setSelectedDay(null)
-  }, [selectedDay, selectedSessions.length])
 
   const coachCopy = useIdea('coachCopy')
   const statsRow = useIdea('statsRow')
-
   const showForm = !plan.doneToday && (!plan.restSuggested || trainAnyway)
 
   return (
@@ -97,78 +132,161 @@ export default function Today() {
         </div>
       )}
       <div ref={heatRef}>
-        <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-5" />
+        <ActivityHeatmap
+          sessions={data.sessions}
+          selected={selectedDay}
+          onSelect={(k) => {
+            setDir(k !== null && k > viewing ? 'left' : 'right')
+            setSelectedDay(k)
+          }}
+          className="mb-5"
+        />
       </div>
 
-      {selectedDay !== null ? (
-        <div ref={detailRef}>
-          <DayDetail
-            dateKey={selectedDay}
-            sessions={selectedSessions}
-            onEdit={(x) => nav(`/log/${x.dayIndex}?session=${x.id}`)}
-            onDelete={async (x) => {
-              await deleteSession(x.id)
-              toast('Session deleted')
-            }}
-          />
-        </div>
-      ) : (
-        <>
-          {!cloud && (
-            <div className="mb-3 rounded-xl border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
-              Device-only mode. Your log lives in this browser until sign-in is set up.
-            </div>
-          )}
-
-          {plan.doneToday ? (
-            <Card className="py-4">
-              <CardContent className="px-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-xs text-muted-foreground">Done today</div>
-                    <div className="mt-0.5 text-xl font-bold">{plan.doneToday.dayName}</div>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => nav(`/log/${plan.doneToday!.dayIndex}?session=${plan.doneToday!.id}`)}>
-                    <Pencil className="size-3.5" /> Edit
-                  </Button>
-                </div>
-                <ul className="mt-3 space-y-1 text-sm">
-                  {plan.doneToday.entries.map((e) => (
-                    <li key={e.slotKey} className="flex justify-between">
-                      <span>{e.name}</span>
-                      <span className="text-muted-foreground tabular-nums">{fmtSets(e)}</span>
-                    </li>
-                  ))}
-                </ul>
-                {coachCopy && <div className="mt-4 text-xs text-muted-foreground">Rest up. Muscle is built between sessions, not during them.</div>}
-              </CardContent>
-            </Card>
+      <div ref={detailRef} {...swipe} style={{ touchAction: 'pan-y' }} className="min-h-[40vh]">
+        <div key={viewing} className={cn('animate-in fade-in duration-200', dir === 'left' ? 'slide-in-from-right-3' : 'slide-in-from-left-3')}>
+          {selectedDay !== null ? (
+            selectedDay > today ? (
+              <DayPreview dateKey={selectedDay} program={program} data={data} onToday={() => setSelectedDay(null)} />
+            ) : selectedSessions.length > 0 ? (
+              <DayDetail
+                dateKey={selectedDay}
+                sessions={selectedSessions}
+                onToday={() => setSelectedDay(null)}
+                onEdit={(x) => nav(`/log/${x.dayIndex}?session=${x.id}`)}
+                onDelete={async (x) => {
+                  await deleteSession(x.id)
+                  toast('Session deleted')
+                }}
+              />
+            ) : (
+              <DayEmpty dateKey={selectedDay} day={scheduled(program, selectedDay)} onToday={() => setSelectedDay(null)} />
+            )
           ) : (
             <>
-              {plan.restSuggested && !trainAnyway ? (
+              {!cloud && (
+                <div className="mb-3 rounded-xl border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
+                  Device-only mode. Your log lives in this browser until sign-in is set up.
+                </div>
+              )}
+
+              {plan.doneToday ? (
                 <Card className="py-4">
                   <CardContent className="px-4">
-                    <div className="text-xs text-muted-foreground">Rest day</div>
-                    <div className="mt-0.5 text-xl font-bold">Recover</div>
-                    <p className="mt-2 text-sm">
-                      You trained {plan.daysSince === 1 ? 'yesterday' : `${plan.daysSince} days ago`}. Next up is <span className="font-semibold">{plan.day.name}</span> on {plan.weekday}.
-                    </p>
-                    <Button variant="secondary" size="lg" className="mt-4 h-12 w-full" onClick={() => setTrainAnyway(true)}>
-                      Train anyway
-                    </Button>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs text-muted-foreground">Done today</div>
+                        <div className="mt-0.5 text-xl font-bold">{plan.doneToday.dayName}</div>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => nav(`/log/${plan.doneToday!.dayIndex}?session=${plan.doneToday!.id}`)}>
+                        <Pencil className="size-3.5" /> Edit
+                      </Button>
+                    </div>
+                    <ul className="mt-3 space-y-1 text-sm">
+                      {plan.doneToday.entries.map((e) => (
+                        <li key={e.slotKey} className="flex justify-between">
+                          <span>{e.name}</span>
+                          <span className="text-muted-foreground tabular-nums">{fmtSets(e)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {coachCopy && <div className="mt-4 text-xs text-muted-foreground">Rest up. Muscle is built between sessions, not during them.</div>}
                   </CardContent>
                 </Card>
-              ) : null}
-              {showForm && <WorkoutForm key={`${program.id}:${plan.dayIndex}`} dayIndex={plan.dayIndex} onSaved={() => setTrainAnyway(false)} />}
+              ) : (
+                <>
+                  {plan.restSuggested && !trainAnyway ? (
+                    <Card className="py-4">
+                      <CardContent className="px-4">
+                        <div className="text-xs text-muted-foreground">Rest day</div>
+                        <div className="mt-0.5 text-xl font-bold">Recover</div>
+                        <p className="mt-2 text-sm">
+                          You trained {plan.daysSince === 1 ? 'yesterday' : `${plan.daysSince} days ago`}. Next up is{' '}
+                          <span className="font-semibold">{plan.day.name}</span> on {plan.weekday}.
+                        </p>
+                        <Button variant="secondary" size="lg" className="mt-4 h-12 w-full" onClick={() => setTrainAnyway(true)}>
+                          Train anyway
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : null}
+                  {showForm && <WorkoutForm key={`${program.id}:${plan.dayIndex}`} dayIndex={plan.dayIndex} onSaved={() => setTrainAnyway(false)} />}
+                </>
+              )}
+
+              <p className="mt-8 text-sm text-muted-foreground">
+                Tomorrow: <span className="font-medium text-foreground">{tomorrow ? tomorrow.name : 'Rest day'}</span>
+              </p>
             </>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
-          <p className="mt-8 text-sm text-muted-foreground">
-            Tomorrow: <span className="font-medium text-foreground">{tomorrow ? tomorrow.name : 'Rest day'}</span>
-          </p>
+/* ---------- other days ---------- */
 
-        </>
-      )}
+function DayHeading({ dateKey, onToday }: { dateKey: number; onToday: () => void }) {
+  const d = new Date(dateKey)
+  return (
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <div className="text-xs text-muted-foreground">{relativeDay(d.toISOString())}</div>
+        <div className="truncate text-xl font-bold">{d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+      </div>
+      <Button variant="outline" size="sm" onClick={onToday}>
+        Today
+      </Button>
+    </div>
+  )
+}
+
+function DayEmpty({ dateKey, day, onToday }: { dateKey: number; day: WorkoutDay | null; onToday: () => void }) {
+  return (
+    <div>
+      <DayHeading dateKey={dateKey} onToday={onToday} />
+      <Card className="py-4">
+        <CardContent className="px-4">
+          <div className="text-xs text-muted-foreground">{day ? 'Scheduled' : 'Rest day'}</div>
+          <div className="mt-0.5 text-xl font-bold">{day ? day.name : 'Recover'}</div>
+          <p className="mt-2 text-sm text-muted-foreground">{day ? 'Nothing logged.' : 'Nothing scheduled, nothing logged.'}</p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+/** A day ahead: what the schedule has planned, with where you stand on each movement. */
+function DayPreview({ dateKey, program, data, onToday }: { dateKey: number; program: Program; data: { steps: Record<string, number | undefined>; customNames: Record<string, string>; sessions: Session[] }; onToday: () => void }) {
+  const day = scheduled(program, dateKey)
+  return (
+    <div>
+      <DayHeading dateKey={dateKey} onToday={onToday} />
+      <Card className="py-4">
+        <CardContent className="px-4">
+          <div className="text-xs text-muted-foreground">{day ? 'Scheduled' : 'Rest day'}</div>
+          <div className="mt-0.5 text-xl font-bold">{day ? day.name : 'Recover'}</div>
+          {day && (
+            <ul className="mt-3 space-y-1.5 text-sm">
+              {day.slots.map((s) => {
+                const name = s.kind === 'progression' ? getStep(s.progression, data.steps[s.progression] ?? 1).name : data.customNames[s.key] || s.label
+                const sub = s.kind === 'progression' ? `${PROGRESSIONS[s.progression].name} · step ${data.steps[s.progression] ?? 1}` : 'Your pick'
+                const last = lastEntryForSlot(data.sessions, program.id, s.key)
+                return (
+                  <li key={s.key} className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="font-medium">{name}</span>
+                      <span className="ml-1.5 text-xs text-muted-foreground">{sub}</span>
+                    </span>
+                    {last && <span className="shrink-0 text-muted-foreground tabular-nums">{fmtSets(last.entry)}</span>}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -176,23 +294,19 @@ export default function Today() {
 function DayDetail({
   dateKey,
   sessions,
+  onToday,
   onEdit,
   onDelete,
 }: {
   dateKey: number
   sessions: Session[]
+  onToday: () => void
   onEdit: (s: Session) => void
   onDelete: (s: Session) => void | Promise<void>
 }) {
-  const d = new Date(dateKey)
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-xs text-muted-foreground">{relativeDay(d.toISOString())}</div>
-          <div className="truncate text-xl font-bold">{d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
-        </div>
-      </div>
+      <DayHeading dateKey={dateKey} onToday={onToday} />
       <div className="space-y-2">
         {sessions.map((s) => (
           <Card key={s.id} className="py-3">
