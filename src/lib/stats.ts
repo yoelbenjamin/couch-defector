@@ -1,5 +1,5 @@
 import { getStep, REP_BAND } from '../data/progressions'
-import type { Entry, ProgressionId, Session, Step } from '../types'
+import type { Entry, ProgressionId, Session, Standard, Step, Unit } from '../types'
 
 export function hardSets(e: Entry) {
   return e.sets.filter((s) => !s.warmup && s.reps > 0)
@@ -52,13 +52,27 @@ export function entriesForProgression(sessions: Session[], progression: Progress
   return out
 }
 
+export type StandardLevel = 'none' | 'beginner' | 'intermediate' | 'progression'
+
 export interface GoalCheck {
   step: Step
-  /** Number of hard sets that reached the goal reps in the entry. */
+  /** Number of hard sets that reached the progression standard's reps. */
   setsAtGoal: number
+  /** Progression standard met: move up. */
   reached: boolean
+  /** Highest of the three standards met in this entry. */
+  level: StandardLevel
   /** Hard sets over the hypertrophy band's top. */
   overBand: boolean
+}
+
+function meets(sets: { reps: number }[], std: Standard) {
+  return sets.filter((s) => s.reps >= std.reps).length >= std.sets
+}
+
+export function fmtStandard(std: Standard, unit: Unit) {
+  const u = unit === 'seconds' ? 's' : ''
+  return std.sets === 1 && unit === 'seconds' ? `${std.reps}${u}` : `${std.sets} × ${std.reps}${u}`
 }
 
 export function checkGoal(entry: Entry): GoalCheck | null {
@@ -67,9 +81,10 @@ export function checkGoal(entry: Entry): GoalCheck | null {
   const hs = hardSets(entry)
   const setsAtGoal = hs.filter((s) => s.reps >= step.goal.reps).length
   const reached = setsAtGoal >= step.goal.sets
+  const level: StandardLevel = reached ? 'progression' : meets(hs, step.intermediate) ? 'intermediate' : meets(hs, step.beginner) ? 'beginner' : 'none'
   // Only meaningful when the step itself lives inside the muscle-building band; early rungs ask for far more reps by design.
   const overBand = step.unit === 'reps' && step.goal.reps <= REP_BAND.max && hs.length > 0 && hs.every((s) => s.reps > REP_BAND.max)
-  return { step, setsAtGoal, reached, overBand }
+  return { step, setsAtGoal, reached, level, overBand }
 }
 
 export function fmtSets(e: Entry) {

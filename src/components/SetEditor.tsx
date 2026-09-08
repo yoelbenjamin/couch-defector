@@ -17,10 +17,12 @@ interface Props {
   /** Ticked sets by index. Owned by the parent so it can be persisted with the draft. */
   done: boolean[]
   onDoneChange: (done: boolean[]) => void
+  /** Word for one row: "Set" for reps, "Hold" for timed work. */
+  noun?: string
 }
 
-function label(sets: SetEntry[], k: number) {
-  return sets[k].warmup ? 'Warm-up' : `Set ${sets.slice(0, k).filter((y) => !y.warmup).length + 1}`
+function label(sets: SetEntry[], k: number, noun = 'Set') {
+  return sets[k].warmup ? 'Warm-up' : `${noun} ${sets.slice(0, k).filter((y) => !y.warmup).length + 1}`
 }
 function prevFor(sets: SetEntry[], k: number, previous?: number[]) {
   if (!previous || sets[k].warmup) return undefined
@@ -43,7 +45,7 @@ function Prev({ prev, cur, mode, className }: { prev?: number; cur: number; mode
  * The sets of one exercise as a checklist: remove on the left, label, last time, the reps, and a tick on the right.
  * Tap the number to adjust just that set. Ticks are a mid-workout aid kept in the draft, not saved with the session.
  */
-export default function SetEditor({ sets, previous, prevMode = 'beside', suffix, onChange, done, onDoneChange }: Props) {
+export default function SetEditor({ sets, previous, prevMode = 'beside', suffix, onChange, done, onDoneChange, noun = 'Set' }: Props) {
   const setReps = (k: number, v: number) => onChange(sets.map((y, j) => (j === k ? { ...y, reps: Math.max(0, v) } : y)))
   const toggleWarmup = (k: number) => onChange(sets.map((y, j) => (j === k ? { ...y, warmup: !y.warmup } : y)))
   const remove = (k: number) => {
@@ -65,7 +67,7 @@ export default function SetEditor({ sets, previous, prevMode = 'beside', suffix,
             <X />
           </Button>
           <button type="button" onClick={() => toggleWarmup(k)} className={cn('w-14 text-left text-[11px] font-semibold', s.warmup && 'text-muted-foreground')}>
-            {label(sets, k)}
+            {label(sets, k, noun)}
           </button>
           {prevMode === 'beside' && <Prev prev={prevFor(sets, k, previous)} cur={s.reps} mode={prevMode} className="w-6 text-right" />}
           {open === k ? (

@@ -1,12 +1,12 @@
 import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { RULES, TECHNIQUE } from '@/data/technique'
+import { fmtStandard } from '@/lib/stats'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import type { Entry } from '@/types'
 
 /** Full-screen "how to do it" for one exercise: the step, the movement, and the rules for every set. */
 export default function TechniqueSheet({ entry, open, onOpenChange }: { entry: Entry | null; open: boolean; onOpenChange: (o: boolean) => void }) {
   const step = entry?.progression && entry.step ? getStep(entry.progression, entry.step) : null
-  const suffix = entry?.unit === 'seconds' ? 's' : ''
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[100dvh] gap-0 overflow-y-auto rounded-none p-0">
@@ -15,11 +15,25 @@ export default function TechniqueSheet({ entry, open, onOpenChange }: { entry: E
             <SheetHeader className="p-0 text-left">
               <SheetTitle className="text-2xl font-bold">{step.name}</SheetTitle>
               <SheetDescription>
-                {PROGRESSIONS[entry.progression].name} · step {step.n} of 10 · move up at {step.goal.sets} × {step.goal.reps}
-                {suffix}
+                {PROGRESSIONS[entry.progression].name} · step {step.n} of 10
               </SheetDescription>
             </SheetHeader>
             {step.image && <img src={step.image} alt={step.name} className="mt-4 w-full rounded-lg" />}
+            <div className="mt-4 grid grid-cols-3 divide-x rounded-lg border text-center">
+              {(
+                [
+                  ['Beginner', step.beginner],
+                  ['Intermediate', step.intermediate],
+                  ['Progression', step.goal],
+                ] as const
+              ).map(([label, std]) => (
+                <div key={label} className="px-2 py-2.5">
+                  <div className="text-[11px] text-muted-foreground">{label}</div>
+                  <div className="text-sm font-semibold tabular-nums">{fmtStandard(std, step.unit)}</div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Start at the beginner standard. Hit the progression standard and move up a step.</p>
             <div className="mt-5 space-y-6 text-[15px] leading-relaxed">
               <section>
                 <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">This step</h3>

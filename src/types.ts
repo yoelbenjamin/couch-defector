@@ -20,9 +20,13 @@ export interface Step {
   n: number
   name: string
   unit: Unit
-  /** Reach this to move to the next step. */
+  /** Beginner standard: where you start on this step. One set, or a short hold. */
+  beginner: Standard
+  /** Intermediate standard: solid at the step. */
+  intermediate: Standard
+  /** Progression standard. Reach this to move to the next step. */
   goal: Standard
-  /** A reasonable first-session target. */
+  /** Reps of the beginner standard, kept for callers that want a single starting number. */
   start: number
   cue?: string
   /** Step-by-step performance notes, when a shared source provides them. */

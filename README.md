@@ -6,9 +6,10 @@ Progressive bodyweight training tracker. Open it, see what's due today and what 
 
 ## How it works
 
-- **Six movements, ten steps each.** Push-up, squat, pull-up, leg raise, bridge, and handstand each progress through ten steps from easy variations to the hard one-limb versions. Hit the goal reps for your step and the app tells you to move up.
+- **Six movements, ten steps each.** Push-up, squat, pull-up, leg raise, bridge, and handstand each progress through ten steps from easy variations to the hard one-limb versions. Every step carries the book's three standards: beginner (where a new step starts), intermediate, and progression. Hit the progression standard and the app tells you to move up.
+- **Trifecta on rest days.** Bridge hold, L-hold, and twist hold from Convict Conditioning 2, each with a five-step ladder and a seconds counter per chunk. Logged as mobility, never counted as training.
 - **Programs.** The five Convict Conditioning routines as weekday schedules: New Blood (Mon/Fri), Good Behavior (Mon/Tue/Fri), Veterano (one movement a day, six days), Solitary Confinement (six days, each movement twice), Supermax (all six, six days). The app shows today's workout, or the next one on a rest day.
-- **Today.** One screen: an activity grid of the last 26 weeks, then today's workout with logging right there. Each exercise is prefilled with last time's sets. Bump reps with a stepper, hit Finish, done. Tap a filled day in the grid to see or edit that session.
+- **Today.** One screen: an activity grid of the last 26 weeks, then today's workout with logging right there. Each exercise is prefilled with last time's sets; tick sets off as you go, tap a number to adjust it. Drafts survive leaving the screen or closing the app. Swipe the workout area right to step back through past days, or tap a grid cell.
 - **Sign in with Google** to sync across devices. Without sign-in configured, the app runs in device-only mode and keeps data in the browser.
 
 Monochrome, light only, no shadows, installable on a phone home screen.

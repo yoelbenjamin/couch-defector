@@ -152,6 +152,7 @@ export default function TrifectaForm({ editing = null, onSaved }: { editing?: Se
                 <SetEditor
                   sets={e.sets}
                   suffix="s"
+                  noun="Hold"
                   previous={prev ? hardSets(prev).map((x) => x.reps) : undefined}
                   onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
                   done={done[e.slotKey] ?? []}

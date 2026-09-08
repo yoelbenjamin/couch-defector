@@ -17,22 +17,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import type { Entry, Program, ProgressionId, Session, SetEntry, Slot, UserData } from '@/types'
 
-function setsForStep(progression: ProgressionId, stepN: number, sessions: Session[], workSets: number): SetEntry[] {
+function setsForStep(progression: ProgressionId, stepN: number, sessions: Session[]): SetEntry[] {
   const step = getStep(progression, stepN)
   const last = lastEntryForStep(sessions, progression, stepN)
+  // First time on a step: the beginner standard. After that: what you did last time.
   const hard: SetEntry[] = last
     ? last.entry.sets.filter((s) => !s.warmup).map((s) => ({ reps: s.reps }))
-    : Array.from({ length: Math.max(workSets, step.goal.sets) }, () => ({
-        reps: step.start,
-      }))
+    : Array.from({ length: step.beginner.sets }, () => ({ reps: step.beginner.reps }))
   if (step.unit !== 'reps') return hard
-  return [
-    {
-      reps: Math.max(1, Math.round((hard[0]?.reps ?? step.start) / 2)),
-      warmup: true,
-    },
-    ...hard,
-  ]
+  return [{ reps: Math.max(1, Math.round((hard[0]?.reps ?? step.beginner.reps) / 2)), warmup: true }, ...hard]
 }
 
 function initialEntry(slot: Slot, data: UserData, program: Program): Entry {
@@ -45,7 +38,7 @@ function initialEntry(slot: Slot, data: UserData, program: Program): Entry {
       unit: step.unit,
       progression: slot.progression,
       step: stepN,
-      sets: setsForStep(slot.progression, stepN, data.sessions, program.workSets),
+      sets: setsForStep(slot.progression, stepN, data.sessions),
     }
   }
   const last = lastEntryForSlot(data.sessions, program.id, slot.key)
@@ -152,7 +145,7 @@ export default function WorkoutForm({
       step: stepN,
       name: step.name,
       unit: step.unit,
-      sets: setsForStep(e.progression!, stepN, data.sessions, program.workSets),
+      sets: setsForStep(e.progression!, stepN, data.sessions),
     }))
   }
 
@@ -271,7 +264,9 @@ export default function WorkoutForm({
                     <Plus className="size-3.5" /> Add set
                   </Button>
                   <div className="flex gap-1.5">
-                    {goal?.reached && <Badge variant="secondary">Goal hit, move up next time</Badge>}
+                    {goal?.level === 'progression' && <Badge variant="secondary">Progression standard. Move up next time</Badge>}
+                    {goal?.level === 'intermediate' && <Badge variant="secondary">Intermediate standard</Badge>}
+                    {goal?.level === 'beginner' && <Badge variant="secondary">Beginner standard</Badge>}
                     {goal?.overBand && !goal.reached && <Badge variant="secondary">Over 20, try a harder step</Badge>}
                   </div>
                 </div>
