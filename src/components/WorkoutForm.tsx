@@ -265,8 +265,6 @@ export default function WorkoutForm({
                   </Button>
                   <div className="flex gap-1.5">
                     {goal?.level === 'progression' && <Badge variant="secondary">Progression standard. Move up next time</Badge>}
-                    {goal?.level === 'intermediate' && <Badge variant="secondary">Intermediate standard</Badge>}
-                    {goal?.level === 'beginner' && <Badge variant="secondary">Beginner standard</Badge>}
                     {goal?.overBand && !goal.reached && <Badge variant="secondary">Over 20, try a harder step</Badge>}
                   </div>
                 </div>
