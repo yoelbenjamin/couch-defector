@@ -238,6 +238,13 @@ function StatesTab({ close }: { close: () => void }) {
 
 function IdeasTab() {
   const proto = useProto()
+  if (IDEA_KEYS.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No open ideas. Add one in <code>src/dev/ideas.ts</code> and it appears here.
+      </p>
+    )
+  }
   const areas = [...new Set(IDEA_KEYS.map((k) => IDEAS[k].area))]
   const changed = IDEA_KEYS.filter((k) => proto.ideas[k] !== IDEAS[k].default).length
 
@@ -292,7 +299,7 @@ function IdeaRow({ k }: { k: IdeaKey }) {
           size="sm"
           className="mt-2 w-full"
           value={value as string}
-          onValueChange={(v) => v && proto.setIdea(k, v as never)}
+          onValueChange={(v) => v && proto.setIdea(k, v)}
         >
           {def.options.map((o) => (
             <ToggleGroupItem key={o} value={o} className="flex-1 text-xs capitalize">

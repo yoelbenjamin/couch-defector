@@ -47,7 +47,7 @@ export interface ProtoApi extends ProtoState {
   loadScenario: (id: string, auth: AuthMode, data: UserData) => void
   setAuth: (a: AuthMode) => void
   setData: (fn: (d: UserData) => UserData) => void
-  setIdea: <K extends IdeaKey>(k: K, v: IdeaValue<K>) => void
+  setIdea: (k: IdeaKey, v: IdeaValue) => void
   resetIdeas: () => void
   setFrame: (on: boolean) => void
   setDocked: (on: boolean) => void
@@ -125,9 +125,9 @@ export function useProto() {
 
 const DEFAULTS = ideaDefaults()
 /** Read an idea flag. Falls back to the default when the controller is unavailable. */
-export function useIdea<K extends IdeaKey>(key: K): IdeaValue<K> {
+export function useIdea(key: IdeaKey): IdeaValue | undefined {
   const p = useContext(Ctx)
-  return (p?.ideas[key] ?? DEFAULTS[key]) as IdeaValue<K>
+  return p?.ideas[key] ?? DEFAULTS[key]
 }
 
 /** Optional phone frame for exploring on a desktop browser. */

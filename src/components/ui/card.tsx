@@ -2,17 +2,43 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/** Grey tray that groups white inset cards, with the section's button sitting in the tray below them. */
+function Tray({
+  className,
+  action,
+  children,
+  ...props
+}: React.ComponentProps<"div"> & {
+  /** A button rendered in the tray under the cards, full width. */
+  action?: React.ReactNode
+}) {
+  return (
+    <div data-slot="tray" className={cn("ws-tray flex flex-col gap-2.5", className)} {...props}>
+      {children}
+      {action && <div className="ws-card-action [&>*]:w-full">{action}</div>}
+    </div>
+  )
+}
+
 function Card({
   className,
-  variant = "raised",
+  variant = "plain",
   action,
   ...props
 }: React.ComponentProps<"div"> & {
-  /** raised: grey tray holding a white inset (the reference "Cards inset"). plain: single raised surface. flat: quiet grey surface. */
-  variant?: "raised" | "plain" | "flat"
-  /** A button rendered in the tray under the inset, full width. */
+  /**
+   * plain: a single raised white surface (lone cards).
+   * inset: white inset for use inside a Tray.
+   * flat: quiet grey surface.
+   * raised: its own tray around one inset.
+   */
+  variant?: "plain" | "inset" | "flat" | "raised"
+  /** raised only: a button rendered in the tray under the inset, full width. */
   action?: React.ReactNode
 }) {
+  if (variant === "inset") {
+    return <div data-slot="card" data-variant={variant} className={cn("ws-inset flex flex-col gap-4 text-card-foreground", className)} {...props} />
+  }
   if (variant !== "raised") {
     return (
       <div
@@ -98,6 +124,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 export {
+  Tray,
   Card,
   CardHeader,
   CardFooter,

@@ -8,7 +8,7 @@ import { hardSets } from '@/lib/stats'
 import { newId, useStore } from '@/lib/store'
 import SetEditor from '@/components/SetEditor'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, Tray } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import type { Entry, HoldId, Session, SetEntry } from '@/types'
@@ -123,77 +123,80 @@ export default function TrifectaForm({ editing = null, onSaved }: { editing?: Se
 
   return (
     <div className="space-y-3">
-      {entries.map((e, i) => {
-        if (!e.hold) return null
-        const hold = HOLDS[e.hold]
-        const prev = lastHold(data.sessions, e.hold, e.step ?? 1, editing?.id)
-        const total = hardSets(e).reduce((t, s) => t + s.reps, 0)
-        return (
-          <section key={e.slotKey}>
-            <Card>
-              <CardContent>
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
-                    <SelectTrigger variant="bare" className="max-w-full text-xl font-bold [&>svg]:size-5">
-                      <SelectValue>{e.name}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hold.steps.map((s) => (
-                        <SelectItem key={s.n} value={String(s.n)}>
-                          {s.n}. {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    className="shrink-0 text-muted-foreground"
-                    aria-label="How to do it"
-                    onClick={() => setInfo(e.hold!)}
-                  >
-                    <Info className="size-4" />
-                  </Button>
-                </div>
-                <SetEditor
-                  sets={e.sets}
-                  suffix="s"
-                  noun="Hold"
-                  previous={prev ? hardSets(prev).map((x) => x.reps) : undefined}
-                  onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
-                  done={done[e.slotKey] ?? []}
-                  onDoneChange={(d) => setDone((all) => ({ ...all, [e.slotKey]: d }))}
-                />
-                <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-2 text-muted-foreground"
-                    onClick={() => update(i, (x) => ({ ...x, sets: [...x.sets, { reps: x.sets.at(-1)?.reps ?? 5 }] }))}
-                  >
-                    + Add hold
-                  </Button>
-                  <span className="tabular-nums">
-                    {total}s total{hold.perSide ? ' per side' : ''}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-        )
-      })}
-
-      <div className="pt-1">
-        <Button size="lg" className="h-12 w-full" disabled={saving} onClick={finish}>
-          {saving ? 'Saving…' : editing ? 'Save changes' : 'Finish Trifecta'}
-        </Button>
-        <div className="mt-1 text-center">
-          <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={reset}>
-            Reset
+      <Tray
+        action={
+          <Button size="lg" className="h-12 w-full" disabled={saving} onClick={finish}>
+            {saving ? 'Saving…' : editing ? 'Save changes' : 'Finish Trifecta'}
           </Button>
-        </div>
+        }
+      >
+        {entries.map((e, i) => {
+          if (!e.hold) return null
+          const hold = HOLDS[e.hold]
+          const prev = lastHold(data.sessions, e.hold, e.step ?? 1, editing?.id)
+          const total = hardSets(e).reduce((t, s) => t + s.reps, 0)
+          return (
+            <section key={e.slotKey}>
+              <Card variant="inset">
+                <CardContent>
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
+                      <SelectTrigger variant="bare" className="max-w-full text-xl font-bold [&>svg]:size-5">
+                        <SelectValue>{e.name}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hold.steps.map((s) => (
+                          <SelectItem key={s.n} value={String(s.n)}>
+                            {s.n}. {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="shrink-0 text-muted-foreground"
+                      aria-label="How to do it"
+                      onClick={() => setInfo(e.hold!)}
+                    >
+                      <Info className="size-4" />
+                    </Button>
+                  </div>
+                  <SetEditor
+                    sets={e.sets}
+                    suffix="s"
+                    noun="Hold"
+                    previous={prev ? hardSets(prev).map((x) => x.reps) : undefined}
+                    onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
+                    done={done[e.slotKey] ?? []}
+                    onDoneChange={(d) => setDone((all) => ({ ...all, [e.slotKey]: d }))}
+                  />
+                  <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="-ml-2 text-muted-foreground"
+                      onClick={() => update(i, (x) => ({ ...x, sets: [...x.sets, { reps: x.sets.at(-1)?.reps ?? 5 }] }))}
+                    >
+                      + Add hold
+                    </Button>
+                    <span className="tabular-nums">
+                      {total}s total{hold.perSide ? ' per side' : ''}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )
+        })}
+      </Tray>
+
+      <div className="text-center">
+        <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={reset}>
+          Reset
+        </Button>
       </div>
 
       <Sheet open={info !== null} onOpenChange={(o) => !o && setInfo(null)}>

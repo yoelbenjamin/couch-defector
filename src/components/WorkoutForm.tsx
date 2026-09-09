@@ -7,12 +7,11 @@ import { checkGoal, hardSets, lastEntryForSlot, lastEntryForStep } from '@/lib/s
 import { dayKey } from '@/lib/schedule'
 import { newId, useStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
-import { useIdea } from '@/dev/proto'
 import SetEditor from '@/components/SetEditor'
 import TechniqueSheet from '@/components/TechniqueSheet'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, Tray } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { Entry, Program, ProgressionId, Session, SetEntry, Slot, UserData } from '@/types'
@@ -101,7 +100,6 @@ export default function WorkoutForm({
   onSaved?: (s: Session) => void
 }) {
   const { data, saveSession, setStep } = useStore()
-  const prevSet = useIdea('prevSet')
   const program = getProgram(data.programId)
   const cycleDay = program.cycle[dayIndex]
   const day = cycleDay && !('rest' in cycleDay && cycleDay.rest) ? cycleDay.day : null
@@ -193,117 +191,115 @@ export default function WorkoutForm({
 
   return (
     <div className={cn('space-y-3', footer === 'sticky' && 'pb-28')}>
-      {entries.map((e, i) => {
-        const last = lastBySlot.get(e.slotKey) ?? null
-        const sameStep = last && e.progression ? last.entry.step === e.step : true
-        const goal = checkGoal(e)
-        const step = e.progression && e.step ? getStep(e.progression, e.step) : null
-        const suffix = e.unit === 'seconds' ? 's' : undefined
-        return (
-          <section key={e.slotKey}>
-            <Card>
-              <CardContent>
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  {e.progression ? (
-                    <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
-                      <SelectTrigger variant="bare" className="max-w-full text-xl font-bold [&>svg]:size-5">
-                        <SelectValue>{step?.name ?? e.name}</SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PROGRESSIONS[e.progression].steps.map((s) => (
-                          <SelectItem key={s.n} value={String(s.n)}>
-                            {s.n}. {s.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <h2 className="text-xl font-bold">{e.name}</h2>
-                  )}
-                  {e.progression && step && (
+      <Tray action={footer === 'inline' ? finishButton : undefined}>
+        {entries.map((e, i) => {
+          const last = lastBySlot.get(e.slotKey) ?? null
+          const sameStep = last && e.progression ? last.entry.step === e.step : true
+          const goal = checkGoal(e)
+          const step = e.progression && e.step ? getStep(e.progression, e.step) : null
+          const suffix = e.unit === 'seconds' ? 's' : undefined
+          return (
+            <section key={e.slotKey}>
+              <Card variant="inset">
+                <CardContent>
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    {e.progression ? (
+                      <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
+                        <SelectTrigger variant="bare" className="max-w-full text-xl font-bold [&>svg]:size-5">
+                          <SelectValue>{step?.name ?? e.name}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PROGRESSIONS[e.progression].steps.map((s) => (
+                            <SelectItem key={s.n} value={String(s.n)}>
+                              {s.n}. {s.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <h2 className="text-xl font-bold">{e.name}</h2>
+                    )}
+                    {e.progression && step && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="shrink-0 text-muted-foreground"
+                        aria-label="How to do it"
+                        onClick={() => setInfo(i)}
+                      >
+                        <Info className="size-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <SetEditor
+                    sets={e.sets}
+                    previous={last && sameStep ? hardSets(last.entry).map((x) => x.reps) : undefined}
+                    suffix={suffix}
+                    onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
+                    done={done[e.slotKey] ?? []}
+                    onDoneChange={(d) => setDone((all) => ({ ...all, [e.slotKey]: d }))}
+                  />
+
+                  <div className="mt-3 flex items-center justify-between">
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon-sm"
-                      className="shrink-0 text-muted-foreground"
-                      aria-label="How to do it"
-                      onClick={() => setInfo(i)}
+                      size="sm"
+                      className="-ml-2 text-muted-foreground"
+                      onClick={() =>
+                        update(i, (x) => ({
+                          ...x,
+                          sets: [
+                            ...x.sets,
+                            {
+                              reps: x.sets.filter((y) => !y.warmup).at(-1)?.reps ?? 0,
+                            },
+                          ],
+                        }))
+                      }
                     >
-                      <Info className="size-4" />
+                      <Plus className="size-3.5" /> Add set
                     </Button>
-                  )}
-                </div>
-                <SetEditor
-                  sets={e.sets}
-                  previous={last && sameStep ? hardSets(last.entry).map((x) => x.reps) : undefined}
-                  prevMode={prevSet}
-                  suffix={suffix}
-                  onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
-                  done={done[e.slotKey] ?? []}
-                  onDoneChange={(d) => setDone((all) => ({ ...all, [e.slotKey]: d }))}
-                />
-
-                <div className="mt-3 flex items-center justify-between">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-2 text-muted-foreground"
-                    onClick={() =>
-                      update(i, (x) => ({
-                        ...x,
-                        sets: [
-                          ...x.sets,
-                          {
-                            reps: x.sets.filter((y) => !y.warmup).at(-1)?.reps ?? 0,
-                          },
-                        ],
-                      }))
-                    }
-                  >
-                    <Plus className="size-3.5" /> Add set
-                  </Button>
-                  <div className="flex gap-1.5">
-                    {goal?.level === 'progression' && <Badge variant="secondary">Progression standard. Move up next time</Badge>}
-                    {goal?.overBand && !goal.reached && <Badge variant="secondary">Over 20, try a harder step</Badge>}
+                    <div className="flex gap-1.5">
+                      {goal?.level === 'progression' && <Badge variant="secondary">Progression standard. Move up next time</Badge>}
+                      {goal?.overBand && !goal.reached && <Badge variant="secondary">Over 20, try a harder step</Badge>}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-        )
-      })}
+                </CardContent>
+              </Card>
+            </section>
+          )
+        })}
+
+        {showNote || note ? (
+          <Card variant="inset">
+            <CardContent>
+              <label className="text-xs font-semibold text-muted-foreground">Note</label>
+              <Textarea
+                autoFocus={showNote && !note}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={2}
+                placeholder="How did it feel? Anything to change next time?"
+                className="mt-1 resize-none"
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <Button type="button" variant="ghost" size="sm" className="ml-[9px] text-muted-foreground" onClick={() => setShowNote(true)}>
+            <Plus className="size-3.5" /> Add note
+          </Button>
+        )}
+      </Tray>
 
       <TechniqueSheet entry={info === null ? null : (entries[info] ?? null)} open={info !== null} onOpenChange={(o) => !o && setInfo(null)} />
 
-      {showNote || note ? (
-        <Card>
-          <CardContent>
-            <label className="text-xs font-semibold text-muted-foreground">Note</label>
-            <Textarea
-              autoFocus={showNote && !note}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={2}
-              placeholder="How did it feel? Anything to change next time?"
-              className="mt-1 resize-none"
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <Button type="button" variant="ghost" size="sm" className="ml-[9px] text-muted-foreground" onClick={() => setShowNote(true)}>
-          <Plus className="size-3.5" /> Add note
-        </Button>
-      )}
-
       {footer === 'inline' ? (
-        <div className="pt-1">
-          {finishButton}
-          <div className="mt-1 text-center">
-            <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={reset}>
-              Reset
-            </Button>
-          </div>
+        <div className="text-center">
+          <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={reset}>
+            Reset
+          </Button>
         </div>
       ) : (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 mx-auto max-w-md px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] [&>*]:pointer-events-auto">

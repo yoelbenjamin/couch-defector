@@ -6,24 +6,14 @@ export type IdeaDef =
   | { kind: 'toggle'; area: string; label: string; description: string; default: boolean }
   | { kind: 'choice'; area: string; label: string; description: string; options: readonly string[]; default: string }
 
-export const IDEAS = {
-  prevSet: {
-    kind: 'choice',
-    area: 'Workout',
-    label: 'Last time beside each set',
-    description: 'Off: only the summary line. Beside: last time\u2019s reps next to each set. Diff: +1 / \u22121 against last time.',
-    options: ['off', 'beside', 'diff'],
-    default: 'beside',
-  },
-} as const satisfies Record<string, IdeaDef>
+/** Empty for now: every idea so far has been decided and folded into the app. */
+export const IDEAS: Record<string, IdeaDef> = {}
 
-export type IdeaKey = keyof typeof IDEAS
-export type IdeaValue<K extends IdeaKey = IdeaKey> = (typeof IDEAS)[K] extends { options: readonly (infer O)[] }
-  ? O
-  : boolean
-export type IdeaValues = { [K in IdeaKey]: IdeaValue<K> }
+export type IdeaKey = string
+export type IdeaValue = boolean | string
+export type IdeaValues = Record<IdeaKey, IdeaValue>
 
 export function ideaDefaults(): IdeaValues {
-  return Object.fromEntries(Object.entries(IDEAS).map(([k, v]) => [k, v.default])) as IdeaValues
+  return Object.fromEntries(Object.entries(IDEAS).map(([k, v]) => [k, v.default]))
 }
-export const IDEA_KEYS = Object.keys(IDEAS) as IdeaKey[]
+export const IDEA_KEYS = Object.keys(IDEAS)

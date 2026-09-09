@@ -5,13 +5,10 @@ import Stepper from '@/components/Stepper'
 import { Button } from '@/components/ui/button'
 import type { SetEntry } from '@/types'
 
-export type PrevMode = 'off' | 'beside' | 'diff'
-
 interface Props {
   sets: SetEntry[]
   /** Last time's hard-set reps, in order. Aligned to this exercise's hard sets by position. */
   previous?: number[]
-  prevMode?: PrevMode
   suffix?: string
   onChange: (sets: SetEntry[]) => void
   /** Ticked sets by index. Owned by the parent so it can be persisted with the draft. */
@@ -29,23 +26,17 @@ function prevFor(sets: SetEntry[], k: number, previous?: number[]) {
   return previous[sets.slice(0, k).filter((y) => !y.warmup).length]
 }
 
-/** Last time's number, or the difference against it, as a small muted token. */
-function Prev({ prev, cur, mode, className }: { prev?: number; cur: number; mode: PrevMode; className?: string }) {
-  if (mode === 'off' || prev === undefined) return null
-  if (mode === 'beside') return <span className={cn('text-xs text-muted-foreground tabular-nums', className)}>{prev}</span>
-  const d = cur - prev
-  return (
-    <span className={cn('text-xs tabular-nums', d > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground', className)}>
-      {d > 0 ? `+${d}` : d < 0 ? `−${-d}` : '='}
-    </span>
-  )
+/** Last time's reps for this set, as a small muted number beside the current one. */
+function Prev({ prev, className }: { prev?: number; className?: string }) {
+  if (prev === undefined) return null
+  return <span className={cn('text-xs text-muted-foreground tabular-nums', className)}>{prev}</span>
 }
 
 /**
  * The sets of one exercise as a checklist: remove on the left, label, last time, the reps, and a tick on the right.
  * Tap the number to adjust just that set. Ticks are a mid-workout aid kept in the draft, not saved with the session.
  */
-export default function SetEditor({ sets, previous, prevMode = 'beside', suffix, onChange, done, onDoneChange, noun = 'Set' }: Props) {
+export default function SetEditor({ sets, previous, suffix, onChange, done, onDoneChange, noun = 'Set' }: Props) {
   const setReps = (k: number, v: number) => onChange(sets.map((y, j) => (j === k ? { ...y, reps: Math.max(0, v) } : y)))
   const toggleWarmup = (k: number) => onChange(sets.map((y, j) => (j === k ? { ...y, warmup: !y.warmup } : y)))
   const remove = (k: number) => {
@@ -69,7 +60,7 @@ export default function SetEditor({ sets, previous, prevMode = 'beside', suffix,
           <button type="button" onClick={() => toggleWarmup(k)} className={cn('w-14 text-left text-[11px] font-semibold', s.warmup && 'text-muted-foreground')}>
             {label(sets, k, noun)}
           </button>
-          {prevMode === 'beside' && <Prev prev={prevFor(sets, k, previous)} cur={s.reps} mode={prevMode} className="w-6 text-right" />}
+          <Prev prev={prevFor(sets, k, previous)} className="w-6 text-right" />
           {open === k ? (
             <Stepper value={s.reps} suffix={suffix} onChange={(v) => setReps(k, v)} />
           ) : (
@@ -78,7 +69,6 @@ export default function SetEditor({ sets, previous, prevMode = 'beside', suffix,
               {suffix}
             </button>
           )}
-          {prevMode === 'diff' && <Prev prev={prevFor(sets, k, previous)} cur={s.reps} mode={prevMode} />}
           {open === k && (
             <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setOpen(null)}>
               Done
