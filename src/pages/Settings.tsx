@@ -30,11 +30,11 @@ export default function Settings() {
         }
       />
 
-      <Card className="gap-3 py-4">
-        <CardHeader className="px-4">
+      <Card className="gap-3">
+        <CardHeader>
           <CardTitle className="text-xs text-muted-foreground">Account</CardTitle>
         </CardHeader>
-        <CardContent className="px-4">
+        <CardContent>
           {cloud && user ? (
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
@@ -51,11 +51,11 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      <Card className="gap-3 py-4">
-        <CardHeader className="px-4">
+      <Card className="gap-3">
+        <CardHeader>
           <CardTitle className="text-xs text-muted-foreground">Program</CardTitle>
         </CardHeader>
-        <CardContent className="px-4">
+        <CardContent>
           <Select value={program.id} onValueChange={setProgram}>
             <SelectTrigger className="h-11 w-full">
               <SelectValue />
@@ -74,12 +74,12 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      <Card className="gap-3 py-4">
-        <CardHeader className="px-4">
+      <Card className="gap-3">
+        <CardHeader>
           <CardTitle className="text-xs text-muted-foreground">Starting point</CardTitle>
           <CardDescription className="text-xs">Where you are on each of the six movements. Pick the hardest step you can do for at least a few clean reps.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2 px-4">
+        <CardContent className="space-y-2">
           {PROGRESSION_IDS.map((pid) => (
             <div key={pid} className="flex items-center justify-between gap-3">
               <span className="text-sm">{PROGRESSIONS[pid].name}</span>
@@ -100,12 +100,12 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      <Card className="gap-3 py-4">
-        <CardHeader className="px-4">
+      <Card className="gap-3">
+        <CardHeader>
           <CardTitle className="text-xs text-muted-foreground">Mobility</CardTitle>
           <CardDescription className="text-xs">Your step on each Trifecta hold. Rest days show these three. Pick the version you can hold comfortably, never the hardest.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2 px-4">
+        <CardContent className="space-y-2">
           {HOLD_IDS.map((h) => (
             <div key={h} className="flex items-center justify-between gap-3">
               <span className="text-sm">{HOLDS[h].name}</span>
@@ -127,12 +127,12 @@ export default function Settings() {
       </Card>
 
       {uniqueCustom.length > 0 && (
-        <Card className="gap-3 py-4">
-          <CardHeader className="px-4">
+        <Card className="gap-3">
+          <CardHeader>
             <CardTitle className="text-xs text-muted-foreground">Your exercise picks</CardTitle>
             <CardDescription className="text-xs">Name the movement you use for each open slot.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2 px-4">
+          <CardContent className="space-y-2">
             {uniqueCustom.map((s) => (
               <label key={s.key} className="block">
                 <span className="text-xs text-muted-foreground">{s.label}</span>

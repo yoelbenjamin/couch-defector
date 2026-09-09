@@ -14,7 +14,7 @@ function Card({
 }) {
   return (
     <div data-slot="card" data-variant={variant} className={cn("wtray", variant === "flat" && "wtray--flat")}>
-      <div className={cn("winset flex flex-col gap-6 py-6 text-card-foreground", className)} {...props} />
+      <div className={cn("winset flex flex-col gap-4 p-5 text-card-foreground", className)} {...props} />
       {action && <div className="pt-2.5 [&>*]:w-full">{action}</div>}
     </div>
   )
@@ -70,7 +70,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
-      className={cn("px-6", className)}
+      className={cn(className)}
       {...props}
     />
   )
@@ -80,7 +80,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-footer"
-      className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
+      className={cn("flex items-center [.border-t]:pt-6", className)}
       {...props}
     />
   )

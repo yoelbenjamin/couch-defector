@@ -36,7 +36,7 @@ export default function Onboarding() {
             const cur = steps[pid] ?? data.steps[pid] ?? 1
             return (
               <Card key={pid} className="py-4">
-                <CardContent className="px-4">
+                <CardContent>
                   <div className="mb-2 text-sm font-semibold">{p.name}</div>
                   <Select value={String(cur)} onValueChange={(v) => setSteps((s) => ({ ...s, [pid]: Number(v) }))}>
                     <SelectTrigger className="h-11 w-full">
@@ -90,7 +90,7 @@ export default function Onboarding() {
             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setChoice(p.id)}
             className={cn('cursor-pointer py-4 transition', choice === p.id && 'border-primary bg-primary/10')}
           >
-            <CardContent className="px-4">
+            <CardContent>
               <div className="flex items-center justify-between">
                 <span className="font-semibold">{p.name}</span>
                 {levelBadge(p.level)}

@@ -166,8 +166,8 @@ export default function Today() {
               )}
 
               {plan.doneToday ? (
-                <Card className="py-4">
-                  <CardContent className="px-4">
+                <Card>
+                  <CardContent>
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <div className="text-xs text-muted-foreground">Done today</div>
@@ -191,8 +191,8 @@ export default function Today() {
                 <>
                   {plan.restSuggested && !trainAnyway ? (
                     <>
-                      <Card variant="flat" className="py-4">
-                        <CardContent className="px-4">
+                      <Card variant="flat">
+                        <CardContent>
                           <div className="text-xs text-muted-foreground">Rest day</div>
                           <div className="mt-0.5 text-xl font-bold">Recover</div>
                           <p className="mt-2 text-sm">
@@ -210,8 +210,8 @@ export default function Today() {
                         <p className="mt-0.5 text-sm text-muted-foreground">Three easy holds to keep the joints moving. About twenty seconds each.</p>
                       </div>
                       {plan.mobilityToday && !editMobility ? (
-                        <Card className="py-4">
-                          <CardContent className="px-4">
+                        <Card>
+                          <CardContent>
                             <div className="flex items-center justify-between gap-3">
                               <div className="text-sm font-semibold">Done today</div>
                               <Button variant="outline" size="sm" onClick={() => setEditMobility(true)}>
@@ -253,8 +253,8 @@ export default function Today() {
 function DayEmpty({ day }: { day: WorkoutDay | null }) {
   return (
     <div>
-      <Card className="py-4">
-        <CardContent className="px-4">
+      <Card>
+        <CardContent>
           <div className="text-xs text-muted-foreground">{day ? 'Scheduled' : 'Rest day'}</div>
           <div className="mt-0.5 text-xl font-bold">{day ? day.name : 'Recover'}</div>
           <p className="mt-2 text-sm text-muted-foreground">{day ? 'Nothing logged.' : 'Nothing scheduled, nothing logged.'}</p>
@@ -278,7 +278,7 @@ function DayDetail({
       <div className="space-y-2">
         {sessions.map((s) => (
           <Card key={s.id} className="py-3">
-            <CardContent className="px-4">
+            <CardContent>
               <div className="flex items-center justify-between gap-3">
                 <div className="font-semibold">{s.dayName}</div>
                 <span className="text-xs text-muted-foreground">{new Date(s.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>

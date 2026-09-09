@@ -130,8 +130,8 @@ export default function TrifectaForm({ editing = null, onSaved }: { editing?: Se
         const total = hardSets(e).reduce((t, s) => t + s.reps, 0)
         return (
           <section key={e.slotKey}>
-            <Card className="py-4">
-              <CardContent className="px-4">
+            <Card>
+              <CardContent>
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
                     <SelectTrigger className="h-auto w-auto max-w-full border-0 bg-transparent px-0 py-0.5 text-xl font-bold [&>svg]:size-5">

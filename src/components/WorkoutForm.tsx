@@ -201,8 +201,8 @@ export default function WorkoutForm({
         const suffix = e.unit === 'seconds' ? 's' : undefined
         return (
           <section key={e.slotKey}>
-            <Card className="py-4">
-              <CardContent className="px-4">
+            <Card>
+              <CardContent>
                 <div className="mb-3 flex items-center justify-between gap-2">
                   {e.progression ? (
                     <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
@@ -277,8 +277,8 @@ export default function WorkoutForm({
       <TechniqueSheet entry={info === null ? null : (entries[info] ?? null)} open={info !== null} onOpenChange={(o) => !o && setInfo(null)} />
 
       {showNote || note ? (
-        <Card className="py-4">
-          <CardContent className="px-4">
+        <Card>
+          <CardContent>
             <label className="text-xs font-semibold text-muted-foreground">Note</label>
             <Textarea
               autoFocus={showNote && !note}
