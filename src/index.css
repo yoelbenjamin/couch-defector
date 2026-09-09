@@ -134,17 +134,17 @@ button { touch-action: manipulation; }
 .gbtn--green { --gbtn-bg: #8fb08f; --gbtn-bg-hover: #85a685; --gbtn-fg: #ffffff; --gbtn-border: #4f7a4f; --gbtn-stroke: rgba(255, 255, 255, 0.25); --gbtn-highlight: rgba(255, 255, 255, 0.22); }
 .gbtn--red { --gbtn-bg: #e07866; --gbtn-bg-hover: #d96f5c; --gbtn-fg: #ffffff; --gbtn-border: #b6452f; --gbtn-stroke: rgba(255, 255, 255, 0.25); --gbtn-highlight: rgba(255, 255, 255, 0.22); }
 
-/* Metallic streak badges: gradient fill in the padding box, bevelled gradient rim in the border box. */
+/* Metallic streak badges, after the reference: diagonal brushed fill, bevelled rim, bold label. */
 .metal {
   display: inline-flex;
   align-items: center;
-  height: 1.5rem;
-  padding: 0 0.7rem;
+  height: 2rem;
+  padding: 0 0.95rem;
   border-radius: 9999px;
-  border: 1.5px solid transparent;
-  font-size: 0.72rem;
+  border: 2px solid transparent;
+  font-size: 0.875rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.005em;
   white-space: nowrap;
   background:
     var(--metal-fill) padding-box,
@@ -153,50 +153,34 @@ button { touch-action: manipulation; }
   text-shadow: var(--metal-text-shadow);
   box-shadow:
     inset 0 1px 0 var(--metal-sheen),
-    0 1px 2px rgba(0, 0, 0, 0.12);
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 6px 14px -6px rgba(0, 0, 0, 0.35);
 }
 .metal--graphite {
-  --metal-fill: linear-gradient(180deg, #4b4b4e 0%, #2b2b2e 100%);
-  --metal-rim: linear-gradient(135deg, #8d8d91 0%, #1b1b1d 45%, #6c6c70 60%, #121213 100%);
+  --metal-fill: linear-gradient(135deg, #262628 0%, #3f3f43 45%, #66666b 100%);
+  --metal-rim: linear-gradient(135deg, #a3a3a7 0%, #2a2a2c 28%, #8f8f94 52%, #1a1a1c 78%, #a8a8ac 100%);
   --metal-fg: #ffffff;
-  --metal-sheen: rgba(255, 255, 255, 0.14);
-  --metal-text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+  --metal-sheen: rgba(255, 255, 255, 0.16);
+  --metal-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 .metal--steel {
-  --metal-fill: linear-gradient(180deg, #8c9aa4 0%, #5d6b76 100%);
-  --metal-rim: linear-gradient(135deg, #e8eef2 0%, #4a5661 45%, #c6cfd6 60%, #2e3740 100%);
+  --metal-fill: linear-gradient(135deg, #4a5a66 0%, #6d808e 45%, #a9b6bf 100%);
+  --metal-rim: linear-gradient(135deg, #f2f5f7 0%, #7d8891 28%, #dfe5e9 52%, #66707a 78%, #eef2f4 100%);
   --metal-fg: #ffffff;
-  --metal-sheen: rgba(255, 255, 255, 0.28);
-  --metal-text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  --metal-sheen: rgba(255, 255, 255, 0.3);
+  --metal-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 .metal--silver {
-  --metal-fill: linear-gradient(180deg, #f3f4f7 0%, #ced1d8 100%);
-  --metal-rim: linear-gradient(135deg, #ffffff 0%, #979da8 45%, #e9ebef 60%, #7b818c 100%);
-  --metal-fg: #585d67;
-  --metal-sheen: rgba(255, 255, 255, 0.9);
-  --metal-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  --metal-fill: linear-gradient(135deg, #c5c9d0 0%, #e6e8ec 45%, #f7f8fa 100%);
+  --metal-rim: linear-gradient(135deg, #ffffff 0%, #8d939d 28%, #f0f2f5 52%, #7c828c 78%, #ffffff 100%);
+  --metal-fg: #4d525c;
+  --metal-sheen: rgba(255, 255, 255, 0.95);
+  --metal-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 .metal--gold {
-  --metal-fill: linear-gradient(180deg, #f4f0e4 0%, #d8d1bb 100%);
-  --metal-rim: linear-gradient(135deg, #fff9e8 0%, #a59c78 45%, #f0e9d5 60%, #877e5e 100%);
-  --metal-fg: #6a6146;
-  --metal-sheen: rgba(255, 255, 255, 0.9);
-  --metal-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-
-/* Cards, after the reference: raised is off-white with a white rim and a wide soft shadow; flat is quiet grey. */
-.wcard {
-  border-radius: 24px;
-}
-.wcard--raised {
-  background: var(--card);
-  border: 1px solid rgba(255, 255, 255, 1);
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.035),
-    0 2px 4px rgba(0, 0, 0, 0.03),
-    0 14px 36px -12px rgba(0, 0, 0, 0.12);
-}
-.wcard--flat {
-  background: oklch(0.925 0 0);
-  border: 1px solid transparent;
+  --metal-fill: linear-gradient(135deg, #bdb597 0%, #dbd4bd 45%, #f2eddd 100%);
+  --metal-rim: linear-gradient(135deg, #fff9e6 0%, #9b926d 28%, #f3ecd8 52%, #877e5f 78%, #fff9e6 100%);
+  --metal-fg: #5e553a;
+  --metal-sheen: rgba(255, 255, 255, 0.95);
+  --metal-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
 }

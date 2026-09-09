@@ -10,7 +10,7 @@ import { useSwipe } from '@/lib/useSwipe'
 import { cn } from '@/lib/utils'
 import { useIdea } from '@/dev/proto'
 import PageHeader, { ProfileButton } from '@/components/PageHeader'
-import ActivityHeatmap, { heatmapRange } from '@/components/ActivityHeatmap'
+import ActivityHeatmap from '@/components/ActivityHeatmap'
 import WorkoutForm from '@/components/WorkoutForm'
 import TrifectaForm from '@/components/TrifectaForm'
 import StreakBadge from '@/components/StreakBadge'
@@ -51,11 +51,6 @@ export default function Today() {
   const program = getProgram(data.programId)
   const plan = planToday(program, data.sessions)
   const streak = streakInfo(data.sessions)
-  const range = heatmapRange()
-  const sessionsInRange = data.sessions.filter((x) => {
-    const k = dayKey(new Date(x.date))
-    return x.kind !== 'mobility' && k >= range.start && k <= range.today
-  }).length
   const now = new Date()
   const today = dayKey(now)
   const tomorrow = scheduled(program, addDays(today, 1))
@@ -108,7 +103,6 @@ export default function Today() {
   }, [selectedDay])
 
   const coachCopy = useIdea('coachCopy')
-  const statsRow = useIdea('statsRow')
   const showForm = !plan.doneToday && (!plan.restSuggested || trainAnyway)
 
   return (
@@ -133,14 +127,9 @@ export default function Today() {
         }
       />
 
-      {(streak || statsRow) && (
-        <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
-          {streak && <StreakBadge streak={streak} />}
-          {statsRow && (
-            <span>
-              {sessionsInRange} session{sessionsInRange === 1 ? '' : 's'} · {range.days} days
-            </span>
-          )}
+      {streak && (
+        <div className="mb-3">
+          <StreakBadge streak={streak} />
         </div>
       )}
       <div ref={heatRef}>

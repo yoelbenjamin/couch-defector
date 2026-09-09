@@ -120,7 +120,7 @@ export type StreakTier = 'graphite' | 'steel' | 'silver' | 'gold'
 export interface StreakInfo {
   /** Days since the first workout of the current unbroken run of weeks, inclusive. 0 when there is no streak. */
   days: number
-  /** "3 day", "2 week", "4 month" */
+  /** "3 days", "2 weeks", "4 months" */
   label: string
   /** Graphite in days, Steel in weeks, Silver in months, Gold from six months. */
   tier: StreakTier
@@ -138,8 +138,9 @@ export function streakInfo(sessions: Session[], now = new Date()): StreakInfo | 
   if (!first) return null
   const days = Math.max(1, Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(first.getFullYear(), first.getMonth(), first.getDate()).getTime()) / 86400000) + 1)
   const months = Math.floor(days / 30.44)
-  if (days < 7) return { days, label: `${days} day`, tier: 'graphite' }
-  if (months < 1) return { days, label: `${Math.floor(days / 7)} week`, tier: 'steel' }
-  if (months < 6) return { days, label: `${months} month`, tier: 'silver' }
-  return { days, label: `${months} month`, tier: 'gold' }
+  const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`
+  if (days < 7) return { days, label: plural(days, 'day'), tier: 'graphite' }
+  if (months < 1) return { days, label: plural(Math.floor(days / 7), 'week'), tier: 'steel' }
+  if (months < 6) return { days, label: plural(months, 'month'), tier: 'silver' }
+  return { days, label: plural(months, 'month'), tier: 'gold' }
 }

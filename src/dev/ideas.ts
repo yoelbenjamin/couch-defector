@@ -22,13 +22,6 @@ export const IDEAS = {
     description: 'Short motivational sentences under the headline.',
     default: true,
   },
-  statsRow: {
-    kind: 'toggle',
-    area: 'Today',
-    label: 'Stats row',
-    description: 'Sessions / streak / program tiles at the bottom.',
-    default: true,
-  },
   prevSet: {
     kind: 'choice',
     area: 'Workout',
