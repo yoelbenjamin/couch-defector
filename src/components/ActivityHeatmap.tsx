@@ -74,7 +74,7 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
         const cls = cn(
           'aspect-square rounded-[2px]',
           c.delay >= 0 && !c.future && 'heat-cell',
-          c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/80' : c.mob ? 'bg-foreground/30' : 'bg-foreground/[0.07]',
+          c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/85' : c.mob ? 'bg-foreground/35' : 'bg-white/90 ring-1 ring-black/[0.06] ring-inset',
           c.isToday && c.count === 0 && !c.mob && 'ring-1 ring-foreground/40 ring-inset',
           isSelected && 'bg-foreground ring-2 ring-foreground ring-offset-1 ring-offset-background',
         )
