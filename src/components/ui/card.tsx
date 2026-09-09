@@ -5,19 +5,18 @@ import { cn } from "@/lib/utils"
 function Card({
   className,
   variant = "raised",
+  action,
   ...props
-}: React.ComponentProps<"div"> & { variant?: "raised" | "flat" }) {
+}: React.ComponentProps<"div"> & {
+  variant?: "raised" | "flat"
+  /** A button rendered in the tray under the inset, full width. */
+  action?: React.ReactNode
+}) {
   return (
-    <div
-      data-slot="card"
-      data-variant={variant}
-      className={cn(
-        "wcard flex flex-col gap-6 py-6 text-card-foreground",
-        variant === "flat" ? "wcard--flat" : "wcard--raised",
-        className
-      )}
-      {...props}
-    />
+    <div data-slot="card" data-variant={variant} className={cn("wtray", variant === "flat" && "wtray--flat")}>
+      <div className={cn("winset flex flex-col gap-6 py-6 text-card-foreground", className)} {...props} />
+      {action && <div className="pt-2.5 [&>*]:w-full">{action}</div>}
+    </div>
   )
 }
 

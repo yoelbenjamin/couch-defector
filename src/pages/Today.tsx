@@ -160,7 +160,7 @@ export default function Today() {
           ) : (
             <>
               {!cloud && (
-                <div className="wcard wcard--flat mb-3 px-4 py-2.5 text-xs text-muted-foreground">
+                <div className="mb-3 rounded-[20px] bg-[#ebebeb] px-4 py-2.5 text-xs text-muted-foreground">
                   Device-only mode. Your log lives in this browser until sign-in is set up.
                 </div>
               )}
