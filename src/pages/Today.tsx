@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
-import { dayKey, isRest, planToday, relativeDay, weekdayIndex } from '@/lib/schedule'
+import { dayKey, isRest, planToday, weekdayIndex } from '@/lib/schedule'
 import { fmtSets, streakInfo } from '@/lib/stats'
 import { useStore } from '@/lib/store'
 import PageHeader, { ProfileButton } from '@/components/PageHeader'
@@ -212,7 +212,6 @@ export default function Today() {
             <span className="block">{monthDay}</span>
           </>
         }
-        sub={selectedDay !== null ? relativeDay(viewDate.toISOString()) : undefined}
         action={
           selectedDay !== null ? (
             <div className="flex items-center gap-2">
