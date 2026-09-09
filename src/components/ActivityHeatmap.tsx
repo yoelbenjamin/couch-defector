@@ -79,9 +79,8 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
           loading ? !c.future && 'heat-cell heat-cell--loop' : c.delay >= 0 && !c.future && 'heat-cell',
           c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/85' : c.mob ? 'bg-foreground/35' : 'bg-white',
           c.isToday && c.count === 0 && !c.mob && !isSelected && 'ring-1 ring-foreground/40 ring-offset-1 ring-offset-background',
-          // Selected: a focus ring around the cell. Only a trained day also fills solid.
+          // Selected: a focus ring around the cell. The fill stays what it was; dark means trained, nothing else.
           isSelected && 'ring-2 ring-foreground ring-offset-1 ring-offset-background',
-          isSelected && c.count > 0 && 'bg-foreground',
         )
         if ((c.count === 0 && !c.mob && !c.isToday) || !onSelect) return <div key={c.key} className={cls} style={style} data-filled={c.count > 0 ? '' : undefined} />
         const label = new Date(c.key).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
