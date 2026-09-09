@@ -6,7 +6,7 @@ import { getProgram } from '@/data/programs'
 import { dayKey, isRest, planToday, weekdayIndex } from '@/lib/schedule'
 import { fmtSets, streakInfo } from '@/lib/stats'
 import { useStore } from '@/lib/store'
-import PageHeader, { ProfileButton } from '@/components/PageHeader'
+import PageHeader from '@/components/PageHeader'
 import ActivityHeatmap from '@/components/ActivityHeatmap'
 import DaySwiper, { type DaySwiperHandle } from '@/components/DaySwiper'
 import WorkoutForm from '@/components/WorkoutForm'
@@ -60,7 +60,6 @@ export default function Today() {
   const viewDate = new Date(viewing)
   const weekday = viewDate.toLocaleDateString(undefined, { weekday: 'long' })
   const monthDay = viewDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
-  const heatRef = useRef<HTMLDivElement>(null)
   const swiper = useRef<DaySwiperHandle>(null)
 
   const shift = (n: 1 | -1) => {
@@ -199,16 +198,6 @@ export default function Today() {
             <span className="block">{monthDay}</span>
           </>
         }
-        action={
-          selectedDay !== null ? (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setSelectedDay(null)}>
-                Today
-              </Button>
-              <ProfileButton />
-            </div>
-          ) : undefined
-        }
       />
 
       {streak && (
@@ -216,7 +205,7 @@ export default function Today() {
           <StreakBadge streak={streak} />
         </div>
       )}
-      <div ref={heatRef}>
+      <div>
         <ActivityHeatmap sessions={data.sessions} selected={selectedDay} onSelect={setSelectedDay} className="mb-5" />
       </div>
 

@@ -78,16 +78,16 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
           c.isToday && c.count === 0 && !c.mob && 'ring-1 ring-foreground/40 ring-inset',
           isSelected && 'bg-foreground ring-2 ring-foreground ring-offset-1 ring-offset-background',
         )
-        if ((c.count === 0 && !c.mob) || !onSelect) return <div key={c.key} className={cls} style={style} data-filled={c.count > 0 ? '' : undefined} />
+        if ((c.count === 0 && !c.mob && !c.isToday) || !onSelect) return <div key={c.key} className={cls} style={style} data-filled={c.count > 0 ? '' : undefined} />
         const label = new Date(c.key).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
-        const what = c.count > 0 ? `${c.count} session${c.count === 1 ? '' : 's'}` : 'Trifecta'
+        const what = c.isToday && c.count === 0 && !c.mob ? 'today' : c.count > 0 ? `${c.count} session${c.count === 1 ? '' : 's'}` : 'Trifecta'
         return (
           <button
             key={c.key}
             type="button"
             aria-label={`${label}, ${what}`}
             aria-pressed={isSelected}
-            onClick={() => onSelect(isSelected ? null : c.key)}
+            onClick={() => onSelect(c.isToday || isSelected ? null : c.key)}
             className={cls}
             style={style}
             data-filled=""
