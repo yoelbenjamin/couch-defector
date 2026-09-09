@@ -8,14 +8,25 @@ function Card({
   action,
   ...props
 }: React.ComponentProps<"div"> & {
-  variant?: "raised" | "flat"
+  /** raised: grey tray holding a white inset (the reference "Cards inset"). plain: single raised surface. flat: quiet grey surface. */
+  variant?: "raised" | "plain" | "flat"
   /** A button rendered in the tray under the inset, full width. */
   action?: React.ReactNode
 }) {
+  if (variant !== "raised") {
+    return (
+      <div
+        data-slot="card"
+        data-variant={variant}
+        className={cn("ws-card flex flex-col gap-4 p-5 text-card-foreground", variant === "flat" && "ws-card--flat", className)}
+        {...props}
+      />
+    )
+  }
   return (
-    <div data-slot="card" data-variant={variant} className={cn("wtray", variant === "flat" && "wtray--flat")}>
-      <div className={cn("winset flex flex-col gap-4 p-5 text-card-foreground", className)} {...props} />
-      {action && <div className="pt-2.5 [&>*]:w-full">{action}</div>}
+    <div data-slot="card" data-variant={variant} className="ws-tray">
+      <div className={cn("ws-inset flex flex-col gap-4 text-card-foreground", className)} {...props} />
+      {action && <div className="ws-card-action [&>*]:w-full">{action}</div>}
     </div>
   )
 }
@@ -37,7 +48,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      className={cn("leading-none font-semibold", className)}
+      className={cn("text-[18px] leading-7 font-bold [text-wrap:balance]", className)}
       {...props}
     />
   )
@@ -47,7 +58,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-sm leading-5 text-black/70 [text-wrap:balance]", className)}
       {...props}
     />
   )

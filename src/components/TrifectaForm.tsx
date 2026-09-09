@@ -134,7 +134,7 @@ export default function TrifectaForm({ editing = null, onSaved }: { editing?: Se
               <CardContent>
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
-                    <SelectTrigger className="h-auto w-auto max-w-full border-0 bg-transparent px-0 py-0.5 text-xl font-bold [&>svg]:size-5">
+                    <SelectTrigger variant="bare" className="max-w-full text-xl font-bold [&>svg]:size-5">
                       <SelectValue>{e.name}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
