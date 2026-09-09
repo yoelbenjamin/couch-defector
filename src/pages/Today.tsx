@@ -242,7 +242,7 @@ export default function Today() {
         render={renderDay}
         onChange={(k) => setSelectedDay(k === today ? null : k)}
         className="-mx-4 min-h-[40vh]"
-        peek={20}
+        peek={28}
         gap={12}
       />
     </div>
