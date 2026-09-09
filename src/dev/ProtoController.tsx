@@ -18,7 +18,7 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { Entry, ProgressionId, Slot } from '@/types'
-import { IDEA_KEYS, IDEAS, type IdeaKey } from './ideas'
+import { IDEA_KEYS, IDEAS, type IdeaDef, type IdeaKey } from './ideas'
 import { PROTO_AVAILABLE, useProto } from './proto'
 import { SCENARIO_GROUPS, SCENARIOS } from './scenarios'
 
@@ -34,20 +34,30 @@ export function ProtoController() {
 function Controller() {
   const [open, setOpen] = useState(false)
   const proto = useProto()
+  const docked = proto.docked
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === '.') {
         e.preventDefault()
-        setOpen((o) => !o)
+        if (docked) proto.setDocked(false)
+        else setOpen((o) => !o)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [docked, proto])
 
-  const scenario = SCENARIOS.find((s) => s.id === proto.scenarioId?.replace(/\*$/, ''))
-  const status = !proto.enabled ? 'Live data' : `${scenario?.name ?? 'Custom'}${proto.scenarioId?.endsWith('*') ? ' (edited)' : ''}`
+  const close = docked ? () => {} : () => setOpen(false)
+  const panel = <Panel close={close} />
+
+  if (docked) {
+    return (
+      <aside className="fixed inset-y-0 right-0 z-40 flex w-[360px] flex-col border-l bg-background" aria-label="Prototype controller">
+        {panel}
+      </aside>
+    )
+  }
 
   return (
     <>
@@ -66,53 +76,75 @@ function Controller() {
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="flex w-[360px] flex-col gap-0 p-0 sm:max-w-[360px]">
-          <SheetHeader className="border-b px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <SheetTitle className="text-base">Prototype</SheetTitle>
-                <SheetDescription className="truncate text-xs">
-                  {status}
-                  {proto.enabled && (
-                    <>
-                      {' · '}
-                      {proto.auth === 'signed-in' ? 'signed in' : 'signed out'}
-                    </>
-                  )}
-                </SheetDescription>
-              </div>
-              <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                Frame
-                <Switch checked={proto.frame} onCheckedChange={proto.setFrame} />
-              </label>
-            </div>
+          <SheetHeader className="sr-only">
+            <SheetTitle>Prototype controller</SheetTitle>
+            <SheetDescription>Scenarios, idea flags, navigation, and sandbox data.</SheetDescription>
           </SheetHeader>
-
-          <Tabs defaultValue="states" className="flex min-h-0 flex-1 flex-col gap-0">
-            <TabsList className="mx-4 mt-3 grid w-auto grid-cols-4">
-              <TabsTrigger value="states">States</TabsTrigger>
-              <TabsTrigger value="ideas">Ideas</TabsTrigger>
-              <TabsTrigger value="go">Go</TabsTrigger>
-              <TabsTrigger value="data">Data</TabsTrigger>
-            </TabsList>
-            <ScrollArea className="min-h-0 flex-1">
-              <div className="px-4 py-4">
-                <TabsContent value="states" className="mt-0">
-                  <StatesTab close={() => setOpen(false)} />
-                </TabsContent>
-                <TabsContent value="ideas" className="mt-0">
-                  <IdeasTab />
-                </TabsContent>
-                <TabsContent value="go" className="mt-0">
-                  <GoTab close={() => setOpen(false)} />
-                </TabsContent>
-                <TabsContent value="data" className="mt-0">
-                  <DataTab />
-                </TabsContent>
-              </div>
-            </ScrollArea>
-          </Tabs>
+          {panel}
         </SheetContent>
       </Sheet>
+    </>
+  )
+}
+
+/** Header, tabs, and content. Works inside the sheet or the docked aside. */
+function Panel({ close }: { close: () => void }) {
+  const proto = useProto()
+  const scenario = SCENARIOS.find((s) => s.id === proto.scenarioId?.replace(/\*$/, ''))
+  const status = !proto.enabled ? 'Live data' : `${scenario?.name ?? 'Custom'}${proto.scenarioId?.endsWith('*') ? ' (edited)' : ''}`
+  return (
+    <>
+      <div className="border-b px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-base font-semibold">Prototype</div>
+            <div className="truncate text-xs text-muted-foreground">
+              {status}
+              {proto.enabled && (
+                <>
+                  {' · '}
+                  {proto.auth === 'signed-in' ? 'signed in' : 'signed out'}
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+            <label className="flex items-center gap-1.5">
+              Frame
+              <Switch checked={proto.frame} onCheckedChange={proto.setFrame} />
+            </label>
+            <label className="flex items-center gap-1.5">
+              Pin
+              <Switch checked={proto.docked} onCheckedChange={proto.setDocked} />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <Tabs defaultValue="states" className="flex min-h-0 flex-1 flex-col gap-0">
+        <TabsList className="mx-4 mt-3 grid w-auto grid-cols-4">
+          <TabsTrigger value="states">States</TabsTrigger>
+          <TabsTrigger value="ideas">Ideas</TabsTrigger>
+          <TabsTrigger value="go">Go</TabsTrigger>
+          <TabsTrigger value="data">Data</TabsTrigger>
+        </TabsList>
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="px-4 py-4">
+            <TabsContent value="states" className="mt-0">
+              <StatesTab close={close} />
+            </TabsContent>
+            <TabsContent value="ideas" className="mt-0">
+              <IdeasTab />
+            </TabsContent>
+            <TabsContent value="go" className="mt-0">
+              <GoTab close={close} />
+            </TabsContent>
+            <TabsContent value="data" className="mt-0">
+              <DataTab />
+            </TabsContent>
+          </div>
+        </ScrollArea>
+      </Tabs>
     </>
   )
 }
@@ -238,8 +270,8 @@ function IdeasTab() {
 
 function IdeaRow({ k }: { k: IdeaKey }) {
   const proto = useProto()
-  const def = IDEAS[k]
-  const value = proto.ideas[k]
+  const def = IDEAS[k] as IdeaDef
+  const value = proto.ideas[k] as unknown
   const dirty = value !== def.default
   return (
     <div className="rounded-lg border p-3">
@@ -251,7 +283,7 @@ function IdeaRow({ k }: { k: IdeaKey }) {
           </div>
           <div className="text-xs text-muted-foreground">{def.description}</div>
         </div>
-        {def.kind === 'toggle' && <Switch checked={value as boolean} onCheckedChange={(v) => proto.setIdea(k, v as never)} />}
+        {def.kind === 'toggle' && <Switch checked={Boolean(value)} onCheckedChange={(v) => proto.setIdea(k, v as never)} />}
       </div>
       {def.kind === 'choice' && (
         <ToggleGroup

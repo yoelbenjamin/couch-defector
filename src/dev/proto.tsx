@@ -39,6 +39,8 @@ export interface ProtoState {
   data: UserData
   ideas: IdeaValues
   frame: boolean
+  /** Controller pinned open as a side panel (wide screens). */
+  docked: boolean
 }
 
 export interface ProtoApi extends ProtoState {
@@ -48,13 +50,22 @@ export interface ProtoApi extends ProtoState {
   setIdea: <K extends IdeaKey>(k: K, v: IdeaValue<K>) => void
   resetIdeas: () => void
   setFrame: (on: boolean) => void
+  setDocked: (on: boolean) => void
   disable: () => void
 }
 
 const emptyData = (): UserData => ({ programId: null, steps: {}, customNames: {}, createdAt: new Date().toISOString(), sessions: [] })
 
 const initial = (): ProtoState => {
-  const base: ProtoState = { enabled: false, scenarioId: null, auth: 'signed-in', data: emptyData(), ideas: ideaDefaults(), frame: false }
+  const base: ProtoState = {
+    enabled: false,
+    scenarioId: null,
+    auth: 'signed-in',
+    data: emptyData(),
+    ideas: ideaDefaults(),
+    frame: false,
+    docked: typeof window !== 'undefined' && window.innerWidth >= 1024,
+  }
   try {
     const raw = localStorage.getItem(KEY)
     if (!raw) return base
@@ -91,6 +102,7 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
       setIdea: (k, v) => patch((s) => ({ ideas: { ...s.ideas, [k]: v } })),
       resetIdeas: () => patch({ ideas: ideaDefaults() }),
       setFrame: (frame) => patch({ frame }),
+      setDocked: (docked) => patch({ docked }),
       disable: () => patch({ enabled: false, scenarioId: null }),
     }),
     [state, patch],
@@ -119,11 +131,14 @@ export function useIdea<K extends IdeaKey>(key: K): IdeaValue<K> {
 }
 
 /** Optional phone frame for exploring on a desktop browser. */
+export const DOCK_WIDTH = 360
+
 export function ProtoFrame({ children }: { children: ReactNode }) {
   const p = useContext(Ctx)
-  if (!p?.frame) return <>{children}</>
+  const pad = p?.docked ? { paddingRight: DOCK_WIDTH } : undefined
+  if (!p?.frame) return <div className="h-full" style={pad}>{children}</div>
   return (
-    <div className="flex h-full items-center justify-center bg-neutral-200 p-6">
+    <div className="flex h-full items-center justify-center bg-neutral-200 p-6" style={pad}>
       <div
         className="relative overflow-hidden rounded-[2.5rem] border-[10px] border-neutral-900 bg-background"
         style={{ width: 390, height: 'min(844px, 100%)', contain: 'layout paint' }}

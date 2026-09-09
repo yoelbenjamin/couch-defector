@@ -8,7 +8,6 @@ import { fmtSets, streakInfo } from '@/lib/stats'
 import { useStore } from '@/lib/store'
 import { useSwipe } from '@/lib/useSwipe'
 import { cn } from '@/lib/utils'
-import { useIdea } from '@/dev/proto'
 import PageHeader, { ProfileButton } from '@/components/PageHeader'
 import ActivityHeatmap from '@/components/ActivityHeatmap'
 import WorkoutForm from '@/components/WorkoutForm'
@@ -102,7 +101,6 @@ export default function Today() {
     return () => document.removeEventListener('pointerdown', onDown)
   }, [selectedDay])
 
-  const coachCopy = useIdea('coachCopy')
   const showForm = !plan.doneToday && (!plan.restSuggested || trainAnyway)
 
   return (
@@ -187,7 +185,6 @@ export default function Today() {
                         </li>
                       ))}
                     </ul>
-                    {coachCopy && <div className="mt-4 text-xs text-muted-foreground">Rest up. Muscle is built between sessions, not during them.</div>}
                   </CardContent>
                 </Card>
               ) : (

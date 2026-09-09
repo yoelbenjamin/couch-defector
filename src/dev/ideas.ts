@@ -7,21 +7,6 @@ export type IdeaDef =
   | { kind: 'choice'; area: string; label: string; description: string; options: readonly string[]; default: string }
 
 export const IDEAS = {
-  lastTime: {
-    kind: 'choice',
-    area: 'Today',
-    label: 'Last time detail',
-    description: 'Show every hard set, or only the best set.',
-    options: ['sets', 'best'],
-    default: 'sets',
-  },
-  coachCopy: {
-    kind: 'toggle',
-    area: 'Today',
-    label: 'Coach one-liners',
-    description: 'Short motivational sentences under the headline.',
-    default: true,
-  },
   prevSet: {
     kind: 'choice',
     area: 'Workout',
