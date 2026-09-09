@@ -77,8 +77,8 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
         const cls = cn(
           'aspect-square rounded-[2px]',
           loading ? !c.future && 'heat-cell heat-cell--loop' : c.delay >= 0 && !c.future && 'heat-cell',
-          c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/85' : c.mob ? 'bg-foreground/35' : 'bg-white/90 ring-1 ring-black/[0.06] ring-inset',
-          c.isToday && c.count === 0 && !c.mob && 'ring-1 ring-foreground/40 ring-inset',
+          c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/85' : c.mob ? 'bg-foreground/35' : 'bg-white',
+          c.isToday && c.count === 0 && !c.mob && !isSelected && 'ring-1 ring-foreground/40 ring-offset-1 ring-offset-background',
           // Selected: a focus ring around the cell. Only a trained day also fills solid.
           isSelected && 'ring-2 ring-foreground ring-offset-1 ring-offset-background',
           isSelected && c.count > 0 && 'bg-foreground',
