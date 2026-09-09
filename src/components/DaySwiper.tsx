@@ -63,11 +63,17 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
       stop()
       let last = performance.now()
       const tick = (now: number) => {
-        const dt = Math.min(1 / 30, (now - last) / 1000)
+        // Integrate the real elapsed time in small steps, so throttled timers and dropped frames
+        // move the spring by how long they took rather than by one frame.
+        let remaining = Math.min(0.5, (now - last) / 1000)
         last = now
-        const a = -STIFFNESS * (x.current - target) - DAMPING * v.current
-        v.current += a * dt
-        x.current += v.current * dt
+        while (remaining > 0) {
+          const h = Math.min(1 / 120, remaining)
+          const a = -STIFFNESS * (x.current - target) - DAMPING * v.current
+          v.current += a * h
+          x.current += v.current * h
+          remaining -= h
+        }
         if (Math.abs(x.current - target) < 0.5 && Math.abs(v.current) < 20) {
           x.current = target
           v.current = 0
