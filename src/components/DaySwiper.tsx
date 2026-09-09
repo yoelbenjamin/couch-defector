@@ -21,6 +21,8 @@ interface Props {
   /** Key of the day after `current`, or null when `current` is the last day you may view. */
   next: number | null
   render: (key: number) => ReactNode
+  /** Neighbour of any day, so back-to-back commits never read a stale prev/next. */
+  neighbor: (key: number, dir: 1 | -1) => number | null
   onChange: (key: number) => void
   className?: string
   /** How much of each neighbouring day shows at the screen edge, in px. */
@@ -40,16 +42,19 @@ const DRAG_SLOP = 6
  * one to one, so dragging slowly shows both days at once. On release the finger's velocity feeds a
  * spring: a flick commits and carries through, a hesitant drag settles back or forward on distance.
  */
-const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ current, prev, next, render, onChange, className, peek = 22, gap = 12 }, ref) {
+const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper(
+  { current, prev, next, render, neighbor, onChange, className, peek = 22, gap = 12 },
+  ref,
+) {
   const container = useRef<HTMLDivElement>(null)
   const track = useRef<HTMLDivElement>(null)
   const panes = useRef<(HTMLDivElement | null)[]>([])
+  const cur = useRef(current) // the committed day, ahead of the next render
   const x = useRef(0) // px offset of the track, 0 = current day centred
   const v = useRef(0) // px per second, spring velocity
   const raf = useRef<number | null>(null)
   const drag = useRef<{ id: number; x0: number; y0: number; decided: boolean; active: boolean; samples: { t: number; x: number }[] } | null>(null)
   const suppressClick = useRef(false)
-  const pending = useRef<number | null>(null)
 
   const width = () => container.current?.clientWidth ?? 1
   /** Distance the track moves to bring a neighbour to the centre. */
@@ -115,33 +120,28 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
     [apply],
   )
 
+  // Commit the day the moment the direction is decided: swap `current` right away and shift the
+  // track by one step so nothing moves on screen, then let the spring close the remaining gap.
+  // The header and the card change together, and back-to-back swipes each start from a settled state.
   const commit = useCallback(
     (dir: 1 | -1) => {
-      const key = dir === 1 ? next : prev
+      const key = neighbor(cur.current, dir)
       if (key === null) return settle(0)
-      pending.current = key
-      settle(-dir * step(), () => {
-        onChange(key)
-      })
+      cur.current = key
+      x.current += dir * step()
+      onChange(key)
+      settle(0)
     },
-    [next, prev, onChange, settle],
+    [neighbor, onChange, settle],
   )
 
-  // A committed day arrives as the new `current`: recentre instantly, before paint.
+  // After a commit the panes re-render around the new day; repaint transforms at the shifted x.
   useLayoutEffect(() => {
-    if (pending.current === current) {
-      pending.current = null
-      x.current = 0
-      v.current = 0
-      apply()
-    }
-  }, [current, apply])
+    cur.current = current
+    apply()
+  }, [current, next, apply])
 
   useImperativeHandle(ref, () => ({ go: (dir) => commit(dir) }), [commit])
-
-  useLayoutEffect(() => {
-    apply()
-  }, [apply, current, next])
 
   useEffect(() => () => stop(), [])
 
@@ -174,7 +174,7 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
     }
     if (!d.active) return
     let nx = dx
-    if (next === null && nx < 0) nx = nx * 0.25 // rubber band: nothing lives past today
+    if (neighbor(cur.current, 1) === null && nx < 0) nx = nx * 0.25 // rubber band: nothing lives past today
     x.current = nx
     d.samples.push({ t: e.timeStamp, x: e.clientX })
     if (d.samples.length > 6) d.samples.shift()
@@ -193,7 +193,7 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
     const vel = (lastS.x - first.x) / dt // px per ms
     v.current = vel * 1000
     const dx = x.current
-    if ((dx < -w * COMMIT_FRACTION || vel < -COMMIT_VELOCITY) && next !== null) commit(1)
+    if ((dx < -w * COMMIT_FRACTION || vel < -COMMIT_VELOCITY) && neighbor(cur.current, 1) !== null) commit(1)
     else if (dx > w * COMMIT_FRACTION || vel > COMMIT_VELOCITY) commit(-1)
     else settle(0)
     setTimeout(() => (suppressClick.current = false), 0)

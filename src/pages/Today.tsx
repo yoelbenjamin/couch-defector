@@ -174,6 +174,7 @@ export default function Today() {
         current={viewing}
         prev={addDays(viewing, -1)}
         next={viewing < today ? addDays(viewing, 1) : null}
+        neighbor={(k, d) => (d === 1 ? (k < today ? addDays(k, 1) : null) : addDays(k, -1))}
         render={renderDay}
         onChange={(k) => setSelectedDay(k === today ? null : k)}
         className="-mx-4 min-h-[40vh]"
