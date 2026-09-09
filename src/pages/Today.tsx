@@ -128,7 +128,7 @@ export default function Today() {
       />
 
       {streak && (
-        <div className="mb-3">
+        <div className="mb-3 px-4">
           <StreakBadge streak={streak} />
         </div>
       )}
@@ -208,7 +208,7 @@ export default function Today() {
                         </CardContent>
                       </Card>
 
-                      <div className="mt-6 mb-3">
+                      <div className="mt-6 mb-3 px-4">
                         <h2 className="text-lg font-bold">Trifecta</h2>
                         <p className="mt-0.5 text-sm text-muted-foreground">Three easy holds to keep the joints moving. About twenty seconds each.</p>
                       </div>
@@ -240,7 +240,7 @@ export default function Today() {
                 </>
               )}
 
-              <p className="mt-8 text-sm text-muted-foreground">
+              <p className="mt-8 px-4 text-sm text-muted-foreground">
                 Tomorrow: <span className="font-medium text-foreground">{tomorrow ? tomorrow.name : 'Rest day'}</span>
               </p>
             </>

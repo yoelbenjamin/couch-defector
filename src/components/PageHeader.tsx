@@ -9,7 +9,7 @@ import { useStore } from '@/lib/store'
  */
 export default function PageHeader({ title, sub, action }: { title: ReactNode; sub?: ReactNode; action?: ReactNode | null }) {
   return (
-    <header className="mb-4 flex items-start justify-between gap-3">
+    <header className="mb-4 flex items-start justify-between gap-3 px-4">
       <div className="min-w-0">
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         {sub && <div className="mt-0.5 text-sm text-muted-foreground">{sub}</div>}
