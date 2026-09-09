@@ -86,53 +86,96 @@ button { touch-action: manipulation; }
   .heat-cell::after { animation: none; }
 }
 
-/* Buttons: pill with an inner stroke and a soft lift, after the gbtn reference. */
+/* Buttons: the Wealthsimple glass pill, ported verbatim from the reference stylesheet.
+   Masked 1px gradient rim (::before) plus a masked inner stroke highlight (::after). */
 .gbtn {
   position: relative;
-  isolation: isolate;
-  border-radius: 9999px;
-  border: 1px solid var(--gbtn-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  border-radius: 1000px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
   background: var(--gbtn-bg);
+  box-shadow: var(--gbtn-shadow);
   color: var(--gbtn-fg);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.12),
-    0 8px 16px -10px rgba(0, 0, 0, 0.3);
-  transition: background-color 120ms ease, transform 80ms ease, box-shadow 120ms ease;
 }
+.gbtn:hover { transform: translateY(-1px); }
+.gbtn:active { transform: translateY(0.5px); }
 .gbtn::before {
   content: '';
   position: absolute;
   inset: 0;
+  padding: 1px;
   border-radius: inherit;
+  background: var(--gbtn-rim);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
   pointer-events: none;
-  box-shadow:
-    inset 0 0 0 1px var(--gbtn-stroke),
-    inset 0 1px 0 var(--gbtn-highlight);
 }
-.gbtn:hover { background: var(--gbtn-bg-hover); }
-.gbtn:active { transform: translateY(1px); box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12); }
-
+.gbtn::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  padding: 1px;
+  border-radius: 1000px;
+  z-index: 3;
+  background: var(--gbtn-inner);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
 .gbtn--dark {
-  --gbtn-bg: #0b0b0c;
-  --gbtn-bg-hover: #161617;
-  --gbtn-fg: #fafafa;
-  --gbtn-border: rgba(0, 0, 0, 0.9);
-  --gbtn-stroke: rgba(255, 255, 255, 0.12);
-  --gbtn-highlight: rgba(255, 255, 255, 0.08);
+  --gbtn-bg: rgba(0, 0, 0, 0.96);
+  --gbtn-shadow: 0px 8px 16px rgba(0, 0, 0, 0.16);
+  --gbtn-fg: #ffffff;
+  --gbtn-rim: linear-gradient(146.26deg, #000000 8.55%, #000000 57.49%, #000000 86.93%);
+  --gbtn-inner: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 25.12%, rgba(255, 255, 255, 0.2) 102.08%);
 }
 .gbtn--light {
-  --gbtn-bg: #fafafa;
-  --gbtn-bg-hover: #f1f1f1;
-  --gbtn-fg: var(--foreground);
-  --gbtn-border: rgba(0, 0, 0, 0.06);
-  --gbtn-stroke: rgba(255, 255, 255, 0.9);
-  --gbtn-highlight: #ffffff;
+  --gbtn-bg: rgba(255, 255, 255, 0.5);
+  --gbtn-shadow: 0px 8px 16px rgba(0, 0, 0, 0.06);
+  --gbtn-fg: #1a1a1a;
+  --gbtn-rim: linear-gradient(270deg, rgba(0, 0, 0, 0.07) 0%, rgba(0, 0, 0, 0) 24.61%, rgba(0, 0, 0, 0.05) 100%);
+  --gbtn-inner: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0) 25.12%, rgba(255, 255, 255, 0.7) 102.08%);
 }
-/* Tints, for when a colour earns its place. Border is the tint's darker shade; inner stroke stays white. */
-.gbtn--yellow { --gbtn-bg: #e8e4c0; --gbtn-bg-hover: #e1dcb2; --gbtn-fg: #7a6a2a; --gbtn-border: #cdc27d; --gbtn-stroke: rgba(255, 255, 255, 0.55); --gbtn-highlight: rgba(255, 255, 255, 0.5); }
-.gbtn--blue { --gbtn-bg: #d9deee; --gbtn-bg-hover: #cfd5ea; --gbtn-fg: #4a5f96; --gbtn-border: #8ea3dc; --gbtn-stroke: rgba(255, 255, 255, 0.55); --gbtn-highlight: rgba(255, 255, 255, 0.5); }
-.gbtn--green { --gbtn-bg: #8fb08f; --gbtn-bg-hover: #85a685; --gbtn-fg: #ffffff; --gbtn-border: #4f7a4f; --gbtn-stroke: rgba(255, 255, 255, 0.25); --gbtn-highlight: rgba(255, 255, 255, 0.22); }
-.gbtn--red { --gbtn-bg: #e07866; --gbtn-bg-hover: #d96f5c; --gbtn-fg: #ffffff; --gbtn-border: #b6452f; --gbtn-stroke: rgba(255, 255, 255, 0.25); --gbtn-highlight: rgba(255, 255, 255, 0.22); }
+.gbtn--cream {
+  --gbtn-bg: rgba(228, 222, 158, 0.5);
+  --gbtn-shadow: 0px 8px 16px rgba(0, 0, 0, 0.06);
+  --gbtn-fg: #8b7d4a;
+  --gbtn-rim: linear-gradient(273.75deg, #bcb676 3.96%, #eae4a4 34.23%, #bcb676 98.29%);
+  --gbtn-inner: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0) 25.12%, rgba(255, 255, 255, 0.7) 102.08%);
+}
+.gbtn--blue {
+  --gbtn-bg: rgba(193, 202, 237, 0.5);
+  --gbtn-shadow: 0px 8px 16px rgba(0, 0, 0, 0.04);
+  --gbtn-fg: #4a6fa5;
+  --gbtn-rim: linear-gradient(273.75deg, #6c9be6 3.96%, #b2e1f5 34.23%, #6291dc 98.29%);
+  --gbtn-inner: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 25.12%, rgba(255, 255, 255, 0.6) 102.08%);
+}
+.gbtn--red {
+  --gbtn-bg: rgba(226, 43, 24, 0.7);
+  --gbtn-shadow: 0px 8px 16px rgba(0, 0, 0, 0.08);
+  --gbtn-fg: #ffffff;
+  --gbtn-rim: linear-gradient(273.75deg, #de3221 3.96%, #ff9d8c 34.23%, #c42828 98.29%);
+  --gbtn-inner: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 25.12%, rgba(255, 255, 255, 0.5) 102.08%);
+}
+.gbtn--green {
+  --gbtn-bg: rgba(53, 121, 65, 0.55);
+  --gbtn-shadow: 0px 8px 16px rgba(0, 0, 0, 0.08);
+  --gbtn-fg: #ffffff;
+  --gbtn-rim: linear-gradient(273.75deg, #2a6b38 3.96%, #4a9b58 34.23%, #357941 98.29%);
+  --gbtn-inner: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 25.12%, rgba(255, 255, 255, 0.5) 102.08%);
+}
 
 /* Metallic streak badges, after the reference: diagonal brushed fill, bevelled rim, bold label. */
 .metal {
