@@ -43,8 +43,17 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
     if (track.current) track.current.style.transform = `translate3d(${x.current}px, 0, 0)`
   }, [])
 
+  // rAF stops in hidden documents (backgrounded app, hidden preview); fall back to a timer so a
+  // flick that started before the switch still lands on a day.
+  const frame = (fn: (now: number) => void) =>
+    document.visibilityState === 'hidden' ? (window.setTimeout(() => fn(performance.now()), 16) as unknown as number) : requestAnimationFrame(fn)
+  const cancelFrame = (id: number) => {
+    cancelAnimationFrame(id)
+    window.clearTimeout(id)
+  }
+
   const stop = () => {
-    if (raf.current !== null) cancelAnimationFrame(raf.current)
+    if (raf.current !== null) cancelFrame(raf.current)
     raf.current = null
   }
 
@@ -68,9 +77,9 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
           return
         }
         apply()
-        raf.current = requestAnimationFrame(tick)
+        raf.current = frame(tick)
       }
-      raf.current = requestAnimationFrame(tick)
+      raf.current = frame(tick)
     },
     [apply],
   )
