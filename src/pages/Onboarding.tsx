@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { Check } from 'lucide-react'
 import { DEFAULT_PROGRAM_ID, PROGRAMS } from '@/data/programs'
 import { useStore } from '@/lib/store'
-import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, Tray } from '@/components/ui/card'
@@ -50,14 +48,7 @@ export default function Onboarding() {
                     </div>
                     <div className="mt-0.5 text-sm text-muted-foreground">{p.tagline}</div>
                   </div>
-                  <span
-                    className={cn(
-                      'mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border',
-                      selected && 'border-foreground bg-foreground text-background',
-                    )}
-                  >
-                    {selected && <Check className="size-3.5" />}
-                  </span>
+                  <span className="ws-radio mt-0.5" data-checked={selected ? '' : undefined} aria-hidden />
                 </button>
               )
             })}

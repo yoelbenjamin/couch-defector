@@ -155,7 +155,7 @@ export default function Settings() {
           </Card>
         )}
       </Tray>
-      <p className="pt-3 text-center text-[11px] text-muted-foreground/60">Couch Defector · v0.1</p>
+      <p className="pt-3 text-center text-xs text-muted-foreground/60">Couch Defector · v0.1</p>
     </div>
   )
 }

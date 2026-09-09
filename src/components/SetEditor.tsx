@@ -57,7 +57,7 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onDo
           <Button type="button" variant="ghost" size="icon-sm" className="-ml-2 text-muted-foreground" onClick={() => remove(k)} aria-label="remove set">
             <X />
           </Button>
-          <button type="button" onClick={() => toggleWarmup(k)} className={cn('w-14 text-left text-[11px] font-semibold', s.warmup && 'text-muted-foreground')}>
+          <button type="button" onClick={() => toggleWarmup(k)} className={cn('w-14 text-left text-xs font-semibold', s.warmup && 'text-muted-foreground')}>
             {label(sets, k, noun)}
           </button>
           <Prev prev={prevFor(sets, k, previous)} className="w-6 text-right" />

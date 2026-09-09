@@ -25,6 +25,21 @@
 }
 
 @theme inline {
+  /* Type scale: xsmall 12/16, small 14/20, default 16/22, medium 18/28, large 25/30, xlarge 32/38, xxlarge 40/48 */
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-base: 16px;
+  --text-base--line-height: 22px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
+  --text-xl: 25px;
+  --text-xl--line-height: 30px;
+  --text-2xl: 32px;
+  --text-2xl--line-height: 38px;
+  --text-3xl: 40px;
+  --text-3xl--line-height: 48px;
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
@@ -235,6 +250,30 @@ button { touch-action: manipulation; }
 .gbtn:active { transform: scale(0.98); box-shadow: none; }
 
 /* Switch (.xHLZN) */
+.ws-radio {
+  position: relative;
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: background 0.3s, border-color 0.3s;
+}
+.ws-radio::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: #f6f6f6;
+  transform: scale(0);
+  transition: transform 0.1s;
+}
+button:hover > .ws-radio { border-color: #a8a8a8; }
+.ws-radio[data-checked] { background: #000; border-color: #000; }
+.ws-radio[data-checked]::after { transform: scale(1); }
+
 .ws-switch {
   position: relative;
   display: inline-block;

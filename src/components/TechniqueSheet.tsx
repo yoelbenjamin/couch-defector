@@ -28,13 +28,13 @@ export default function TechniqueSheet({ entry, open, onOpenChange }: { entry: E
                 ] as const
               ).map(([label, std]) => (
                 <div key={label} className="px-2 py-2.5">
-                  <div className="text-[11px] text-muted-foreground">{label}</div>
+                  <div className="text-xs text-muted-foreground">{label}</div>
                   <div className="text-sm font-semibold tabular-nums">{fmtStandard(std, step.unit)}</div>
                 </div>
               ))}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Start at the beginner standard. Hit the progression standard and move up a step.</p>
-            <div className="mt-5 space-y-6 text-[15px] leading-relaxed">
+            <div className="mt-5 space-y-6 text-base">
               <section>
                 <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">This step</h3>
                 {step.cue ? <p>{step.cue}</p> : <p className="text-muted-foreground">No notes for this step yet.</p>}

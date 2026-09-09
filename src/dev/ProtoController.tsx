@@ -221,7 +221,7 @@ function StatesTab({ close }: { close: () => void }) {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium">{s.name}</span>
-                    {active && <Badge variant="secondary" className="text-[10px]">active</Badge>}
+                    {active && <Badge variant="secondary" className="text-xs">active</Badge>}
                   </div>
                   <div className="text-xs text-muted-foreground">{s.description}</div>
                 </button>
@@ -268,7 +268,7 @@ function IdeasTab() {
           </div>
         </section>
       ))}
-      <p className="text-[11px] text-muted-foreground/70">
+      <p className="text-xs text-muted-foreground/70">
         Add a flag in <code>src/dev/ideas.ts</code> and read it with <code>useIdea()</code>. It appears here automatically.
       </p>
     </div>
@@ -347,7 +347,7 @@ function GoTab({ close }: { close: () => void }) {
             </Button>
           ))}
         </div>
-        {!proto.enabled && <p className="mt-2 text-[11px] text-muted-foreground">Uses the program from your live data.</p>}
+        {!proto.enabled && <p className="mt-2 text-xs text-muted-foreground">Uses the program from your live data.</p>}
       </section>
       <section>
         <h3 className="mb-2 text-xs font-semibold text-muted-foreground">Gated screens</h3>
@@ -496,7 +496,7 @@ function DataTab() {
             Clear all
           </Button>
         </div>
-        <p className="mt-2 text-[11px] text-muted-foreground">“Shift back a day” ages every session by one day: turn “done today” into “rest day” into “due”.</p>
+        <p className="mt-2 text-xs text-muted-foreground">“Shift back a day” ages every session by one day: turn “done today” into “rest day” into “due”.</p>
       </section>
 
       <Separator />
