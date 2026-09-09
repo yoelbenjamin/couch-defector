@@ -1,11 +1,11 @@
 import { useState } from 'react'
+import { Check } from 'lucide-react'
 import { DEFAULT_PROGRAM_ID, PROGRAMS } from '@/data/programs'
 import { useStore } from '@/lib/store'
-import { WEEKDAY_SHORT } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, Tray } from '@/components/ui/card'
+import { Card, Tray } from '@/components/ui/card'
 
 function levelBadge(level: number) {
   if (level <= 2) return <Badge variant="secondary">Beginner</Badge>
@@ -31,31 +31,37 @@ export default function Onboarding() {
             </Button>
           }
         >
-          {PROGRAMS.map((p) => (
-            <Card
-              key={p.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => setChoice(p.id)}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setChoice(p.id)}
-              variant="inset"
-              className={cn('cursor-pointer transition', choice === p.id && 'ring-2 ring-foreground')}
-            >
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">{p.name}</span>
-                  {levelBadge(p.level)}
-                </div>
-                <div className="mt-1 text-sm text-muted-foreground">{p.tagline}</div>
-                <div className="mt-2 text-xs text-muted-foreground/70">
-                  {p.cycle
-                    .map((c, i) => ('rest' in c && c.rest ? null : `${WEEKDAY_SHORT[i]} ${c.day.name}`))
-                    .filter(Boolean)
-                    .join(' · ')}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          <Card variant="inset" className="ws-inset--list gap-0 divide-y">
+            {PROGRAMS.map((p) => {
+              const selected = choice === p.id
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => setChoice(p.id)}
+                  className="flex w-full items-start gap-3 px-5 py-4 text-left"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{p.name}</span>
+                      {levelBadge(p.level)}
+                    </div>
+                    <div className="mt-0.5 text-sm text-muted-foreground">{p.tagline}</div>
+                  </div>
+                  <span
+                    className={cn(
+                      'mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border',
+                      selected && 'border-foreground bg-foreground text-background',
+                    )}
+                  >
+                    {selected && <Check className="size-3.5" />}
+                  </span>
+                </button>
+              )
+            })}
+          </Card>
         </Tray>
       </div>
     </div>

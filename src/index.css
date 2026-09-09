@@ -205,6 +205,10 @@ button { touch-action: manipulation; }
   padding: 20px;
   box-shadow: rgba(0, 0, 0, 0.04) 0px 1px 2px, rgba(0, 0, 0, 0.04) 0px 10px 24px;
 }
+.ws-inset--list {
+  padding: 0;
+  overflow: hidden;
+}
 .ws-card-action {
   display: flex;
   align-items: center;
