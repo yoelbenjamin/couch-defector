@@ -241,7 +241,9 @@ export default function Today() {
         next={viewing < today ? addDays(viewing, 1) : null}
         render={renderDay}
         onChange={(k) => setSelectedDay(k === today ? null : k)}
-        className="min-h-[40vh]"
+        className="-mx-4 min-h-[40vh]"
+        peek={20}
+        gap={12}
       />
     </div>
   )

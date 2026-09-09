@@ -18,13 +18,22 @@ export default function TechniqueSheet({ entry, open, onOpenChange }: { entry: E
                 {PROGRESSIONS[entry.progression].name} · step {step.n} of 10
               </SheetDescription>
             </SheetHeader>
-            {step.image && <img src={step.image} alt={step.name} className="mt-4 w-full rounded-lg" />}
+            {step.images && step.images.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {step.images.map((src, i) => (
+                  <figure key={src}>
+                    <img src={src} alt={step.captions?.[i] ?? step.name} className="w-full rounded-lg" />
+                    {step.captions?.[i] && <figcaption className="mt-1 text-xs text-muted-foreground">{step.captions[i]}</figcaption>}
+                  </figure>
+                ))}
+              </div>
+            )}
             <div className="mt-4 grid grid-cols-3 divide-x rounded-lg border text-center">
               {(
                 [
                   ['Beginner', step.beginner],
                   ['Intermediate', step.intermediate],
-                  ['Progression', step.goal],
+                  [step.n === 10 ? 'Elite' : 'Progression', step.goal],
                 ] as const
               ).map(([label, std]) => (
                 <div key={label} className="px-2 py-2.5">
@@ -33,19 +42,29 @@ export default function TechniqueSheet({ entry, open, onOpenChange }: { entry: E
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">Start at the beginner standard. Hit the progression standard and move up a step.</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {step.perSide ? 'Both sides. ' : ''}Start at the beginner standard.{' '}
+              {step.n === 10 ? 'The elite standard is the end of the ladder.' : 'Hit the progression standard and move up a step.'}
+            </p>
             <div className="mt-5 space-y-6 text-base">
               <section>
                 <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">This step</h3>
-                {step.cue ? <p>{step.cue}</p> : <p className="text-muted-foreground">No notes for this step yet.</p>}
-                {step.how && (
-                  <ul className="mt-2 list-disc space-y-1.5 pl-5">
+                {step.how ? (
+                  <div className="space-y-3">
                     {step.how.map((h) => (
-                      <li key={h}>{h}</li>
+                      <p key={h}>{h}</p>
                     ))}
-                  </ul>
+                  </div>
+                ) : (
+                  step.cue && <p>{step.cue}</p>
                 )}
               </section>
+              {step.technique && (
+                <section>
+                  <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">Perfecting your technique</h3>
+                  <p>{step.technique}</p>
+                </section>
+              )}
               <section>
                 <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">{PROGRESSIONS[entry.progression].name}</h3>
                 <p className="text-muted-foreground">{TECHNIQUE[entry.progression].why}</p>

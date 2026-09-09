@@ -1,4 +1,13 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, type PointerEvent as RPointerEvent, type ReactNode } from 'react'
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  type PointerEvent as RPointerEvent,
+  type ReactNode,
+} from 'react'
 
 export interface DaySwiperHandle {
   /** Animate to the previous (-1) or next (+1) day, as a swipe would. */
@@ -14,6 +23,10 @@ interface Props {
   render: (key: number) => ReactNode
   onChange: (key: number) => void
   className?: string
+  /** How much of each neighbouring day shows at the screen edge, in px. */
+  peek?: number
+  /** Space between days, in px. */
+  gap?: number
 }
 
 const STIFFNESS = 260
@@ -27,9 +40,10 @@ const DRAG_SLOP = 6
  * one to one, so dragging slowly shows both days at once. On release the finger's velocity feeds a
  * spring: a flick commits and carries through, a hesitant drag settles back or forward on distance.
  */
-const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ current, prev, next, render, onChange, className }, ref) {
+const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ current, prev, next, render, onChange, className, peek = 22, gap = 12 }, ref) {
   const container = useRef<HTMLDivElement>(null)
   const track = useRef<HTMLDivElement>(null)
+  const panes = useRef<(HTMLDivElement | null)[]>([])
   const x = useRef(0) // px offset of the track, 0 = current day centred
   const v = useRef(0) // px per second, spring velocity
   const raf = useRef<number | null>(null)
@@ -38,10 +52,21 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
   const pending = useRef<number | null>(null)
 
   const width = () => container.current?.clientWidth ?? 1
+  /** Distance the track moves to bring a neighbour to the centre. */
+  const step = () => width() - 2 * peek + gap
 
+  // Track follows x; each pane scales toward 1 as it approaches the centre, like albums in Cover Flow.
   const apply = useCallback(() => {
     if (track.current) track.current.style.transform = `translate3d(${x.current}px, 0, 0)`
-  }, [])
+    const st = step()
+    panes.current.forEach((el, i) => {
+      if (!el) return
+      const offset = (i - 1) * st + x.current // 0 = centred
+      const t = Math.min(1, Math.abs(offset) / st)
+      el.style.transform = `scale(${1 - 0.06 * t})`
+      el.style.opacity = String(1 - 0.35 * t)
+    })
+  }, [peek, gap])
 
   // rAF stops in hidden documents (backgrounded app, hidden preview); fall back to a timer so a
   // flick that started before the switch still lands on a day.
@@ -95,7 +120,7 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
       const key = dir === 1 ? next : prev
       if (key === null) return settle(0)
       pending.current = key
-      settle(-dir * width(), () => {
+      settle(-dir * step(), () => {
         onChange(key)
       })
     },
@@ -113,6 +138,10 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
   }, [current, apply])
 
   useImperativeHandle(ref, () => ({ go: (dir) => commit(dir) }), [commit])
+
+  useLayoutEffect(() => {
+    apply()
+  }, [apply, current, next])
 
   useEffect(() => () => stop(), [])
 
@@ -153,7 +182,7 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
     if (!d || d.id !== e.pointerId) return
     drag.current = null
     if (!d.active) return
-    const w = width()
+    const w = step()
     const first = d.samples[0]
     const lastS = d.samples[d.samples.length - 1]
     const dt = Math.max(1, lastS.t - first.t)
@@ -165,6 +194,16 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
     else settle(0)
     setTimeout(() => (suppressClick.current = false), 0)
   }
+
+  const paneW = `calc(100% - ${2 * peek}px)`
+  const paneStyle = (slot: -1 | 0 | 1): React.CSSProperties => ({
+    position: slot === 0 ? 'relative' : 'absolute',
+    top: 0,
+    left: slot === 0 ? peek : `calc(${peek}px + ${slot} * (100% - ${2 * peek}px + ${gap}px))`,
+    width: paneW,
+    transformOrigin: 'center center',
+    willChange: 'transform, opacity',
+  })
 
   return (
     <div
@@ -184,12 +223,31 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
       }}
     >
       <div ref={track} style={{ position: 'relative', willChange: 'transform' }}>
-        <div aria-hidden style={{ position: 'absolute', top: 0, left: '-100%', width: '100%' }}>
+        <div
+          aria-hidden
+          ref={(el) => {
+            panes.current[0] = el
+          }}
+          style={paneStyle(-1)}
+        >
           {render(prev)}
         </div>
-        <div>{render(current)}</div>
+        <div
+          ref={(el) => {
+            panes.current[1] = el
+          }}
+          style={paneStyle(0)}
+        >
+          {render(current)}
+        </div>
         {next !== null && (
-          <div aria-hidden style={{ position: 'absolute', top: 0, left: '100%', width: '100%' }}>
+          <div
+            aria-hidden
+            ref={(el) => {
+              panes.current[2] = el
+            }}
+            style={paneStyle(1)}
+          >
             {render(next)}
           </div>
         )}

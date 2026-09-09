@@ -29,10 +29,15 @@ export interface Step {
   /** Reps of the beginner standard, kept for callers that want a single starting number. */
   start: number
   cue?: string
-  /** Step-by-step performance notes, when a shared source provides them. */
+  /** Reps are counted per side (steps 7 to 10 of the one-limb ladders). */
+  perSide?: boolean
+  /** Performance paragraphs from the book. */
   how?: string[]
-  /** Path under /public to a demonstration image, when available. */
-  image?: string
+  /** Perfecting Your Technique note from the book. */
+  technique?: string
+  /** Demonstration photographs, start and finish. */
+  images?: string[]
+  captions?: string[]
 }
 
 export interface Progression {

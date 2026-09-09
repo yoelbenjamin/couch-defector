@@ -1,17 +1,17 @@
-import type { Program, ProgressionId, Slot } from '../types'
+import type { Program, ProgressionId, Slot, Unit } from '../types'
 
 /**
- * The five routines from Convict Conditioning, as weekday schedules (Monday first).
- * Rebuilt from memory of the book at Yoel's request; Supermax's exact layout is the one to double-check.
+ * The five routines from Convict Conditioning, chapter 12, as weekday schedules (Monday first).
+ * Transcribed from the printed tables.
  */
 const P = (progression: ProgressionId): Slot => ({ key: progression, kind: 'progression', progression })
+const C = (key: string, label: string, unit: Unit = 'reps'): Slot => ({ key, kind: 'custom', label, unit })
 const REST = { rest: true } as const
 const day = (name: string, ...slots: Slot[]) => ({ day: { name, slots } })
 
 const PUSH_CORE = day('Push-ups & Leg Raises', P('pushup'), P('legraise'))
 const PULL_LEGS = day('Pull-ups & Squats', P('pullup'), P('squat'))
 const HS_BRIDGE = day('Handstand Push-ups & Bridges', P('handstand'), P('bridge'))
-const ALL_SIX = day('All Six', P('pullup'), P('squat'), P('pushup'), P('legraise'), P('handstand'), P('bridge'))
 
 export const PROGRAMS: Program[] = [
   {
@@ -19,26 +19,26 @@ export const PROGRAMS: Program[] = [
     name: 'New Blood',
     tagline: 'Two short sessions a week. Where everyone should start.',
     level: 1,
-    note: 'Two to three work sets per exercise. Handstands and bridges wait until the first four movements feel easy.',
+    note: 'Two to three work sets per exercise.',
     workSets: 2,
     cycle: [PUSH_CORE, REST, REST, REST, PULL_LEGS, REST, REST],
   },
   {
     id: 'good-behavior',
     name: 'Good Behavior',
-    tagline: 'Three sessions a week covering all six movements.',
+    tagline: 'All six movements over three sessions a week. The best basic program there is.',
     level: 2,
-    note: 'Two to three work sets per exercise.',
+    note: 'Two work sets per exercise. Worth returning to no matter how advanced you get.',
     workSets: 2,
-    cycle: [PUSH_CORE, PULL_LEGS, REST, REST, HS_BRIDGE, REST, REST],
+    cycle: [PUSH_CORE, REST, PULL_LEGS, REST, HS_BRIDGE, REST, REST],
   },
   {
     id: 'veterano',
     name: 'Veterano',
-    tagline: 'One movement a day, six days a week, with more sets.',
+    tagline: 'One movement a day, six days a week.',
     level: 3,
-    note: 'Three to five work sets. Each movement gets a full week to recover.',
-    workSets: 3,
+    note: 'Two to three work sets. Each movement gets a full week to recover.',
+    workSets: 2,
     cycle: [
       day('Pull-ups', P('pullup')),
       day('Bridges', P('bridge')),
@@ -52,20 +52,28 @@ export const PROGRAMS: Program[] = [
   {
     id: 'solitary-confinement',
     name: 'Solitary Confinement',
-    tagline: 'Six days a week, every movement twice.',
+    tagline: 'Six days a week, every movement twice, with grip, calf, and neck work.',
     level: 4,
-    note: 'Two to three work sets. Only once you recover quickly from Veterano.',
-    workSets: 2,
-    cycle: [PULL_LEGS, PUSH_CORE, HS_BRIDGE, PULL_LEGS, PUSH_CORE, HS_BRIDGE, REST],
+    note: 'Three to five work sets. Only after more than a year of hard training, and not all year round.',
+    workSets: 3,
+    cycle: [
+      day('Pull-ups, Squats & Grip', P('pullup'), P('squat'), C('grip', 'Grip work')),
+      day('Push-ups, Leg Raises & Calves', P('pushup'), P('legraise'), C('calf', 'Calf work')),
+      day('Handstand Push-ups, Bridges & Neck', P('handstand'), P('bridge'), C('neck', 'Neck work')),
+      day('Pull-ups, Squats & Grip', P('pullup'), P('squat'), C('grip', 'Grip work')),
+      day('Push-ups, Leg Raises & Calves', P('pushup'), P('legraise'), C('calf', 'Calf work')),
+      day('Handstand Push-ups, Bridges & Neck', P('handstand'), P('bridge'), C('neck', 'Neck work')),
+      REST,
+    ],
   },
   {
     id: 'supermax',
     name: 'Supermax',
-    tagline: 'All six movements, six days a week. For exceptional recovery only.',
+    tagline: 'Two movements a day, six days a week, at very high volume. Endurance, not strength.',
     level: 5,
-    note: 'Two work sets per exercise. Check this layout against the book before trusting it.',
-    workSets: 2,
-    cycle: [ALL_SIX, ALL_SIX, ALL_SIX, ALL_SIX, ALL_SIX, ALL_SIX, REST],
+    note: 'Ten to fifty work sets per exercise. Only after working through the ten steps and years of hard training.',
+    workSets: 10,
+    cycle: [PULL_LEGS, PUSH_CORE, HS_BRIDGE, PULL_LEGS, PUSH_CORE, HS_BRIDGE, REST],
   },
 ]
 
