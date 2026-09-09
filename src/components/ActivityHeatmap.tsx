@@ -85,12 +85,12 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
           <button
             key={c.key}
             type="button"
+            style={{ ...style, appearance: 'none', padding: 0, margin: 0, border: 0, display: 'block', font: 'inherit' }}
             aria-label={`${label}, ${what}`}
             aria-pressed={isSelected}
             onClick={() => onSelect(c.isToday || isSelected ? null : c.key)}
             className={cls}
-            style={style}
-            data-filled=""
+                        data-filled=""
           />
         )
       })}

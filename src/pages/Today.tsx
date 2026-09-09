@@ -79,24 +79,21 @@ export default function Today() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-
   const showForm = !plan.doneToday && (!plan.restSuggested || trainAnyway)
+
+  const editSession = (x: Session) => {
+    if (x.kind === 'mobility') setEditMobility(true)
+    else nav(`/log/${x.dayIndex}?session=${x.id}`)
+  }
+  const removeSession = async (x: Session) => {
+    await deleteSession(x.id)
+    toast('Session deleted')
+  }
 
   const renderDay = (key: number) => {
     if (key !== today) {
       const sessions = data.sessions.filter((x) => dayKey(new Date(x.date)) === key)
-      return sessions.length > 0 ? (
-        <DayDetail
-          sessions={sessions}
-          onEdit={(x) => nav(`/log/${x.dayIndex}?session=${x.id}`)}
-          onDelete={async (x) => {
-            await deleteSession(x.id)
-            toast('Session deleted')
-          }}
-        />
-      ) : (
-        <DayEmpty day={scheduled(program, key)} />
-      )
+      return sessions.length > 0 ? <DayDetail sessions={sessions} onEdit={editSession} onDelete={removeSession} /> : <DayEmpty day={scheduled(program, key)} />
     }
     return (
       <>
@@ -107,27 +104,7 @@ export default function Today() {
         )}
 
         {plan.doneToday ? (
-          <Card>
-            <CardContent>
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-xs text-muted-foreground">Done today</div>
-                  <div className="mt-0.5 text-xl font-bold">{plan.doneToday.dayName}</div>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => nav(`/log/${plan.doneToday!.dayIndex}?session=${plan.doneToday!.id}`)}>
-                  <Pencil className="size-3.5" /> Edit
-                </Button>
-              </div>
-              <ul className="mt-3 space-y-1 text-sm">
-                {plan.doneToday.entries.map((e) => (
-                  <li key={e.slotKey} className="flex justify-between">
-                    <span>{e.name}</span>
-                    <span className="text-muted-foreground tabular-nums">{fmtSets(e)}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          <DayDetail sessions={[plan.doneToday]} onEdit={editSession} onDelete={removeSession} />
         ) : (
           <>
             {plan.restSuggested && !trainAnyway ? (
@@ -151,24 +128,7 @@ export default function Today() {
                   <p className="mt-0.5 text-sm text-muted-foreground">Three easy holds to keep the joints moving. About twenty seconds each.</p>
                 </div>
                 {plan.mobilityToday && !editMobility ? (
-                  <Card>
-                    <CardContent>
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-semibold">Done today</div>
-                        <Button variant="outline" size="sm" onClick={() => setEditMobility(true)}>
-                          <Pencil className="size-3.5" /> Edit
-                        </Button>
-                      </div>
-                      <ul className="mt-3 space-y-1 text-sm">
-                        {plan.mobilityToday.entries.map((e) => (
-                          <li key={e.slotKey} className="flex justify-between">
-                            <span>{e.name}</span>
-                            <span className="text-muted-foreground tabular-nums">{fmtSets(e)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
+                  <DayDetail sessions={[plan.mobilityToday]} onEdit={editSession} onDelete={removeSession} />
                 ) : (
                   <TrifectaForm
                     key={plan.mobilityToday?.id ?? 'new'}
@@ -201,7 +161,7 @@ export default function Today() {
       />
 
       {streak && (
-        <div className="mb-3">
+        <div className="-mt-1.5 mb-3">
           <StreakBadge streak={streak} />
         </div>
       )}
