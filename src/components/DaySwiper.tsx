@@ -166,7 +166,11 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper({ curren
       }
       d.active = true
       suppressClick.current = true
-      container.current?.setPointerCapture(e.pointerId)
+      try {
+        container.current?.setPointerCapture(e.pointerId)
+      } catch {
+        /* pointer already gone; the drag still works without capture */
+      }
     }
     if (!d.active) return
     let nx = dx
