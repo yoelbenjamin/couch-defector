@@ -5,6 +5,7 @@ import Layout from '@/components/Layout'
 import SignIn from '@/pages/SignIn'
 import Onboarding from '@/pages/Onboarding'
 import Today from '@/pages/Today'
+import LoadingScreen from '@/components/LoadingScreen'
 import Log from '@/pages/Log'
 import Settings from '@/pages/Settings'
 
@@ -12,11 +13,7 @@ export default function App() {
   const { ready, needsSignIn, data } = useStore()
 
   if (!ready) {
-    return (
-      <div className="flex h-full items-center justify-center text-muted-foreground">
-        <div className="animate-pulse text-sm">Loading…</div>
-      </div>
-    )
+    return <LoadingScreen />
   }
   if (needsSignIn) return <SignIn />
   if (!isProgramId(data.programId)) return <Onboarding />

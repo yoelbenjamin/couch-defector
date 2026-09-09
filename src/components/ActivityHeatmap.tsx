@@ -27,13 +27,15 @@ interface Props {
   selected?: number | null
   /** Called with the day key when a trained day is tapped, or null when the selected day is tapped again. */
   onSelect?: (dayKey: number | null) => void
+  /** Data not here yet: every cell is empty and the shimmer sweeps across in a loop. */
+  loading?: boolean
 }
 
 /**
  * Tight activity grid: one column per week, one cell per day, filled dark when you trained.
  * Ends on the current week so the newest cells are on the right. Trained days are tappable.
  */
-export default function ActivityHeatmap({ sessions, weeks = 26, className, selected = null, onSelect }: Props) {
+export default function ActivityHeatmap({ sessions, weeks = 26, className, selected = null, onSelect, loading = false }: Props) {
   const now = new Date()
   const today = dayKey(now)
   const start = weekStart(now) - (weeks - 1) * 7 * DAY
@@ -70,10 +72,11 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
       {cells.map((c) => {
         // Days ahead stay invisible even when they are the day being viewed.
         const isSelected = selected === c.key && !c.future
-        const style = { '--shimmer-delay': `${Math.round(Math.max(0, c.delay))}ms` } as CSSProperties
+        const col = Math.floor(cells.indexOf(c) / 7)
+        const style = { '--shimmer-delay': loading ? `${col * 45}ms` : `${Math.round(Math.max(0, c.delay))}ms` } as CSSProperties
         const cls = cn(
           'aspect-square rounded-[2px]',
-          c.delay >= 0 && !c.future && 'heat-cell',
+          loading ? !c.future && 'heat-cell heat-cell--loop' : c.delay >= 0 && !c.future && 'heat-cell',
           c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/85' : c.mob ? 'bg-foreground/35' : 'bg-white/90 ring-1 ring-black/[0.06] ring-inset',
           c.isToday && c.count === 0 && !c.mob && 'ring-1 ring-foreground/40 ring-inset',
           isSelected && 'bg-foreground ring-2 ring-foreground ring-offset-1 ring-offset-background',

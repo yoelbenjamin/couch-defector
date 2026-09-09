@@ -97,8 +97,13 @@ button { touch-action: manipulation; }
   35% { opacity: 0.22; }
   100% { opacity: 0; }
 }
+/* While data loads, the sweep repeats as a wave across the columns. */
+.heat-cell--loop::after {
+  animation: heat-shimmer 1500ms ease-in-out var(--shimmer-delay, 0ms) infinite;
+}
 @media (prefers-reduced-motion: reduce) {
-  .heat-cell::after { animation: none; }
+  .heat-cell::after,
+  .heat-cell--loop::after { animation: none; }
 }
 
 @layer components {
