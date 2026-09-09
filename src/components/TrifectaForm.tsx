@@ -207,6 +207,7 @@ export default function TrifectaForm({ editing = null, onSaved }: { editing?: Se
                   {infoHold.perSide ? ' · both sides' : ''}
                 </SheetDescription>
               </SheetHeader>
+              {infoStep.image && <img src={infoStep.image} alt={infoStep.name} className="mt-4 w-full rounded-2xl" />}
               <div className="mt-5 space-y-6 text-[15px] leading-relaxed">
                 <section>
                   <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">This step</h3>

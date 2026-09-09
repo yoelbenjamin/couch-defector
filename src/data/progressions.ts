@@ -6,7 +6,7 @@ import type { Progression, ProgressionId, Step } from '../types'
  * of the first book at Yoel's request; verify against the printed tables.
  */
 type Std = readonly [sets: number, reps: number]
-const r = (n: number, name: string, b: Std, i: Std, p: Std, cue?: string): Step => ({
+const r = (n: number, name: string, b: Std, i: Std, p: Std, cue?: string, image?: string): Step => ({
   n,
   name,
   unit: 'reps',
@@ -15,6 +15,7 @@ const r = (n: number, name: string, b: Std, i: Std, p: Std, cue?: string): Step 
   goal: { sets: p[0], reps: p[1] },
   start: b[1],
   cue,
+  image,
 })
 const hold = (n: number, name: string, b: number, i: number, p: number, cue?: string): Step => ({
   n,
@@ -101,12 +102,12 @@ export const PROGRESSIONS: Record<ProgressionId, Progression> = {
     name: 'Bridge',
     short: 'Bridge',
     steps: [
-      r(1, 'Short Bridges', [1, 10], [2, 25], [3, 50], 'On your back, feet flat, push the hips up. Squeeze at the top.'),
-      r(2, 'Straight Bridges', [1, 10], [2, 20], [3, 40], 'Sit with legs straight, hands behind, lift the hips until the body is a line.'),
-      r(3, 'Angled Bridges', [1, 8], [2, 15], [3, 30], 'Hands on a bed or bench behind you, feet on the floor.'),
-      r(4, 'Head Bridges', [1, 8], [2, 15], [2, 25], 'Crown of the head rests lightly on the floor at the top.'),
+      r(1, 'Short Bridges', [1, 10], [2, 25], [3, 50], 'On your back, feet flat, push the hips up. Squeeze at the top.', '/holds/bridge-1.jpg'),
+      r(2, 'Straight Bridges', [1, 10], [2, 20], [3, 40], 'Sit with legs straight, hands behind, lift the hips until the body is a line.', '/holds/bridge-2.jpg'),
+      r(3, 'Angled Bridges', [1, 8], [2, 15], [3, 30], 'Hands on a bed or bench behind you, feet on the floor.', '/holds/bridge-3.jpg'),
+      r(4, 'Head Bridges', [1, 8], [2, 15], [2, 25], 'Crown of the head rests lightly on the floor at the top.', '/holds/bridge-4.jpg'),
       r(5, 'Half Bridges', [1, 8], [2, 15], [2, 20], 'A ball or block under the lower back marks the bottom.'),
-      r(6, 'Full Bridges', [1, 6], [2, 10], [2, 15], 'Arms and legs as straight as you can, hips high.'),
+      r(6, 'Full Bridges', [1, 6], [2, 10], [2, 15], 'Arms and legs as straight as you can, hips high.', '/holds/bridge-5.jpg'),
       r(7, 'Wall Walking Bridges (Down)', [1, 3], [2, 6], [2, 10], 'Walk the hands down a wall into a bridge.'),
       r(8, 'Wall Walking Bridges (Up)', [1, 2], [2, 4], [2, 8], 'From the bridge, walk the hands back up the wall.'),
       r(9, 'Closing Bridges', [1, 1], [2, 3], [2, 6], 'Bend back from standing into a bridge, no wall.'),
