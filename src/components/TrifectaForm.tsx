@@ -130,25 +130,32 @@ export default function TrifectaForm({ editing = null, onSaved }: { editing?: Se
         const total = hardSets(e).reduce((t, s) => t + s.reps, 0)
         return (
           <section key={e.slotKey}>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
-                <SelectTrigger className="h-auto w-auto max-w-full border-0 bg-transparent px-0 py-0.5 text-xl font-bold [&>svg]:size-5">
-                  <SelectValue>{e.name}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {hold.steps.map((s) => (
-                    <SelectItem key={s.n} value={String(s.n)}>
-                      {s.n}. {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button type="button" variant="ghost" size="icon-sm" className="shrink-0 text-muted-foreground" aria-label="How to do it" onClick={() => setInfo(e.hold!)}>
-                <Info className="size-4" />
-              </Button>
-            </div>
             <Card className="py-4">
               <CardContent className="px-4">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
+                    <SelectTrigger className="h-auto w-auto max-w-full border-0 bg-transparent px-0 py-0.5 text-xl font-bold [&>svg]:size-5">
+                      <SelectValue>{e.name}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hold.steps.map((s) => (
+                        <SelectItem key={s.n} value={String(s.n)}>
+                          {s.n}. {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="shrink-0 text-muted-foreground"
+                    aria-label="How to do it"
+                    onClick={() => setInfo(e.hold!)}
+                  >
+                    <Info className="size-4" />
+                  </Button>
+                </div>
                 <SetEditor
                   sets={e.sets}
                   suffix="s"

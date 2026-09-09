@@ -201,38 +201,38 @@ export default function WorkoutForm({
         const suffix = e.unit === 'seconds' ? 's' : undefined
         return (
           <section key={e.slotKey}>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              {e.progression ? (
-                <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
-                  <SelectTrigger className="h-auto w-auto max-w-full border-0 bg-transparent px-0 py-0.5 text-xl font-bold [&>svg]:size-5">
-                    <SelectValue>{step?.name ?? e.name}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROGRESSIONS[e.progression].steps.map((s) => (
-                      <SelectItem key={s.n} value={String(s.n)}>
-                        {s.n}. {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <h2 className="text-xl font-bold">{e.name}</h2>
-              )}
-              {e.progression && step && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="shrink-0 text-muted-foreground"
-                  aria-label="How to do it"
-                  onClick={() => setInfo(i)}
-                >
-                  <Info className="size-4" />
-                </Button>
-              )}
-            </div>
             <Card className="py-4">
               <CardContent className="px-4">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  {e.progression ? (
+                    <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
+                      <SelectTrigger className="h-auto w-auto max-w-full border-0 bg-transparent px-0 py-0.5 text-xl font-bold [&>svg]:size-5">
+                        <SelectValue>{step?.name ?? e.name}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PROGRESSIONS[e.progression].steps.map((s) => (
+                          <SelectItem key={s.n} value={String(s.n)}>
+                            {s.n}. {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <h2 className="text-xl font-bold">{e.name}</h2>
+                  )}
+                  {e.progression && step && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="shrink-0 text-muted-foreground"
+                      aria-label="How to do it"
+                      onClick={() => setInfo(i)}
+                    >
+                      <Info className="size-4" />
+                    </Button>
+                  )}
+                </div>
                 <SetEditor
                   sets={e.sets}
                   previous={last && sameStep ? hardSets(last.entry).map((x) => x.reps) : undefined}
