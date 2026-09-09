@@ -80,19 +80,6 @@ export default function Today() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // Tapping the header or grid margins (not a cell, the day view, or a dialog) returns to today.
-  useEffect(() => {
-    if (selectedDay === null) return
-    const onDown = (e: PointerEvent) => {
-      const t = e.target as Element | null
-      if (!t) return
-      if (heatRef.current?.contains(t) || t.closest?.('[data-day-swiper]')) return
-      if (t.closest?.('[data-slot^="alert-dialog"]')) return
-      setSelectedDay(null)
-    }
-    document.addEventListener('pointerdown', onDown)
-    return () => document.removeEventListener('pointerdown', onDown)
-  }, [selectedDay])
 
   const showForm = !plan.doneToday && (!plan.restSuggested || trainAnyway)
 
