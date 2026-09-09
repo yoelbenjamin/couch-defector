@@ -25,7 +25,7 @@ interface Props {
   className?: string
   /** Day key of the selected cell, if any. */
   selected?: number | null
-  /** Called with the day key when a trained day is tapped, or null when the selected day is tapped again. */
+  /** Called with the day key when a past day is tapped, or null for today or when the selected day is tapped again. */
   onSelect?: (dayKey: number | null) => void
   /** Data not here yet: every cell is empty and the shimmer sweeps across in a loop. */
   loading?: boolean
@@ -33,7 +33,7 @@ interface Props {
 
 /**
  * Tight activity grid: one column per week, one cell per day, filled dark when you trained.
- * Ends on the current week so the newest cells are on the right. Trained days are tappable.
+ * Ends on the current week so the newest cells are on the right. Every past day is tappable.
  */
 export default function ActivityHeatmap({ sessions, weeks = 26, className, selected = null, onSelect, loading = false }: Props) {
   const now = new Date()
@@ -82,9 +82,10 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
           // Selected: a focus ring around the cell. The fill stays what it was; dark means trained, nothing else.
           isSelected && 'ring-2 ring-foreground ring-offset-1 ring-offset-background',
         )
-        if ((c.count === 0 && !c.mob && !c.isToday) || !onSelect) return <div key={c.key} className={cls} style={style} data-filled={c.count > 0 ? '' : undefined} />
+        // Every past day is tappable; only days ahead are inert.
+        if (c.future || !onSelect) return <div key={c.key} className={cls} style={style} data-filled={c.count > 0 ? '' : undefined} />
         const label = new Date(c.key).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
-        const what = c.isToday && c.count === 0 && !c.mob ? 'today' : c.count > 0 ? `${c.count} session${c.count === 1 ? '' : 's'}` : 'Trifecta'
+        const what = c.count > 0 ? `${c.count} session${c.count === 1 ? '' : 's'}` : c.mob ? 'Trifecta' : c.isToday ? 'today' : 'nothing logged'
         return (
           <button
             key={c.key}
