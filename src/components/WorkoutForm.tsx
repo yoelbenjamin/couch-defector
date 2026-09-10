@@ -6,7 +6,6 @@ import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { checkGoal, hardSets, lastEntryForSlot, lastEntryForStep } from '@/lib/stats'
 import { dayKey } from '@/lib/schedule'
 import { newId, useStore } from '@/lib/store'
-import { cn } from '@/lib/utils'
 import SetEditor from '@/components/SetEditor'
 import TechniqueSheet from '@/components/TechniqueSheet'
 import { Badge } from '@/components/ui/badge'
@@ -90,14 +89,11 @@ function writeDraft(key: string, d: Draft) {
 export default function WorkoutForm({
   dayIndex,
   editing = null,
-  footer = 'inline',
   onSaved,
   onCancel,
 }: {
   dayIndex: number
   editing?: Session | null
-  /** `sticky` pins Finish to the bottom of the viewport (full-screen Log). `inline` renders it after the note. */
-  footer?: 'inline' | 'sticky'
   onSaved?: (s: Session) => void
   /** Editing in place: shown as a Cancel button next to Reset; drops the edit draft. */
   onCancel?: () => void
@@ -198,8 +194,8 @@ export default function WorkoutForm({
   )
 
   return (
-    <div className={cn('space-y-3', footer === 'sticky' && 'pb-28')}>
-      <Tray action={footer === 'inline' ? finishButton : undefined}>
+    <div className="space-y-3">
+      <Tray action={finishButton}>
         {entries.map((e, i) => {
           const last = lastBySlot.get(e.slotKey) ?? null
           const sameStep = last && e.progression ? last.entry.step === e.step : true
@@ -303,27 +299,16 @@ export default function WorkoutForm({
 
       <TechniqueSheet entry={info === null ? null : (entries[info] ?? null)} open={info !== null} onOpenChange={(o) => !o && setInfo(null)} />
 
-      {footer === 'inline' ? (
-        <div className="flex justify-center gap-2">
-          <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={reset}>
-            Reset
+      <div className="flex justify-center gap-2">
+        <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={reset}>
+          Reset
+        </Button>
+        {editing && onCancel && (
+          <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={cancel}>
+            Cancel
           </Button>
-          {editing && onCancel && (
-            <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={cancel}>
-              Cancel
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 mx-auto max-w-md px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] [&>*]:pointer-events-auto">
-          <div className="flex flex-col items-center gap-1">
-            {finishButton}
-            <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={reset}>
-              Reset
-            </Button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

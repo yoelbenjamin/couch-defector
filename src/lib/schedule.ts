@@ -77,13 +77,3 @@ export function planToday(program: Program, sessions: Session[], now = new Date(
 export function fmtDate(iso: string, opts: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' }) {
   return new Date(iso).toLocaleDateString(undefined, opts)
 }
-
-export function relativeDay(iso: string, now = new Date()) {
-  const d = daysBetween(new Date(iso), now)
-  if (d === 0) return 'Today'
-  if (d === 1) return 'Yesterday'
-  if (d === -1) return 'Tomorrow'
-  if (d < 0 && d > -7) return `In ${-d} days`
-  if (d > 0 && d < 7) return `${d} days ago`
-  return fmtDate(iso)
-}

@@ -6,7 +6,6 @@ import SignIn from '@/pages/SignIn'
 import Onboarding from '@/pages/Onboarding'
 import Today from '@/pages/Today'
 import LoadingScreen from '@/components/LoadingScreen'
-import Log from '@/pages/Log'
 import Settings from '@/pages/Settings'
 
 /** Dev only: ?splash holds the load screen open so it can be looked at. */
@@ -32,7 +31,6 @@ function Screens({ needsSignIn, programId }: { needsSignIn: boolean; programId: 
         <Route path="/" element={<Today />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
-      <Route path="/log/:dayIndex" element={<Log />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
