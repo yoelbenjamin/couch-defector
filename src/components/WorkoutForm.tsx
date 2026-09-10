@@ -92,12 +92,15 @@ export default function WorkoutForm({
   editing = null,
   footer = 'inline',
   onSaved,
+  onCancel,
 }: {
   dayIndex: number
   editing?: Session | null
   /** `sticky` pins Finish to the bottom of the viewport (full-screen Log). `inline` renders it after the note. */
   footer?: 'inline' | 'sticky'
   onSaved?: (s: Session) => void
+  /** Editing in place: shown as a Cancel button next to Reset; drops the edit draft. */
+  onCancel?: () => void
 }) {
   const { data, saveSession, setStep } = useStore()
   const program = getProgram(data.programId)
@@ -153,6 +156,11 @@ export default function WorkoutForm({
     setEntries(editing ? clone(editing) : day.slots.map((s) => initialEntry(s, data, program)))
     setNote(editing?.note ?? '')
     setShowNote(Boolean(editing?.note))
+  }
+
+  const cancel = () => {
+    localStorage.removeItem(draftKey)
+    onCancel?.()
   }
 
   const finish = async () => {
@@ -296,10 +304,15 @@ export default function WorkoutForm({
       <TechniqueSheet entry={info === null ? null : (entries[info] ?? null)} open={info !== null} onOpenChange={(o) => !o && setInfo(null)} />
 
       {footer === 'inline' ? (
-        <div className="text-center">
+        <div className="flex justify-center gap-2">
           <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={reset}>
             Reset
           </Button>
+          {editing && onCancel && (
+            <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={cancel}>
+              Cancel
+            </Button>
+          )}
         </div>
       ) : (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 mx-auto max-w-md px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] [&>*]:pointer-events-auto">

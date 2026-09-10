@@ -12,12 +12,17 @@ import Settings from '@/pages/Settings'
 export default function App() {
   const { ready, needsSignIn, data } = useStore()
 
-  if (!ready) {
-    return <LoadingScreen />
-  }
-  if (needsSignIn) return <SignIn />
-  if (!isProgramId(data.programId)) return <Onboarding />
+  return (
+    <>
+      {ready && <Screens needsSignIn={needsSignIn} programId={data.programId} />}
+      <LoadingScreen done={ready} />
+    </>
+  )
+}
 
+function Screens({ needsSignIn, programId }: { needsSignIn: boolean; programId: string | null }) {
+  if (needsSignIn) return <SignIn />
+  if (!isProgramId(programId)) return <Onboarding />
   return (
     <Routes>
       <Route element={<Layout />}>

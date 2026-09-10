@@ -1,38 +1,34 @@
-import {
-  CircleCheckIcon,
-  InfoIcon,
-  Loader2Icon,
-  OctagonXIcon,
-  TriangleAlertIcon,
-} from "lucide-react"
-import { useTheme } from "next-themes"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { Check, Info, Loader2, TriangleAlert, X } from 'lucide-react'
+import { Toaster as Sonner, type ToasterProps } from 'sonner'
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
-  return (
-    <Sonner
-      theme={theme as ToasterProps["theme"]}
-      className="toaster group"
-      icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
-      }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
-        } as React.CSSProperties
-      }
-      {...props}
-    />
-  )
-}
+/** Bottom-of-page toasts in the app's own inset-card recipe. Light only. */
+const Toaster = (props: ToasterProps) => (
+  <Sonner
+    theme="light"
+    position="bottom-center"
+    offset={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)' }}
+    mobileOffset={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)', left: 16, right: 16 }}
+    gap={10}
+    duration={3200}
+    icons={{
+      success: <Check className="size-4" strokeWidth={2.5} />,
+      info: <Info className="size-4" />,
+      warning: <TriangleAlert className="size-4" />,
+      error: <X className="size-4" strokeWidth={2.5} />,
+      loading: <Loader2 className="size-4 animate-spin" />,
+    }}
+    toastOptions={{
+      unstyled: true,
+      classNames: {
+        toast: 'ws-toast',
+        icon: 'ws-toast-icon',
+        content: 'ws-toast-content',
+        title: 'ws-toast-title',
+        description: 'ws-toast-desc',
+      },
+    }}
+    {...props}
+  />
+)
 
 export { Toaster }

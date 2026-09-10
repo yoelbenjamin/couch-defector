@@ -136,7 +136,12 @@ export const DOCK_WIDTH = 360
 export function ProtoFrame({ children }: { children: ReactNode }) {
   const p = useContext(Ctx)
   const pad = p?.docked ? { paddingRight: DOCK_WIDTH } : undefined
-  if (!p?.frame) return <div className="h-full" style={pad}>{children}</div>
+  if (!p?.frame)
+    return (
+      <div className="h-full" style={pad}>
+        {children}
+      </div>
+    )
   return (
     <div className="flex h-full items-center justify-center bg-neutral-200 p-6" style={pad}>
       <div

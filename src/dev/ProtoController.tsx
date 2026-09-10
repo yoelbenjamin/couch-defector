@@ -191,7 +191,14 @@ function StatesTab({ close }: { close: () => void }) {
         {proto.enabled && (
           <div className="mt-3">
             <Label className="mb-1.5 block text-xs text-muted-foreground">Auth</Label>
-            <ToggleGroup type="single" variant="outline" size="sm" value={proto.auth} onValueChange={(v) => v && proto.setAuth(v as 'signed-in' | 'signed-out')} className="w-full">
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={proto.auth}
+              onValueChange={(v) => v && proto.setAuth(v as 'signed-in' | 'signed-out')}
+              className="w-full"
+            >
               <ToggleGroupItem value="signed-in" className="flex-1 text-xs">
                 Signed in
               </ToggleGroupItem>
@@ -214,14 +221,15 @@ function StatesTab({ close }: { close: () => void }) {
                   key={s.id}
                   type="button"
                   onClick={() => load(s.id)}
-                  className={cn(
-                    'w-full rounded-lg border px-3 py-2 text-left transition hover:bg-accent',
-                    active && 'border-primary/50 bg-primary/5',
-                  )}
+                  className={cn('w-full rounded-lg border px-3 py-2 text-left transition hover:bg-accent', active && 'border-primary/50 bg-primary/5')}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium">{s.name}</span>
-                    {active && <Badge variant="secondary" className="text-xs">active</Badge>}
+                    {active && (
+                      <Badge variant="secondary" className="text-xs">
+                        active
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground">{s.description}</div>
                 </button>
@@ -251,9 +259,7 @@ function IdeasTab() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          {changed === 0 ? 'All defaults.' : `${changed} flag${changed === 1 ? '' : 's'} changed.`}
-        </p>
+        <p className="text-xs text-muted-foreground">{changed === 0 ? 'All defaults.' : `${changed} flag${changed === 1 ? '' : 's'} changed.`}</p>
         <Button size="sm" variant="ghost" onClick={proto.resetIdeas} disabled={changed === 0}>
           <RotateCcw className="size-3.5" /> Reset
         </Button>
@@ -293,14 +299,7 @@ function IdeaRow({ k }: { k: IdeaKey }) {
         {def.kind === 'toggle' && <Switch checked={Boolean(value)} onCheckedChange={(v) => proto.setIdea(k, v as never)} />}
       </div>
       {def.kind === 'choice' && (
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          className="mt-2 w-full"
-          value={value as string}
-          onValueChange={(v) => v && proto.setIdea(k, v)}
-        >
+        <ToggleGroup type="single" variant="outline" size="sm" className="mt-2 w-full" value={value as string} onValueChange={(v) => v && proto.setIdea(k, v)}>
           {def.options.map((o) => (
             <ToggleGroupItem key={o} value={o} className="flex-1 text-xs capitalize">
               {o}

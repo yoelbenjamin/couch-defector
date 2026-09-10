@@ -130,13 +130,22 @@ export interface StreakInfo {
 export function streakInfo(sessions: Session[], now = new Date()): StreakInfo | null {
   const weeks = streakWeeks(sessions, now)
   if (weeks === 0) return null
-  const startWeek = weekKey(now) - (weeks - 1 + (sessions.some((s) => s.kind !== 'mobility' && weekKey(new Date(s.date)) === weekKey(now)) ? 0 : 1)) * 7 * 86400000
+  const startWeek =
+    weekKey(now) - (weeks - 1 + (sessions.some((s) => s.kind !== 'mobility' && weekKey(new Date(s.date)) === weekKey(now)) ? 0 : 1)) * 7 * 86400000
   const first = sessions
     .filter((s) => s.kind !== 'mobility' && weekKey(new Date(s.date)) === startWeek)
     .map((s) => new Date(s.date))
     .sort((a, b) => a.getTime() - b.getTime())[0]
   if (!first) return null
-  const days = Math.max(1, Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(first.getFullYear(), first.getMonth(), first.getDate()).getTime()) / 86400000) + 1)
+  // Today only counts once today's workout is logged; until then the run ends yesterday.
+  const todayKey = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const trainedToday = sessions.some((s) => {
+    if (s.kind === 'mobility') return false
+    const d = new Date(s.date)
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() === todayKey
+  })
+  const end = trainedToday ? todayKey : todayKey - 86400000
+  const days = Math.max(1, Math.round((end - new Date(first.getFullYear(), first.getMonth(), first.getDate()).getTime()) / 86400000) + 1)
   const months = Math.floor(days / 30.44)
   const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`
   if (days < 7) return { days, label: plural(days, 'day'), tier: 'graphite' }

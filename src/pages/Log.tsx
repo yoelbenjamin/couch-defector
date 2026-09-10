@@ -46,7 +46,13 @@ export default function Log() {
         <div className="w-[76px]" />
       </header>
       <main className="flex-1 overflow-y-auto px-4 py-4">
-        <WorkoutForm key={`${dayIndex}:${editing?.id ?? 'new'}`} dayIndex={dayIndex} editing={editing} footer="sticky" onSaved={() => nav('/', { replace: true })} />
+        <WorkoutForm
+          key={`${dayIndex}:${editing?.id ?? 'new'}`}
+          dayIndex={dayIndex}
+          editing={editing}
+          footer="sticky"
+          onSaved={() => nav('/', { replace: true })}
+        />
       </main>
     </div>
   )

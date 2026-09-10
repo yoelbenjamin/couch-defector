@@ -64,7 +64,11 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onDo
           {open === k ? (
             <Stepper value={s.reps} suffix={suffix} onChange={(v) => setReps(k, v)} />
           ) : (
-            <button type="button" onClick={() => setOpen(k)} className={cn('text-lg font-semibold tabular-nums', done[k] && 'text-muted-foreground line-through')}>
+            <button
+              type="button"
+              onClick={() => setOpen(k)}
+              className={cn('text-lg font-semibold tabular-nums', done[k] && 'text-muted-foreground line-through')}
+            >
               {s.reps}
               {suffix}
             </button>
@@ -78,7 +82,10 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onDo
             type="button"
             aria-label={done[k] ? 'mark not done' : 'mark done'}
             onClick={() => toggleDone(k)}
-            className={cn('ml-auto flex size-7 shrink-0 items-center justify-center rounded-full border', done[k] && 'border-foreground bg-foreground text-background')}
+            className={cn(
+              'ml-auto flex size-7 shrink-0 items-center justify-center rounded-full border',
+              done[k] && 'border-foreground bg-foreground text-background',
+            )}
           >
             {done[k] && <Check className="size-4" />}
           </button>

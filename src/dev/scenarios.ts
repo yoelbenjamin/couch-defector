@@ -59,7 +59,11 @@ export function history(o: HistoryOpts): UserData {
     if (isRest(idx)) {
       if (daysAgo !== 0 || o.daysSinceLast !== 0) continue
       // Forced "done today" on a rest day: log the next workout in the week.
-      for (let k = 1; k <= 7; k++) if (!isRest((idx + k) % 7)) { idx = (idx + k) % 7; break }
+      for (let k = 1; k <= 7; k++)
+        if (!isRest((idx + k) % 7)) {
+          idx = (idx + k) % 7
+          break
+        }
     }
     schedule.push({ daysAgo, dayIndex: idx })
   }
@@ -74,11 +78,16 @@ export function history(o: HistoryOpts): UserData {
     const day = (cycle[slotDay.dayIndex] as { day: { name: string; slots: Slot[] } }).day
     const entries: Entry[] = day.slots.map((s): Entry => {
       if (s.kind === 'progression') {
-        const st = (state[s.progression] ??= { step: o.startSteps?.[s.progression] ?? 1, reps: getStep(s.progression, o.startSteps?.[s.progression] ?? 1).start })
+        const st = (state[s.progression] ??= {
+          step: o.startSteps?.[s.progression] ?? 1,
+          reps: getStep(s.progression, o.startSteps?.[s.progression] ?? 1).start,
+        })
         const step = getStep(s.progression, st.step)
         let reps = st.reps
         if (isLast && o.peakLast) reps = step.goal.reps
-        const hard = Array.from({ length: Math.max(program.workSets, step.goal.sets) }, (_, k) => ({ reps: Math.max(1, reps - (k > 0 && rand() < 0.5 ? 1 : 0)) }))
+        const hard = Array.from({ length: Math.max(program.workSets, step.goal.sets) }, (_, k) => ({
+          reps: Math.max(1, reps - (k > 0 && rand() < 0.5 ? 1 : 0)),
+        }))
         const entry: Entry = {
           slotKey: s.key,
           name: step.name,
@@ -120,26 +129,70 @@ export function history(o: HistoryOpts): UserData {
 export const SCENARIOS: Scenario[] = [
   { id: 'signed-out', group: 'Account', name: 'Signed out', description: 'The sign-in screen.', auth: 'signed-out', build: () => empty(null) },
   { id: 'new-account', group: 'Account', name: 'New account', description: 'Signed in, no program picked. Onboarding.', build: () => empty(null) },
-  { id: 'day-one', group: 'Lifecycle', name: 'Day one', description: 'Program picked, nothing logged yet.', build: () => empty('new-blood', { squat: 2, pullup: 1, pushup: 3, legraise: 2 }) },
-  { id: 'due-today', group: 'Lifecycle', name: 'Workout due', description: 'Veterano, three weeks in. A session is due unless it is Sunday.', build: () => history({ programId: 'veterano', weeks: 3, daysSinceLast: 2 }) },
-  { id: 'rest-day', group: 'Lifecycle', name: 'Rest day', description: 'New Blood: only Monday and Friday train, so most days rest.', build: () => history({ programId: 'new-blood', weeks: 3, daysSinceLast: 1 }) },
-  { id: 'done-today', group: 'Lifecycle', name: 'Done today', description: 'Already logged this morning.', build: () => history({ programId: 'veterano', weeks: 3, daysSinceLast: 0 }) },
-  { id: 'ready-up', group: 'Lifecycle', name: 'Ready to move up', description: 'Last session hit the goal on every exercise.', build: () => history({ programId: 'good-behavior', weeks: 5, daysSinceLast: 0, peakLast: true }) },
-  { id: 'back-to-back', group: 'Lifecycle', name: 'Back-to-back day', description: 'Solitary Confinement, six days a week. Trained yesterday, due again today.', build: () => history({ programId: 'solitary-confinement', weeks: 4, daysSinceLast: 1 }) },
-  { id: 'long-break', group: 'Lifecycle', name: 'Long break', description: 'Sixteen days off. What does coming back feel like?', build: () => history({ programId: 'good-behavior', weeks: 6, daysSinceLast: 16 }) },
+  {
+    id: 'day-one',
+    group: 'Lifecycle',
+    name: 'Day one',
+    description: 'Program picked, nothing logged yet.',
+    build: () => empty('new-blood', { squat: 2, pullup: 1, pushup: 3, legraise: 2 }),
+  },
+  {
+    id: 'due-today',
+    group: 'Lifecycle',
+    name: 'Workout due',
+    description: 'Veterano, three weeks in. A session is due unless it is Sunday.',
+    build: () => history({ programId: 'veterano', weeks: 3, daysSinceLast: 2 }),
+  },
+  {
+    id: 'rest-day',
+    group: 'Lifecycle',
+    name: 'Rest day',
+    description: 'New Blood: only Monday and Friday train, so most days rest.',
+    build: () => history({ programId: 'new-blood', weeks: 3, daysSinceLast: 1 }),
+  },
+  {
+    id: 'done-today',
+    group: 'Lifecycle',
+    name: 'Done today',
+    description: 'Already logged this morning.',
+    build: () => history({ programId: 'veterano', weeks: 3, daysSinceLast: 0 }),
+  },
+  {
+    id: 'ready-up',
+    group: 'Lifecycle',
+    name: 'Ready to move up',
+    description: 'Last session hit the goal on every exercise.',
+    build: () => history({ programId: 'good-behavior', weeks: 5, daysSinceLast: 0, peakLast: true }),
+  },
+  {
+    id: 'back-to-back',
+    group: 'Lifecycle',
+    name: 'Back-to-back day',
+    description: 'Solitary Confinement, six days a week. Trained yesterday, due again today.',
+    build: () => history({ programId: 'solitary-confinement', weeks: 4, daysSinceLast: 1 }),
+  },
+  {
+    id: 'long-break',
+    group: 'Lifecycle',
+    name: 'Long break',
+    description: 'Sixteen days off. What does coming back feel like?',
+    build: () => history({ programId: 'good-behavior', weeks: 6, daysSinceLast: 16 }),
+  },
   {
     id: 'veteran',
     group: 'Volume',
     name: 'Veteran',
     description: 'Twenty weeks of Veterano. Stress-test the grid and day views.',
-    build: () => history({ programId: 'veterano', weeks: 20, daysSinceLast: 2, startSteps: { pushup: 4, squat: 4, pullup: 3, legraise: 3, bridge: 2, handstand: 1 } }),
+    build: () =>
+      history({ programId: 'veterano', weeks: 20, daysSinceLast: 2, startSteps: { pushup: 4, squat: 4, pullup: 3, legraise: 3, bridge: 2, handstand: 1 } }),
   },
   {
     id: 'advanced',
     group: 'Volume',
     name: 'Advanced athlete',
     description: 'Supermax, high steps, all six every day.',
-    build: () => history({ programId: 'supermax', weeks: 8, daysSinceLast: 1, startSteps: { pushup: 7, squat: 7, pullup: 6, legraise: 6, bridge: 5, handstand: 4 } }),
+    build: () =>
+      history({ programId: 'supermax', weeks: 8, daysSinceLast: 1, startSteps: { pushup: 7, squat: 7, pullup: 6, legraise: 6, bridge: 5, handstand: 4 } }),
   },
 ]
 

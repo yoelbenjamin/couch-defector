@@ -58,7 +58,15 @@ const cloneEntries = (s: Session) => s.entries.map((e) => ({ ...e, sets: e.sets.
  * The rest-day Trifecta: bridge hold, L-hold, twist hold, each at your current step with a seconds
  * counter per chunk. Saves as a mobility session, which never counts as training.
  */
-export default function TrifectaForm({ editing = null, onSaved }: { editing?: Session | null; onSaved?: (s: Session) => void }) {
+export default function TrifectaForm({
+  editing = null,
+  onSaved,
+  onCancel,
+}: {
+  editing?: Session | null
+  onSaved?: (s: Session) => void
+  onCancel?: () => void
+}) {
   const { data, saveSession, setHoldStep } = useStore()
   const program = getProgram(data.programId)
   const draftKey = editing ? `draft:trifecta:edit:${editing.id}` : `draft:trifecta:${program.id}`
@@ -193,10 +201,22 @@ export default function TrifectaForm({ editing = null, onSaved }: { editing?: Se
         })}
       </Tray>
 
-      <div className="text-center">
+      <div className="flex justify-center gap-2">
         <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={reset}>
           Reset
         </Button>
+        {editing && onCancel && (
+          <Button
+            variant="ghost"
+            className="h-11 px-8 text-muted-foreground"
+            onClick={() => {
+              localStorage.removeItem(draftKey)
+              onCancel()
+            }}
+          >
+            Cancel
+          </Button>
+        )}
       </div>
 
       <Sheet open={info !== null} onOpenChange={(o) => !o && setInfo(null)}>

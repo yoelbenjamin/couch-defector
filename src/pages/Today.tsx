@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
@@ -13,7 +12,7 @@ import WorkoutForm from '@/components/WorkoutForm'
 import TrifectaForm from '@/components/TrifectaForm'
 import StreakBadge from '@/components/StreakBadge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, Tray } from '@/components/ui/card'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +43,6 @@ function scheduled(program: Program, key: number): WorkoutDay | null {
  */
 export default function Today() {
   const { data, cloud, deleteSession } = useStore()
-  const nav = useNavigate()
   const program = getProgram(data.programId)
   const plan = planToday(program, data.sessions)
   const streak = streakInfo(data.sessions)
@@ -56,6 +54,8 @@ export default function Today() {
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [trainAnyway, setTrainAnyway] = useState(false)
   const [editMobility, setEditMobility] = useState(false)
+  /** Session being edited in place, under the day it belongs to. */
+  const [editingId, setEditingId] = useState<string | null>(null)
   const viewing = selectedDay ?? today
   const viewDate = new Date(viewing)
   const weekday = viewDate.toLocaleDateString(undefined, { weekday: 'long' })
@@ -83,17 +83,34 @@ export default function Today() {
 
   const editSession = (x: Session) => {
     if (x.kind === 'mobility') setEditMobility(true)
-    else nav(`/log/${x.dayIndex}?session=${x.id}`)
+    else setEditingId(x.id)
   }
   const removeSession = async (x: Session) => {
     await deleteSession(x.id)
     toast('Session deleted')
   }
 
+  /** A logged workout, or the form open over it while it is being edited. */
+  const detailOrEdit = (sessions: Session[]) => {
+    const editing = sessions.find((x) => x.id === editingId && x.kind !== 'mobility')
+    if (editing) {
+      return (
+        <WorkoutForm
+          key={`edit:${editing.id}`}
+          dayIndex={editing.dayIndex}
+          editing={editing}
+          onSaved={() => setEditingId(null)}
+          onCancel={() => setEditingId(null)}
+        />
+      )
+    }
+    return <DayDetail sessions={sessions} onEdit={editSession} onDelete={removeSession} />
+  }
+
   const renderDay = (key: number) => {
     if (key !== today) {
       const sessions = data.sessions.filter((x) => dayKey(new Date(x.date)) === key)
-      return sessions.length > 0 ? <DayDetail sessions={sessions} onEdit={editSession} onDelete={removeSession} /> : <DayEmpty day={scheduled(program, key)} />
+      return sessions.length > 0 ? detailOrEdit(sessions) : <DayEmpty day={scheduled(program, key)} />
     }
     return (
       <>
@@ -104,7 +121,7 @@ export default function Today() {
         )}
 
         {plan.doneToday ? (
-          <DayDetail sessions={[plan.doneToday]} onEdit={editSession} onDelete={removeSession} />
+          detailOrEdit([plan.doneToday])
         ) : (
           <>
             {plan.restSuggested && !trainAnyway ? (
@@ -134,6 +151,7 @@ export default function Today() {
                     key={plan.mobilityToday?.id ?? 'new'}
                     editing={editMobility ? plan.mobilityToday : null}
                     onSaved={() => setEditMobility(false)}
+                    onCancel={() => setEditMobility(false)}
                   />
                 )}
               </>
@@ -161,7 +179,7 @@ export default function Today() {
       />
 
       {streak && (
-        <div className="-mt-1.5 mb-3">
+        <div className="-mt-2.5 mb-3">
           <StreakBadge streak={streak} />
         </div>
       )}
@@ -178,7 +196,7 @@ export default function Today() {
         render={renderDay}
         onChange={(k) => setSelectedDay(k === today ? null : k)}
         className="-mx-4 min-h-[40vh]"
-        peek={28}
+        peek={16}
         gap={12}
       />
     </div>
@@ -189,70 +207,68 @@ export default function Today() {
 
 function DayEmpty({ day }: { day: WorkoutDay | null }) {
   return (
-    <div>
-      <Card>
+    <Tray>
+      <Card variant="inset">
         <CardContent>
           <div className="text-xs text-muted-foreground">{day ? 'Scheduled' : 'Rest day'}</div>
           <div className="mt-0.5 text-xl font-bold">{day ? day.name : 'Recover'}</div>
           <p className="mt-2 text-sm text-muted-foreground">{day ? 'Nothing logged.' : 'Nothing scheduled, nothing logged.'}</p>
         </CardContent>
       </Card>
-    </div>
+    </Tray>
   )
 }
 
 function DayDetail({ sessions, onEdit, onDelete }: { sessions: Session[]; onEdit: (s: Session) => void; onDelete: (s: Session) => void | Promise<void> }) {
   return (
-    <div>
-      <div className="space-y-2">
-        {sessions.map((s) => (
-          <Card key={s.id} className="py-3">
-            <CardContent>
-              <div className="flex items-center justify-between gap-3">
-                <div className="font-semibold">{s.dayName}</div>
-                <span className="text-xs text-muted-foreground">{new Date(s.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
-              </div>
-              <ul className="mt-2 space-y-1 text-sm">
-                {s.entries.map((e) => (
-                  <li key={e.slotKey} className="flex justify-between gap-3">
-                    <span className="min-w-0 truncate">
-                      {e.name}
-                      {e.step ? <span className="text-muted-foreground"> · step {e.step}</span> : null}
-                    </span>
-                    <span className="text-muted-foreground tabular-nums">{fmtSets(e)}</span>
-                  </li>
-                ))}
-              </ul>
-              {s.note && <p className="mt-2 text-sm text-muted-foreground">{s.note}</p>}
-              <div className="mt-3 flex items-center justify-end gap-1">
-                <Button variant="ghost" size="sm" onClick={() => onEdit(s)}>
-                  <Pencil className="size-3.5" /> Edit
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground">
-                      <Trash2 className="size-3.5" /> Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete this session?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {s.dayName} on {new Date(s.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })} will be removed from
-                        your log. This cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Keep</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => void onDelete(s)}>Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
+    <Tray>
+      {sessions.map((s) => (
+        <Card key={s.id} variant="inset">
+          <CardContent>
+            <div className="flex items-center justify-between gap-3">
+              <div className="font-semibold">{s.dayName}</div>
+              <span className="text-xs text-muted-foreground">{new Date(s.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
+            </div>
+            <ul className="mt-2 space-y-1 text-sm">
+              {s.entries.map((e) => (
+                <li key={e.slotKey} className="flex justify-between gap-3">
+                  <span className="min-w-0 truncate">
+                    {e.name}
+                    {e.step ? <span className="text-muted-foreground"> · step {e.step}</span> : null}
+                  </span>
+                  <span className="text-muted-foreground tabular-nums">{fmtSets(e)}</span>
+                </li>
+              ))}
+            </ul>
+            {s.note && <p className="mt-2 text-sm text-muted-foreground">{s.note}</p>}
+            <div className="mt-3 flex items-center justify-end gap-1">
+              <Button variant="ghost" size="sm" onClick={() => onEdit(s)}>
+                <Pencil className="size-3.5" /> Edit
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground">
+                    <Trash2 className="size-3.5" /> Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this session?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {s.dayName} on {new Date(s.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })} will be removed from
+                      your log. This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => void onDelete(s)}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </Tray>
   )
 }

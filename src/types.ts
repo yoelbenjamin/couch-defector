@@ -1,10 +1,4 @@
-export type ProgressionId =
-  | 'pushup'
-  | 'squat'
-  | 'pullup'
-  | 'legraise'
-  | 'bridge'
-  | 'handstand'
+export type ProgressionId = 'pushup' | 'squat' | 'pullup' | 'legraise' | 'bridge' | 'handstand'
 
 export type Unit = 'reps' | 'seconds'
 
@@ -47,9 +41,7 @@ export interface Progression {
   steps: Step[]
 }
 
-export type Slot =
-  | { key: string; kind: 'progression'; progression: ProgressionId }
-  | { key: string; kind: 'custom'; label: string; unit?: Unit }
+export type Slot = { key: string; kind: 'progression'; progression: ProgressionId } | { key: string; kind: 'custom'; label: string; unit?: Unit }
 
 export interface WorkoutDay {
   name: string

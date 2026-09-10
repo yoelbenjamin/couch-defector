@@ -95,7 +95,7 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
             aria-pressed={isSelected}
             onClick={() => onSelect(c.isToday || isSelected ? null : c.key)}
             className={cls}
-                        data-filled=""
+            data-filled=""
           />
         )
       })}

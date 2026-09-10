@@ -20,7 +20,7 @@ createRoot(document.getElementById('root')!).render(
           <ProtoFrame>
             <App />
           </ProtoFrame>
-          <Toaster position="top-center" richColors />
+          <Toaster />
           <AgentationDev />
           <ProtoController />
         </StoreProvider>
