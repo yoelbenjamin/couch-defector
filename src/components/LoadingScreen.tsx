@@ -169,10 +169,18 @@ function drawWordmark(target: HTMLCanvasElement, w: number, h: number, dpr: numb
   return true
 }
 
-function mountShader(host: HTMLDivElement, canvas: HTMLCanvasElement) {
+function mountShader(host: HTMLDivElement) {
+  const canvas = document.createElement('canvas')
+  canvas.setAttribute('aria-hidden', 'true')
+  Object.assign(canvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', display: 'block', opacity: '0' } as CSSStyleDeclaration)
+  host.appendChild(canvas)
+  const drop = () => canvas.remove()
   const gl = (canvas.getContext('webgl', { antialias: false, alpha: false }) ??
     canvas.getContext('experimental-webgl', { antialias: false, alpha: false })) as WebGLRenderingContext | null
-  if (!gl) return null
+  if (!gl) {
+    drop()
+    return null
+  }
   const compile = (type: number, src: string) => {
     const sh = gl.createShader(type)
     if (!sh) return null
@@ -187,11 +195,17 @@ function mountShader(host: HTMLDivElement, canvas: HTMLCanvasElement) {
   const vs = compile(gl.VERTEX_SHADER, VERT)
   const fs = compile(gl.FRAGMENT_SHADER, FRAG)
   const prog = gl.createProgram()
-  if (!vs || !fs || !prog) return null
+  if (!vs || !fs || !prog) {
+    drop()
+    return null
+  }
   gl.attachShader(prog, vs)
   gl.attachShader(prog, fs)
   gl.linkProgram(prog)
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    drop()
+    return null
+  }
   gl.useProgram(prog)
 
   const buf = gl.createBuffer()
@@ -294,6 +308,7 @@ function mountShader(host: HTMLDivElement, canvas: HTMLCanvasElement) {
     cancelAnimationFrame(raf)
     ro.disconnect()
     gl.getExtension('WEBGL_lose_context')?.loseContext()
+    drop()
   }
 }
 
@@ -303,13 +318,12 @@ function mountShader(host: HTMLDivElement, canvas: HTMLCanvasElement) {
  */
 export default function LoadingScreen({ done = false }: { done?: boolean }) {
   const host = useRef<HTMLDivElement>(null)
-  const canvas = useRef<HTMLCanvasElement>(null)
   const [gone, setGone] = useState(false)
   const [fallback, setFallback] = useState(false)
 
   useEffect(() => {
-    if (!host.current || !canvas.current) return
-    const cleanup = mountShader(host.current, canvas.current)
+    if (!host.current) return
+    const cleanup = mountShader(host.current)
     if (!cleanup) setFallback(true)
     return cleanup ?? undefined
   }, [])
@@ -338,7 +352,6 @@ export default function LoadingScreen({ done = false }: { done?: boolean }) {
         pointerEvents: done ? 'none' : 'auto',
       }}
     >
-      <canvas ref={canvas} aria-hidden style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', opacity: 0 }} />
       {fallback && (
         <div
           style={{

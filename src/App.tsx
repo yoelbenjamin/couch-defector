@@ -9,13 +9,16 @@ import LoadingScreen from '@/components/LoadingScreen'
 import Log from '@/pages/Log'
 import Settings from '@/pages/Settings'
 
+/** Dev only: ?splash holds the load screen open so it can be looked at. */
+const HOLD_SPLASH = import.meta.env.DEV && new URLSearchParams(window.location.search).has('splash')
+
 export default function App() {
   const { ready, needsSignIn, data } = useStore()
 
   return (
     <>
       {ready && <Screens needsSignIn={needsSignIn} programId={data.programId} />}
-      <LoadingScreen done={ready} />
+      <LoadingScreen done={ready && !HOLD_SPLASH} />
     </>
   )
 }
