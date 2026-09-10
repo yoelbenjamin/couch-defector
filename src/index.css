@@ -541,7 +541,6 @@ button {
     width: 100%;
     padding: 14px 18px;
     background: #ffffff;
-    background-image: var(--ws-noise-soft);
     border: 1px solid transparent;
     border-radius: 22px;
     box-shadow:

@@ -6,8 +6,8 @@ const Toaster = (props: ToasterProps) => (
   <Sonner
     theme="light"
     position="bottom-center"
-    offset={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)' }}
-    mobileOffset={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)', left: 16, right: 16 }}
+    offset={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+    mobileOffset={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', left: 16, right: 16 }}
     gap={10}
     duration={3200}
     icons={{
