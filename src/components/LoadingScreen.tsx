@@ -313,13 +313,27 @@ function mountShader(host: HTMLDivElement) {
 }
 
 /**
- * Full-screen load shader. Stays mounted while `done` is false; once true it fades out and unmounts,
- * so the app underneath is already painted by the time the dark screen lifts.
+ * Full-screen load shader.
+ *
+ * Local data is ready on the first render, so without a floor the screen would mount and unmount
+ * inside a couple of frames and read as a flicker rather than a splash. It therefore holds for
+ * MIN_VISIBLE_MS from mount, then lifts: a fade with a slight scale up, on a curve that starts
+ * quickly and eases out, so it feels fast without snapping. The app underneath mounts as soon as
+ * the data lands, so it is already painted by the time the dark screen clears.
  */
+const MIN_VISIBLE_MS = 320
+const EXIT_MS = 420
+/** Quick off the mark, long settle. Snappier than ease-out without the jerk of a linear tail. */
+const EXIT_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)'
+
+type Phase = 'holding' | 'leaving' | 'gone'
+
 export default function LoadingScreen({ done = false }: { done?: boolean }) {
   const host = useRef<HTMLDivElement>(null)
-  const [gone, setGone] = useState(false)
+  const shownAt = useRef(performance.now())
+  const [phase, setPhase] = useState<Phase>('holding')
   const [fallback, setFallback] = useState(false)
+  const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   useEffect(() => {
     if (!host.current) return
@@ -328,13 +342,22 @@ export default function LoadingScreen({ done = false }: { done?: boolean }) {
     return cleanup ?? undefined
   }, [])
 
+  // Start leaving once the data is in and the floor has elapsed, whichever is later.
   useEffect(() => {
-    if (!done) return
-    const id = window.setTimeout(() => setGone(true), 480)
+    if (!done || phase !== 'holding') return
+    const id = window.setTimeout(() => setPhase('leaving'), Math.max(0, MIN_VISIBLE_MS - (performance.now() - shownAt.current)))
     return () => window.clearTimeout(id)
-  }, [done])
+  }, [done, phase])
 
-  if (gone) return null
+  // Unmount only after the exit has actually played, so the shader is never torn down mid-fade.
+  useEffect(() => {
+    if (phase !== 'leaving') return
+    const id = window.setTimeout(() => setPhase('gone'), reduced ? 160 : EXIT_MS)
+    return () => window.clearTimeout(id)
+  }, [phase, reduced])
+
+  if (phase === 'gone') return null
+  const leaving = phase === 'leaving'
   return (
     <div
       ref={host}
@@ -347,9 +370,13 @@ export default function LoadingScreen({ done = false }: { done?: boolean }) {
         zIndex: 100,
         background: '#0d0d0d',
         overflow: 'hidden',
-        opacity: done ? 0 : 1,
-        transition: 'opacity 420ms ease',
-        pointerEvents: done ? 'none' : 'auto',
+        opacity: leaving ? 0 : 1,
+        // The lift: the screen pulls back a touch as it clears, so it reads as leaving rather than blinking.
+        transform: leaving && !reduced ? 'scale(1.03)' : 'scale(1)',
+        transformOrigin: 'center center',
+        transition: reduced ? 'opacity 160ms linear' : `opacity ${EXIT_MS}ms ${EXIT_EASE}, transform ${EXIT_MS}ms ${EXIT_EASE}`,
+        willChange: 'opacity, transform',
+        pointerEvents: leaving ? 'none' : 'auto',
       }}
     >
       {fallback && (
