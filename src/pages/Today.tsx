@@ -160,9 +160,15 @@ export default function Today() {
           </>
         )}
 
-        <p className="mt-8 text-sm text-muted-foreground">
-          Tomorrow: <span className="font-medium text-foreground">{tomorrow ? tomorrow.name : 'Rest day'}</span>
-        </p>
+        {/* What is next only matters once the day is finished; until then it is a distraction. */}
+        {(plan.doneToday || plan.mobilityToday) && (
+          <Card variant="flat" className="mt-3">
+            <CardContent>
+              <div className="text-xs text-muted-foreground">Upcoming workout</div>
+              <div className="mt-0.5 text-lg font-bold">{tomorrow ? tomorrow.name : 'Rest day'}</div>
+            </CardContent>
+          </Card>
+        )}
       </>
     )
   }
