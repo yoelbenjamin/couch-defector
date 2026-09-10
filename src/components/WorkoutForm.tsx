@@ -210,10 +210,10 @@ export default function WorkoutForm({
             <section key={e.slotKey}>
               <Card variant="inset">
                 <CardContent>
-                  <div className="mb-3 flex items-center justify-between gap-2">
+                  <div className="mb-3 flex min-w-0 items-center justify-between gap-2">
                     {e.progression ? (
                       <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
-                        <SelectTrigger variant="bare" className="max-w-full text-xl font-bold [&>svg]:size-5">
+                        <SelectTrigger variant="bare" className="min-w-0 flex-1 text-xl font-bold [&>svg]:size-5">
                           <SelectValue>{step?.name ?? e.name}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -225,7 +225,7 @@ export default function WorkoutForm({
                         </SelectContent>
                       </Select>
                     ) : (
-                      <h2 className="text-xl font-bold">{e.name}</h2>
+                      <h2 className="min-w-0 flex-1 truncate text-xl font-bold">{e.name}</h2>
                     )}
                     {e.progression && step && (
                       <Button

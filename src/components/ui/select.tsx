@@ -35,7 +35,7 @@ function SelectTrigger({
       data-size={size}
       className={cn(
         variant === 'bare'
-          ? 'inline-flex items-center gap-1.5 bg-transparent whitespace-nowrap outline-none disabled:opacity-50 [&_svg]:shrink-0 [&_svg]:text-black/70'
+          ? 'inline-flex min-w-0 items-center gap-1.5 bg-transparent text-left outline-none disabled:opacity-50 *:data-[slot=select-value]:truncate [&_svg]:shrink-0 [&_svg]:text-black/70'
           : 'ws-select whitespace-nowrap outline-none data-[placeholder]:text-black/50 *:data-[slot=select-value]:line-clamp-1 [&_svg]:pointer-events-none',
         className,
       )}
