@@ -90,12 +90,20 @@ export interface Session {
   note?: string
 }
 
+export interface Reminder {
+  enabled: boolean
+  /** Local time of day, 24 hour "HH:MM". */
+  time: string
+}
+
 export interface Profile {
   programId: string | null
   steps: Partial<Record<ProgressionId, number>>
   /** Current step on each Trifecta hold. */
   holdSteps?: Partial<Record<HoldId, number>>
   customNames: Record<string, string>
+  /** Daily nudge on training days. Whether the browser will actually show it is the browser's business. */
+  reminder?: Reminder
   createdAt: string
 }
 

@@ -5,6 +5,7 @@ import { HOLD_IDS, HOLDS } from '@/data/trifecta'
 import { PROGRESSION_IDS, PROGRESSIONS } from '@/data/progressions'
 import { useStore } from '@/lib/store'
 import PageHeader from '@/components/PageHeader'
+import RemindersCard from '@/components/RemindersCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Tray } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -154,6 +155,8 @@ export default function Settings() {
             </CardContent>
           </Card>
         )}
+
+        <RemindersCard />
       </Tray>
       <p className="pt-3 text-center text-xs text-muted-foreground/60">Couch Defector · v0.2</p>
     </div>

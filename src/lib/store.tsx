@@ -3,7 +3,8 @@ import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut as fbS
 import { collection, deleteDoc, doc, onSnapshot, setDoc, type DocumentData } from 'firebase/firestore'
 import { auth, db, firebaseEnabled, googleProvider } from './firebase'
 import { PROTO_USER, useProtoOptional } from '@/dev/proto'
-import type { HoldId, Profile, ProgressionId, Session, UserData } from '../types'
+import { DEFAULT_REMINDER, useReminderScheduler } from './reminders'
+import type { HoldId, Profile, ProgressionId, Reminder, Session, UserData } from '../types'
 
 const LOCAL_KEY = 'couch-defector:v1'
 
@@ -25,6 +26,7 @@ export interface StoreApi {
   setStep: (p: ProgressionId, step: number) => Promise<void>
   setHoldStep: (h: HoldId, step: number) => Promise<void>
   setCustomName: (key: string, name: string) => Promise<void>
+  setReminder: (patch: Partial<Reminder>) => Promise<void>
   saveSession: (s: Session) => Promise<void>
   deleteSession: (id: string) => Promise<void>
   exportJson: () => string
@@ -115,6 +117,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const needsSignIn = sandbox ? sandbox.auth === 'signed-out' : firebaseEnabled && !user
   const effectiveUser = sandbox ? (sandbox.auth === 'signed-in' ? PROTO_USER : null) : user
 
+  // The sandbox drives fake data, so it must never nudge.
+  useReminderScheduler(data, !sandbox && !!data.reminder?.enabled)
+
   const updateLocal = (fn: (d: UserData) => UserData) => {
     if (sandbox) {
       sandbox.setData(fn)
@@ -165,6 +170,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setStep: (p, step) => writeProfile({ steps: { ...data.steps, [p]: step } }),
     setHoldStep: (h, step) => writeProfile({ holdSteps: { ...(data.holdSteps ?? {}), [h]: step } }),
     setCustomName: (key, name) => writeProfile({ customNames: { ...data.customNames, [key]: name } }),
+    setReminder: (patch) => writeProfile({ reminder: { ...DEFAULT_REMINDER, ...(data.reminder ?? {}), ...patch } }),
     saveSession: async (s) => {
       if (!sandbox && liveCloud && db && user) {
         await setDoc(doc(db, 'users', user.uid, 'sessions', s.id), s)
