@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Info } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
-import { DEFAULT_HOLD_SETS, getHoldStep, HOLD_IDS, HOLDS, TRIFECTA_RULES } from '@/data/trifecta'
+import { DEFAULT_HOLD_SETS, getHoldStep, HOLD_IDS, HOLD_TARGET_SECONDS, HOLDS, TRIFECTA_RULES } from '@/data/trifecta'
 import { dayKey, weekdayIndex } from '@/lib/schedule'
 import { hardSets } from '@/lib/stats'
 import { newId, useStore } from '@/lib/store'
@@ -10,7 +10,7 @@ import SetEditor from '@/components/SetEditor'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, Tray } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import HowToSheet, { type HowTo } from '@/components/HowToSheet'
 import type { Entry, HoldId, Session, SetEntry } from '@/types'
 
 interface Draft {
@@ -128,6 +128,26 @@ export default function TrifectaForm({
   const infoHold = info ? HOLDS[info] : null
   const infoEntry = info ? entries.find((e) => e.hold === info) : null
   const infoStep = infoHold && infoEntry?.step ? getHoldStep(infoHold.id, infoEntry.step) : null
+  const chunks = DEFAULT_HOLD_SETS.length
+  const how: HowTo | null =
+    infoHold && infoStep
+      ? {
+          title: infoStep.name,
+          subtitle: `${infoHold.name} · step ${infoStep.n} of ${infoHold.steps.length}`,
+          images: infoStep.image ? [infoStep.image] : undefined,
+          stats: [
+            { label: 'Per session', value: `${HOLD_TARGET_SECONDS}s` },
+            { label: 'Chunks', value: `${chunks} × ${Math.round(HOLD_TARGET_SECONDS / chunks)}s` },
+            { label: 'Sides', value: infoHold.perSide ? 'Both' : 'One' },
+          ],
+          statsNote: `${infoHold.perSide ? 'The same time on each side. ' : ''}Split the time however suits you. Easy versions only, never to failure.`,
+          sections: [
+            { heading: 'This step', paragraphs: [infoStep.cue] },
+            { heading: infoHold.name, paragraphs: [infoHold.why], muted: true },
+            { heading: 'The Trifecta', bullets: [...TRIFECTA_RULES] },
+          ],
+        }
+      : null
 
   return (
     <div className="space-y-3">
@@ -219,43 +239,7 @@ export default function TrifectaForm({
         )}
       </div>
 
-      <Sheet open={info !== null} onOpenChange={(o) => !o && setInfo(null)}>
-        <SheetContent side="bottom" className="h-[100dvh] gap-0 overflow-y-auto rounded-none p-0">
-          {infoHold && infoStep && (
-            <div className="mx-auto max-w-md px-5 pt-[calc(env(safe-area-inset-top,0px)+20px)] pb-[calc(env(safe-area-inset-bottom,0px)+32px)]">
-              <SheetHeader className="p-0 text-left">
-                <SheetTitle className="text-2xl font-bold">{infoStep.name}</SheetTitle>
-                <SheetDescription>
-                  {infoHold.name} · step {infoStep.n} of {infoHold.steps.length}
-                  {infoHold.perSide ? ' · both sides' : ''}
-                </SheetDescription>
-              </SheetHeader>
-              {infoStep.image && <img src={infoStep.image} alt={infoStep.name} className="mt-4 w-full rounded-2xl" />}
-              <div className="mt-5 space-y-6 text-base">
-                <section>
-                  <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">This step</h3>
-                  <p>{infoStep.cue}</p>
-                </section>
-                <section>
-                  <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">{infoHold.name}</h3>
-                  <p>{infoHold.why}</p>
-                </section>
-                <section>
-                  <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">The Trifecta</h3>
-                  <ul className="list-disc space-y-1.5 pl-5">
-                    {TRIFECTA_RULES.map((r) => (
-                      <li key={r}>{r}</li>
-                    ))}
-                  </ul>
-                </section>
-              </div>
-              <Button variant="outline" className="mt-8 w-full" onClick={() => setInfo(null)}>
-                Close
-              </Button>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      <HowToSheet how={how} open={info !== null} onOpenChange={(o) => !o && setInfo(null)} />
     </div>
   )
 }

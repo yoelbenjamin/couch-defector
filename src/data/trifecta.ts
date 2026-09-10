@@ -145,6 +145,9 @@ export function getHoldStep(id: HoldId, n: number): HoldStep {
   return steps[Math.min(Math.max(1, n), steps.length) - 1]
 }
 
+/** The book's target: about twenty seconds of holding per hold, per session. */
+export const HOLD_TARGET_SECONDS = 20
+
 /** Default chunking from the book's sample session: about 20 seconds per hold, split up. */
 export const DEFAULT_HOLD_SETS = [{ reps: 5 }, { reps: 5 }, { reps: 5 }, { reps: 5 }]
 
