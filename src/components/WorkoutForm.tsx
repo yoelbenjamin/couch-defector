@@ -5,8 +5,10 @@ import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { checkGoal, hardSets, lastEntryForSlot, lastEntryForStep } from '@/lib/stats'
 import { dayKey } from '@/lib/schedule'
+import { IDLE_TIMER, isTimerState, totalSec, type SetRef, type TimerState } from '@/lib/timer'
 import { newId, useStore } from '@/lib/store'
 import SetEditor from '@/components/SetEditor'
+import WorkoutTimer from '@/components/WorkoutTimer'
 import TechniqueSheet from '@/components/TechniqueSheet'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -54,6 +56,8 @@ interface Draft {
   note: string
   /** Ticked sets per slot, by set index. */
   done: Record<string, boolean[]>
+  /** The running clock, so a reload mid-workout resumes rather than restarts. */
+  timer?: TimerState
 }
 
 function readDraft(key: string, mustBeToday: boolean): Draft | null {
@@ -66,7 +70,7 @@ function readDraft(key: string, mustBeToday: boolean): Draft | null {
       localStorage.removeItem(key)
       return null
     }
-    return { ...d, note: d.note ?? '', done: d.done ?? {} }
+    return { ...d, note: d.note ?? '', done: d.done ?? {}, timer: isTimerState(d.timer) ? d.timer : IDLE_TIMER }
   } catch {
     return null
   }
@@ -117,10 +121,11 @@ export default function WorkoutForm({
   const [showNote, setShowNote] = useState(Boolean(draft?.note))
   const [info, setInfo] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
+  const [timer, setTimer] = useState<TimerState>(draft?.timer ?? IDLE_TIMER)
 
   useEffect(() => {
-    writeDraft(draftKey, { date: dayKey(new Date()), entries, note, done })
-  }, [entries, note, done, draftKey])
+    writeDraft(draftKey, { date: dayKey(new Date()), entries, note, done, timer })
+  }, [entries, note, done, timer, draftKey])
 
   const lastBySlot = useMemo(() => {
     const m = new Map<string, ReturnType<typeof lastEntryForSlot>>()
@@ -131,6 +136,46 @@ export default function WorkoutForm({
   if (!day) return <p className="py-6 text-center text-sm text-muted-foreground">Not a workout day.</p>
 
   const update = (i: number, fn: (e: Entry) => Entry) => setEntries((list) => list.map((e, k) => (k === i ? fn(e) : e)))
+
+  /** Write timing onto one set. An explicit undefined clears the field rather than storing undefined. */
+  const patchSet = (entryIndex: number, setIndex: number, patch: Partial<SetEntry>) =>
+    setEntries((list) =>
+      list.map((e, i) =>
+        i === entryIndex
+          ? {
+              ...e,
+              sets: e.sets.map((s, k) => {
+                if (k !== setIndex) return s
+                const next: SetEntry = { ...s, ...patch }
+                for (const key of Object.keys(patch) as (keyof SetEntry)[]) if (patch[key] === undefined) delete next[key]
+                return next
+              }),
+            }
+          : e,
+      ),
+    )
+
+  const tickSet = (entryIndex: number, setIndex: number, value: boolean) => {
+    const slotKey = entries[entryIndex]?.slotKey
+    if (!slotKey) return
+    setDone((all) => {
+      const arr = [...(all[slotKey] ?? [])]
+      arr[setIndex] = value
+      return { ...all, [slotKey]: arr }
+    })
+  }
+
+  const startSet = (ref: SetRef, rest: number | undefined) => {
+    if (rest !== undefined) patchSet(ref.entryIndex, ref.setIndex, { rest })
+  }
+  const endSet = (ref: SetRef, work: number) => {
+    patchSet(ref.entryIndex, ref.setIndex, { work })
+    tickSet(ref.entryIndex, ref.setIndex, true)
+  }
+  const undoSet = (ref: SetRef) => {
+    patchSet(ref.entryIndex, ref.setIndex, { work: undefined })
+    tickSet(ref.entryIndex, ref.setIndex, false)
+  }
 
   const changeStep = async (i: number, stepN: number) => {
     const e = entries[i]
@@ -152,6 +197,7 @@ export default function WorkoutForm({
     setEntries(editing ? clone(editing) : day.slots.map((s) => initialEntry(s, data, program)))
     setNote(editing?.note ?? '')
     setShowNote(Boolean(editing?.note))
+    setTimer(IDLE_TIMER)
   }
 
   const cancel = () => {
@@ -176,6 +222,9 @@ export default function WorkoutForm({
           }
       if (trimmed) session.note = trimmed
       else delete session.note
+      const ran = totalSec(entries, timer, Date.now())
+      if (ran > 0) session.durationSec = ran
+      else delete session.durationSec
       await saveSession(session)
       localStorage.removeItem(draftKey)
       toast.success(editing ? 'Workout updated' : 'Workout saved', {
@@ -196,6 +245,8 @@ export default function WorkoutForm({
   return (
     <div className="space-y-3">
       <Tray action={finishButton}>
+        <WorkoutTimer entries={entries} timer={timer} onTimerChange={setTimer} onStartSet={startSet} onEndSet={endSet} onUndoSet={undoSet} />
+
         {entries.map((e, i) => {
           const last = lastBySlot.get(e.slotKey) ?? null
           const sameStep = last && e.progression ? last.entry.step === e.step : true

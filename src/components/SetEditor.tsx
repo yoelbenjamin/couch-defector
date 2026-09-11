@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { fmtShort } from '@/lib/timer'
 import Stepper from '@/components/Stepper'
 import { Button } from '@/components/ui/button'
 import type { SetEntry } from '@/types'
@@ -32,6 +33,17 @@ function Prev({ prev, className }: { prev?: number; className?: string }) {
   return <span className={cn('text-xs text-muted-foreground tabular-nums', className)}>{prev}</span>
 }
 
+/** What the clock caught for one set, once it has been timed. */
+function Timing({ set }: { set: SetEntry }) {
+  if (set.work === undefined) return null
+  return (
+    <div className="-mt-0.5 pb-1 pl-[38px] text-xs text-muted-foreground tabular-nums">
+      {fmtShort(set.work)}
+      {set.rest !== undefined && <span> · rested {fmtShort(set.rest)}</span>}
+    </div>
+  )
+}
+
 /**
  * The sets of one exercise as a checklist: remove on the left, label, last time, the reps, and a tick on the right.
  * Tap the number to adjust just that set. Ticks are a mid-workout aid kept in the draft, not saved with the session.
@@ -53,42 +65,45 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onDo
   return (
     <div className="divide-y">
       {sets.map((s, k) => (
-        <div key={k} className="flex items-center gap-3 py-1.5">
-          <Button type="button" variant="ghost" size="icon-sm" className="-ml-2 text-muted-foreground" onClick={() => remove(k)} aria-label="remove set">
-            <X />
-          </Button>
-          <button type="button" onClick={() => toggleWarmup(k)} className={cn('w-14 text-left text-xs font-semibold', s.warmup && 'text-muted-foreground')}>
-            {label(sets, k, noun)}
-          </button>
-          <Prev prev={prevFor(sets, k, previous)} className="w-6 text-right" />
-          {open === k ? (
-            <Stepper value={s.reps} suffix={suffix} onChange={(v) => setReps(k, v)} />
-          ) : (
+        <div key={k}>
+          <div className="flex items-center gap-3 py-1.5">
+            <Button type="button" variant="ghost" size="icon-sm" className="-ml-2 text-muted-foreground" onClick={() => remove(k)} aria-label="remove set">
+              <X />
+            </Button>
+            <button type="button" onClick={() => toggleWarmup(k)} className={cn('w-14 text-left text-xs font-semibold', s.warmup && 'text-muted-foreground')}>
+              {label(sets, k, noun)}
+            </button>
+            <Prev prev={prevFor(sets, k, previous)} className="w-6 text-right" />
+            {open === k ? (
+              <Stepper value={s.reps} suffix={suffix} onChange={(v) => setReps(k, v)} />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setOpen(k)}
+                className={cn('text-lg font-semibold tabular-nums', done[k] && 'text-muted-foreground line-through')}
+              >
+                {s.reps}
+                {suffix}
+              </button>
+            )}
+            {open === k && (
+              <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setOpen(null)}>
+                Done
+              </Button>
+            )}
             <button
               type="button"
-              onClick={() => setOpen(k)}
-              className={cn('text-lg font-semibold tabular-nums', done[k] && 'text-muted-foreground line-through')}
+              aria-label={done[k] ? 'mark not done' : 'mark done'}
+              onClick={() => toggleDone(k)}
+              className={cn(
+                'ml-auto flex size-7 shrink-0 items-center justify-center rounded-full border',
+                done[k] && 'border-foreground bg-foreground text-background',
+              )}
             >
-              {s.reps}
-              {suffix}
+              {done[k] && <Check className="size-4" />}
             </button>
-          )}
-          {open === k && (
-            <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setOpen(null)}>
-              Done
-            </Button>
-          )}
-          <button
-            type="button"
-            aria-label={done[k] ? 'mark not done' : 'mark done'}
-            onClick={() => toggleDone(k)}
-            className={cn(
-              'ml-auto flex size-7 shrink-0 items-center justify-center rounded-full border',
-              done[k] && 'border-foreground bg-foreground text-background',
-            )}
-          >
-            {done[k] && <Check className="size-4" />}
-          </button>
+          </div>
+          <Timing set={s} />
         </div>
       ))}
     </div>

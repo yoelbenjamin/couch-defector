@@ -65,6 +65,10 @@ export interface Program {
 export interface SetEntry {
   reps: number
   warmup?: boolean
+  /** Seconds spent performing the set, when it was timed. */
+  work?: number
+  /** Seconds rested before this set. Absent on the first set of a workout. */
+  rest?: number
 }
 
 export interface Entry {
@@ -88,6 +92,8 @@ export interface Session {
   kind?: 'workout' | 'mobility'
   entries: Entry[]
   note?: string
+  /** Seconds from starting the workout to finishing it, when it was timed. */
+  durationSec?: number
 }
 
 export interface Reminder {

@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { dayKey, isRest, planToday, weekdayIndex } from '@/lib/schedule'
 import { fmtSets, streakInfo } from '@/lib/stats'
+import { fmtDuration } from '@/lib/timer'
 import { useStore } from '@/lib/store'
 import PageHeader from '@/components/PageHeader'
 import ActivityHeatmap from '@/components/ActivityHeatmap'
@@ -233,7 +234,10 @@ function DayDetail({ sessions, onEdit, onDelete }: { sessions: Session[]; onEdit
           <CardContent>
             <div className="flex items-center justify-between gap-3">
               <div className="font-semibold">{s.dayName}</div>
-              <span className="text-xs text-muted-foreground">{new Date(s.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
+              <span className="text-xs text-muted-foreground">
+                {s.durationSec ? `${fmtDuration(s.durationSec)} · ` : ''}
+                {new Date(s.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+              </span>
             </div>
             <ul className="mt-2 space-y-1 text-sm">
               {s.entries.map((e) => (
