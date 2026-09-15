@@ -8,23 +8,11 @@ import Today from '@/pages/Today'
 import LoadingScreen from '@/components/LoadingScreen'
 import Settings from '@/pages/Settings'
 
-/** Dev only: ?splash holds the load screen open so it can be looked at. */
-const HOLD_SPLASH = import.meta.env.DEV && new URLSearchParams(window.location.search).has('splash')
-
 export default function App() {
   const { ready, needsSignIn, data } = useStore()
-
-  return (
-    <>
-      {ready && <Screens needsSignIn={needsSignIn} programId={data.programId} />}
-      <LoadingScreen done={ready && !HOLD_SPLASH} />
-    </>
-  )
-}
-
-function Screens({ needsSignIn, programId }: { needsSignIn: boolean; programId: string | null }) {
+  if (!ready) return <LoadingScreen />
   if (needsSignIn) return <SignIn />
-  if (!isProgramId(programId)) return <Onboarding />
+  if (!isProgramId(data.programId)) return <Onboarding />
   return (
     <Routes>
       <Route element={<Layout />}>

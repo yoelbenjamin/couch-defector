@@ -10,22 +10,9 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Couch Defector</title>
-    <style>
-      /* The ground the app boots onto. Inline so it paints on the first frame, before the CSS
-         bundle or any script: otherwise the light body shows between the launch screen iOS draws
-         and the load screen React mounts, and the startup reads as two flashes instead of one
-         continuous dark. The load screen removes this as it takes over. */
-      #boot {
-        position: fixed;
-        inset: 0;
-        background: #0d0d0d;
-        z-index: 99;
-      }
-    </style>
   </head>
   <body>
     <div id="root"></div>
-    <div id="boot"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

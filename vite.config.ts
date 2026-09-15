@@ -17,7 +17,7 @@ export default defineConfig({
         short_name: 'Defector',
         description: 'Progressive calisthenics tracker: see today, beat last time, watch progress.',
         theme_color: '#fafafa',
-        background_color: '#0d0d0d',
+        background_color: '#fafafa',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
