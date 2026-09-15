@@ -345,6 +345,8 @@ export default function LoadingScreen({ done = false }: { done?: boolean }) {
   // iOS paints the status bar strip from theme-color, so a light one leaves a pale band above a dark
   // splash. Borrow it for as long as the splash is up, then hand it back.
   useEffect(() => {
+    // The static ground from index.html has done its job now that this is on screen.
+    document.getElementById('boot')?.remove()
     const meta = document.querySelector('meta[name="theme-color"]')
     const original = meta?.getAttribute('content') ?? null
     meta?.setAttribute('content', SPLASH_BG)
