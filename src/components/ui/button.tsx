@@ -16,6 +16,7 @@ const buttonVariants = cva(
         warning: 'gbtn gbtn--cream',
         outline: 'gbtn gbtn--light',
         secondary: 'gbtn gbtn--light',
+        tertiary: 'gbtn gbtn--quiet',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
       },

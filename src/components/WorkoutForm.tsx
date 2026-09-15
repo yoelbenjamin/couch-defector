@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Info, NotebookPen, Plus } from 'lucide-react'
+import { Info, NotebookPen, Plus, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
@@ -249,7 +249,7 @@ export default function WorkoutForm({
       </Button>
     )
 
-  // The note rides alongside the primary as an icon rather than taking a row of its own.
+  // Primary first, then the two icons, in descending weight: note is secondary, reset is tertiary.
   const finishButton = (
     <div className="flex items-center gap-2">
       {primary}
@@ -258,6 +258,9 @@ export default function WorkoutForm({
           <NotebookPen className="size-4" />
         </Button>
       )}
+      <Button type="button" variant="tertiary" className="size-12 shrink-0 px-0" aria-label="Reset this workout" onClick={reset}>
+        <RotateCcw className="size-4" />
+      </Button>
     </div>
   )
 
@@ -366,16 +369,13 @@ export default function WorkoutForm({
 
       <TechniqueSheet entry={info === null ? null : (entries[info] ?? null)} open={info !== null} onOpenChange={(o) => !o && setInfo(null)} />
 
-      <div className="flex justify-center gap-2">
-        <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={reset}>
-          Reset
-        </Button>
-        {editing && onCancel && (
+      {editing && onCancel && (
+        <div className="flex justify-center">
           <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={cancel}>
             Cancel
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -219,6 +219,17 @@ button {
     --gbtn-rim: linear-gradient(273.75deg, #6c9be6 3.96%, #b2e1f5 34.23%, #6291dc 98.29%);
     --gbtn-inner: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 25.12%, rgba(255, 255, 255, 0.6) 102.08%);
   }
+  /* Tertiary: a third tier below the light pill. No fill, no rim, no lift, just the glyph on the
+     tray, so it sits under the primary and the secondary without introducing a new shape. */
+  .gbtn--quiet {
+    --gbtn-bg: transparent;
+    --gbtn-shadow: none;
+    --gbtn-fg: rgba(0, 0, 0, 0.45);
+    --gbtn-rim: none;
+    --gbtn-inner: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
   .gbtn--red {
     --gbtn-bg: rgba(226, 43, 24, 0.7);
     --gbtn-shadow: 0px 8px 16px rgba(0, 0, 0, 0.08);
@@ -296,7 +307,8 @@ button {
   }
   .gbtn--light:hover,
   .gbtn--cream:hover,
-  .gbtn--blue:hover {
+  .gbtn--blue:hover,
+  .gbtn--quiet:hover {
     background-image: linear-gradient(rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.03));
   }
   .gbtn:active {
