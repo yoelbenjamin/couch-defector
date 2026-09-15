@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Info, Plus } from 'lucide-react'
+import { Info, NotebookPen, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
@@ -238,16 +238,28 @@ export default function WorkoutForm({
   }
 
   const started = timer.startedAt !== null
-  const finishButton =
+  const primary =
     !editing && !started ? (
-      <Button size="lg" className="h-12 w-full" onClick={() => setTimer((t) => ({ ...t, startedAt: Date.now() }))}>
+      <Button size="lg" className="h-12 flex-1" onClick={() => setTimer((t) => ({ ...t, startedAt: Date.now() }))}>
         Start workout
       </Button>
     ) : (
-      <Button size="lg" className="h-12 w-full" disabled={saving} onClick={finish}>
+      <Button size="lg" className="h-12 flex-1" disabled={saving} onClick={finish}>
         {saving ? 'Saving…' : editing ? 'Save changes' : 'Finish workout'}
       </Button>
     )
+
+  // The note rides alongside the primary as an icon rather than taking a row of its own.
+  const finishButton = (
+    <div className="flex items-center gap-2">
+      {primary}
+      {!showNote && !note && (
+        <Button type="button" variant="secondary" className="size-12 shrink-0 px-0" aria-label="Add a note" onClick={() => setShowNote(true)}>
+          <NotebookPen className="size-4" />
+        </Button>
+      )}
+    </div>
+  )
 
   return (
     <div className="space-y-3">
@@ -349,11 +361,7 @@ export default function WorkoutForm({
               />
             </CardContent>
           </Card>
-        ) : (
-          <Button type="button" variant="ghost" size="sm" className="ml-[9px] text-muted-foreground" onClick={() => setShowNote(true)}>
-            <Plus className="size-3.5" /> Add note
-          </Button>
-        )}
+        ) : null}
       </Tray>
 
       <TechniqueSheet entry={info === null ? null : (entries[info] ?? null)} open={info !== null} onOpenChange={(o) => !o && setInfo(null)} />
