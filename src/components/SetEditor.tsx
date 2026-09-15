@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { elapsedSec, fmtShort, useNow } from '@/lib/timer'
 import Stepper from '@/components/Stepper'
@@ -63,45 +63,67 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
         const gap = gaps?.[k]
         const live = resting?.index === k
         return (
-          <SwipeRow key={k} label={`Remove ${label(sets, k, noun).toLowerCase()}`} onDelete={() => onRemove(k)}>
-            <div className="flex items-center gap-3 py-1.5">
-              <button type="button" onClick={() => toggleWarmup(k)} className={cn('w-14 text-left text-xs font-semibold', s.warmup && 'text-muted-foreground')}>
-                {label(sets, k, noun)}
-              </button>
-              <Prev prev={prevFor(sets, k, previous)} className="w-6 text-right" />
-              {open === k ? (
-                <Stepper value={s.reps} suffix={suffix} onChange={(v) => setReps(k, v)} />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setOpen(k)}
-                  className={cn('text-lg font-semibold tabular-nums', done[k] && 'text-muted-foreground line-through')}
-                >
-                  {s.reps}
-                  {suffix}
-                </button>
-              )}
-              {open === k && (
-                <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setOpen(null)}>
-                  Done
-                </Button>
-              )}
-              <button
-                type="button"
-                aria-label={done[k] ? 'mark not done' : 'mark done'}
-                onClick={() => onToggle(k)}
-                className={cn(
-                  'mr-0.5 ml-auto flex size-7 shrink-0 items-center justify-center rounded-full border',
-                  done[k] && 'border-foreground bg-foreground text-background',
+          <SwipeRow key={k} onDelete={() => onRemove(k)}>
+            {({ hide, show, remove }) => (
+              <>
+                <div className="flex items-center gap-3 py-1.5">
+                  <button
+                    type="button"
+                    onClick={() => toggleWarmup(k)}
+                    className={cn('w-14 text-left text-xs font-semibold', s.warmup && 'text-muted-foreground')}
+                  >
+                    {label(sets, k, noun)}
+                  </button>
+                  <Prev prev={prevFor(sets, k, previous)} className="w-6 text-right" />
+                  {open === k ? (
+                    <Stepper value={s.reps} suffix={suffix} onChange={(v) => setReps(k, v)} />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setOpen(k)}
+                      className={cn('text-lg font-semibold tabular-nums', done[k] && 'text-muted-foreground line-through')}
+                    >
+                      {s.reps}
+                      {suffix}
+                    </button>
+                  )}
+                  {open === k && (
+                    <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setOpen(null)}>
+                      Done
+                    </Button>
+                  )}
+                  {/* The tick and the delete share one slot: swiping trades one for the other. */}
+                  <div className="relative ml-auto size-7 shrink-0">
+                    <button
+                      type="button"
+                      aria-label={done[k] ? 'mark not done' : 'mark done'}
+                      onClick={() => onToggle(k)}
+                      style={hide}
+                      className={cn(
+                        'absolute inset-0 flex items-center justify-center rounded-full border',
+                        done[k] && 'border-foreground bg-foreground text-background',
+                      )}
+                    >
+                      {done[k] && <Check className="size-4" />}
+                    </button>
+                    <button
+                      data-swipe-action=""
+                      type="button"
+                      aria-label={`Remove ${label(sets, k, noun).toLowerCase()}`}
+                      onClick={remove}
+                      style={show}
+                      className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground text-background"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+                {(live || gap !== undefined) && (
+                  <div className="-mt-0.5 pb-1 text-xs text-muted-foreground">
+                    {live ? <RestClock from={resting.from} /> : <span className="tabular-nums">Rested {fmtShort(gap!)}</span>}
+                  </div>
                 )}
-              >
-                {done[k] && <Check className="size-4" />}
-              </button>
-            </div>
-            {(live || gap !== undefined) && (
-              <div className="-mt-0.5 pb-1 text-xs text-muted-foreground">
-                {live ? <RestClock from={resting.from} /> : <span className="tabular-nums">Rested {fmtShort(gap!)}</span>}
-              </div>
+              </>
             )}
           </SwipeRow>
         )

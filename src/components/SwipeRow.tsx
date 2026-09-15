@@ -1,48 +1,57 @@
-import { useRef, type PointerEvent as RPointerEvent, type ReactNode } from 'react'
-import { Trash2 } from 'lucide-react'
+import { useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent, type ReactNode } from 'react'
 
-const ACTION_W = 56
-/** Release past this and the row stays open on the action. */
-const OPEN_AT = 30
-/** Carry it this far and the row goes without a second tap. */
+/** How far the row must be dragged for the action to be fully shown. */
+const TRAVEL = 56
+/** Release past this fraction of the travel and the action stays put. */
+const OPEN_AT = 0.5
+/** Carry it this far in px and the row goes without a second tap. */
 const DELETE_AT = 150
 const SLOP = 8
-const EASE = 'transform 220ms cubic-bezier(0.32, 0.72, 0, 1)'
+const EASE = 'opacity 200ms ease, transform 200ms ease'
+/** How far the two circles slide as they trade places. Enough to feel, not enough to jump. */
+const SLIDE = 10
+
+export interface SwipeRowState {
+  /** 0 closed, 1 fully open on the action. */
+  p: number
+  /** For the control the action replaces: fades out and steps aside. */
+  hide: CSSProperties
+  /** For the action itself: fades in and settles into the same slot. */
+  show: CSSProperties
+  /** Run the deletion. */
+  remove: () => void
+}
 
 interface Props {
   onDelete: () => void
-  /** Spoken name for the action, e.g. "Remove set 2". */
-  label: string
-  children: ReactNode
+  children: (state: SwipeRowState) => ReactNode
 }
 
 /**
- * A row you drag left to uncover a delete action, the way a mail list works. A short pull parks it
- * open so the action can be tapped; a long pull deletes on release.
+ * A row you drag left to trade one control for a delete, the way a mail list works. A short pull
+ * parks the delete in place so it can be tapped, a long pull deletes on release, and a tap anywhere
+ * else on the row puts things back. Nothing in the row moves, so the label and the reps stay put and
+ * only the control on the right changes hands.
  *
  * The row is marked so the day carousel leaves gestures that start here alone, otherwise a swipe
  * over a set would be claimed by whichever handler decided first.
  */
-export default function SwipeRow({ onDelete, label, children }: Props) {
-  const sled = useRef<HTMLDivElement>(null)
+export default function SwipeRow({ onDelete, children }: Props) {
+  const [p, setP] = useState(0)
+  const [animate, setAnimate] = useState(true)
   const open = useRef(false)
   const drag = useRef<{ id: number; x0: number; y0: number; base: number; decided: boolean; active: boolean } | null>(null)
   const suppressClick = useRef(false)
 
-  const place = (x: number, animate: boolean) => {
-    const el = sled.current
-    if (!el) return
-    el.style.transition = animate ? EASE : 'none'
-    el.style.transform = `translate3d(${x}px, 0, 0)`
-  }
-  const settle = (x: number) => {
-    open.current = x !== 0
-    place(x, true)
+  const settle = (next: 0 | 1) => {
+    open.current = next === 1
+    setAnimate(true)
+    setP(next)
   }
 
   const onPointerDown = (e: RPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return
-    drag.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, base: open.current ? -ACTION_W : 0, decided: false, active: false }
+    drag.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, base: open.current ? TRAVEL : 0, decided: false, active: false }
   }
 
   const onPointerMove = (e: RPointerEvent<HTMLDivElement>) => {
@@ -66,8 +75,8 @@ export default function SwipeRow({ onDelete, label, children }: Props) {
       }
     }
     if (!d.active) return
-    const x = d.base + dx
-    place(x > 0 ? x * 0.25 : x, false) // rubber band: nothing lives to the right
+    setAnimate(false)
+    setP(Math.max(0, Math.min(1, (d.base - dx) / TRAVEL)))
   }
 
   const finish = (e: RPointerEvent<HTMLDivElement>) => {
@@ -75,19 +84,25 @@ export default function SwipeRow({ onDelete, label, children }: Props) {
     if (!d || d.id !== e.pointerId) return
     drag.current = null
     if (!d.active) return
-    const x = d.base + (e.clientX - d.x0)
-    if (x < -DELETE_AT) {
-      place(-(sled.current?.clientWidth ?? 400), true)
-      window.setTimeout(onDelete, 180)
+    const pulled = d.base - (e.clientX - d.x0)
+    if (pulled > DELETE_AT) {
+      onDelete()
       return
     }
-    settle(x < -OPEN_AT ? -ACTION_W : 0)
+    settle(pulled / TRAVEL > OPEN_AT ? 1 : 0)
     window.setTimeout(() => (suppressClick.current = false), 0)
+  }
+
+  const transition = animate ? EASE : 'none'
+  const state: SwipeRowState = {
+    p,
+    hide: { opacity: 1 - p, transform: `translateX(${p * SLIDE}px)`, pointerEvents: p > 0.5 ? 'none' : 'auto', transition },
+    show: { opacity: p, transform: `translateX(${(1 - p) * SLIDE}px)`, pointerEvents: p > 0.5 ? 'auto' : 'none', transition },
+    remove: onDelete,
   }
 
   return (
     <div
-      className="relative overflow-hidden"
       data-no-day-swipe=""
       style={{ touchAction: 'pan-y' }}
       onPointerDown={onPointerDown}
@@ -95,7 +110,7 @@ export default function SwipeRow({ onDelete, label, children }: Props) {
       onPointerUp={finish}
       onPointerCancel={finish}
       onClickCapture={(e) => {
-        // A drag must not land as a tap, and while the action is showing a tap anywhere else closes it.
+        // A drag must not land as a tap, and while the delete is showing a tap anywhere else puts it away.
         if (suppressClick.current) {
           e.preventDefault()
           e.stopPropagation()
@@ -108,21 +123,7 @@ export default function SwipeRow({ onDelete, label, children }: Props) {
         }
       }}
     >
-      <button
-        data-swipe-action=""
-        type="button"
-        aria-label={label}
-        onClick={onDelete}
-        className="absolute inset-y-0 right-0 flex items-center justify-center"
-        style={{ width: ACTION_W }}
-      >
-        <span className="flex size-8 items-center justify-center rounded-full bg-foreground text-background">
-          <Trash2 className="size-4" />
-        </span>
-      </button>
-      <div ref={sled} className="relative bg-white" style={{ willChange: 'transform' }}>
-        {children}
-      </div>
+      {children(state)}
     </div>
   )
 }
