@@ -65,9 +65,10 @@ export interface Program {
 export interface SetEntry {
   reps: number
   warmup?: boolean
-  /** Seconds spent performing the set, when it was timed. */
-  work?: number
-  /** Seconds rested before this set. Absent on the first set of a workout. */
+  /**
+   * Seconds from finishing the set before this one to finishing this one: the rest plus this set.
+   * Ticking sets off is the only signal, so pure rest is not separable. Absent on the first set.
+   */
   rest?: number
 }
 

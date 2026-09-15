@@ -5,10 +5,9 @@ import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
 import { checkGoal, hardSets, lastEntryForSlot, lastEntryForStep } from '@/lib/stats'
 import { dayKey } from '@/lib/schedule'
-import { IDLE_TIMER, isTimerState, totalSec, type SetRef, type TimerState } from '@/lib/timer'
+import { IDLE_TIMER, isTimerState, liveRest, restsFromTicks, setKey, type TimerState } from '@/lib/timer'
 import { newId, useStore } from '@/lib/store'
 import SetEditor from '@/components/SetEditor'
-import WorkoutTimer from '@/components/WorkoutTimer'
 import TechniqueSheet from '@/components/TechniqueSheet'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -54,9 +53,7 @@ interface Draft {
   date: number
   entries: Entry[]
   note: string
-  /** Ticked sets per slot, by set index. */
-  done: Record<string, boolean[]>
-  /** The running clock, so a reload mid-workout resumes rather than restarts. */
+  /** The clock: when the workout began and when each set was ticked off. */
   timer?: TimerState
 }
 
@@ -70,7 +67,7 @@ function readDraft(key: string, mustBeToday: boolean): Draft | null {
       localStorage.removeItem(key)
       return null
     }
-    return { ...d, note: d.note ?? '', done: d.done ?? {}, timer: isTimerState(d.timer) ? d.timer : IDLE_TIMER }
+    return { ...d, note: d.note ?? '', timer: isTimerState(d.timer) ? d.timer : IDLE_TIMER }
   } catch {
     return null
   }
@@ -117,15 +114,19 @@ export default function WorkoutForm({
     return day ? day.slots.map((s) => initialEntry(s, data, program)) : []
   })
   const [note, setNote] = useState(draft?.note ?? editing?.note ?? '')
-  const [done, setDone] = useState<Record<string, boolean[]>>(draft?.done ?? {})
   const [showNote, setShowNote] = useState(Boolean(draft?.note))
   const [info, setInfo] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [timer, setTimer] = useState<TimerState>(draft?.timer ?? IDLE_TIMER)
 
   useEffect(() => {
-    writeDraft(draftKey, { date: dayKey(new Date()), entries, note, done, timer })
-  }, [entries, note, done, timer, draftKey])
+    writeDraft(draftKey, { date: dayKey(new Date()), entries, note, timer })
+  }, [entries, note, timer, draftKey])
+
+  // The clock's numbers are derived, never stored on the sets while editing, so ticking and
+  // unticking stay reversible and the sets only take their gaps at save time.
+  const rests = useMemo(() => restsFromTicks(entries, timer.ticks), [entries, timer.ticks])
+  const resting = useMemo(() => liveRest(entries, timer.ticks), [entries, timer.ticks])
 
   const lastBySlot = useMemo(() => {
     const m = new Map<string, ReturnType<typeof lastEntryForSlot>>()
@@ -136,46 +137,6 @@ export default function WorkoutForm({
   if (!day) return <p className="py-6 text-center text-sm text-muted-foreground">Not a workout day.</p>
 
   const update = (i: number, fn: (e: Entry) => Entry) => setEntries((list) => list.map((e, k) => (k === i ? fn(e) : e)))
-
-  /** Write timing onto one set. An explicit undefined clears the field rather than storing undefined. */
-  const patchSet = (entryIndex: number, setIndex: number, patch: Partial<SetEntry>) =>
-    setEntries((list) =>
-      list.map((e, i) =>
-        i === entryIndex
-          ? {
-              ...e,
-              sets: e.sets.map((s, k) => {
-                if (k !== setIndex) return s
-                const next: SetEntry = { ...s, ...patch }
-                for (const key of Object.keys(patch) as (keyof SetEntry)[]) if (patch[key] === undefined) delete next[key]
-                return next
-              }),
-            }
-          : e,
-      ),
-    )
-
-  const tickSet = (entryIndex: number, setIndex: number, value: boolean) => {
-    const slotKey = entries[entryIndex]?.slotKey
-    if (!slotKey) return
-    setDone((all) => {
-      const arr = [...(all[slotKey] ?? [])]
-      arr[setIndex] = value
-      return { ...all, [slotKey]: arr }
-    })
-  }
-
-  const startSet = (ref: SetRef, rest: number | undefined) => {
-    if (rest !== undefined) patchSet(ref.entryIndex, ref.setIndex, { rest })
-  }
-  const endSet = (ref: SetRef, work: number) => {
-    patchSet(ref.entryIndex, ref.setIndex, { work })
-    tickSet(ref.entryIndex, ref.setIndex, true)
-  }
-  const undoSet = (ref: SetRef) => {
-    patchSet(ref.entryIndex, ref.setIndex, { work: undefined })
-    tickSet(ref.entryIndex, ref.setIndex, false)
-  }
 
   const changeStep = async (i: number, stepN: number) => {
     const e = entries[i]
@@ -191,9 +152,40 @@ export default function WorkoutForm({
     }))
   }
 
+  /** Ticking a set off is the clock. The first tick starts the workout if the button has not. */
+  const toggleSet = (entryIndex: number, setIndex: number) => {
+    const slotKey = entries[entryIndex]?.slotKey
+    if (!slotKey) return
+    const key = setKey(slotKey, setIndex)
+    setTimer((t) => {
+      const ticks = { ...t.ticks }
+      if (ticks[key] === undefined) ticks[key] = Date.now()
+      else delete ticks[key]
+      return { startedAt: t.startedAt ?? Date.now(), ticks }
+    })
+  }
+
+  /** Dropping a set takes its tick with it, and shuffles the ticks after it down one. */
+  const removeSet = (entryIndex: number, setIndex: number) => {
+    const e = entries[entryIndex]
+    if (!e) return
+    update(entryIndex, (x) => ({ ...x, sets: x.sets.filter((_, j) => j !== setIndex) }))
+    setTimer((t) => {
+      const ticks: Record<string, number> = {}
+      for (const [k, at] of Object.entries(t.ticks)) {
+        const sep = k.lastIndexOf(':')
+        const slot = k.slice(0, sep)
+        const i = Number(k.slice(sep + 1))
+        if (slot !== e.slotKey) ticks[k] = at
+        else if (i < setIndex) ticks[k] = at
+        else if (i > setIndex) ticks[setKey(slot, i - 1)] = at
+      }
+      return { ...t, ticks }
+    })
+  }
+
   const reset = () => {
     localStorage.removeItem(draftKey)
-    setDone({})
     setEntries(editing ? clone(editing) : day.slots.map((s) => initialEntry(s, data, program)))
     setNote(editing?.note ?? '')
     setShowNote(Boolean(editing?.note))
@@ -208,7 +200,15 @@ export default function WorkoutForm({
   const finish = async () => {
     setSaving(true)
     try {
-      const kept = entries.filter((e) => e.sets.some((s) => s.reps > 0))
+      const timed = entries.map((e) => ({
+        ...e,
+        sets: e.sets.map((x, k) => {
+          const gap = rests[setKey(e.slotKey, k)]
+          if (gap === undefined) return x
+          return { ...x, rest: gap }
+        }),
+      }))
+      const kept = timed.filter((e) => e.sets.some((s) => s.reps > 0))
       const trimmed = note.trim()
       const session: Session = editing
         ? { ...editing, entries: kept }
@@ -222,8 +222,9 @@ export default function WorkoutForm({
           }
       if (trimmed) session.note = trimmed
       else delete session.note
-      const ran = totalSec(entries, timer, Date.now())
-      if (ran > 0) session.durationSec = ran
+      // Only a workout that was actually ticked through has a length worth keeping.
+      const ran = timer.startedAt === null ? 0 : Math.round((Date.now() - timer.startedAt) / 1000)
+      if (ran > 0 && Object.keys(timer.ticks).length > 0) session.durationSec = ran
       else delete session.durationSec
       await saveSession(session)
       localStorage.removeItem(draftKey)
@@ -236,17 +237,21 @@ export default function WorkoutForm({
     }
   }
 
-  const finishButton = (
-    <Button size="lg" className="h-12 w-full" disabled={saving} onClick={finish}>
-      {saving ? 'Saving…' : editing ? 'Save changes' : 'Finish workout'}
-    </Button>
-  )
+  const started = timer.startedAt !== null
+  const finishButton =
+    !editing && !started ? (
+      <Button size="lg" className="h-12 w-full" onClick={() => setTimer((t) => ({ ...t, startedAt: Date.now() }))}>
+        Start workout
+      </Button>
+    ) : (
+      <Button size="lg" className="h-12 w-full" disabled={saving} onClick={finish}>
+        {saving ? 'Saving…' : editing ? 'Save changes' : 'Finish workout'}
+      </Button>
+    )
 
   return (
     <div className="space-y-3">
       <Tray action={finishButton}>
-        <WorkoutTimer entries={entries} timer={timer} onTimerChange={setTimer} onStartSet={startSet} onEndSet={endSet} onUndoSet={undoSet} />
-
         {entries.map((e, i) => {
           const last = lastBySlot.get(e.slotKey) ?? null
           const sameStep = last && e.progression ? last.entry.step === e.step : true
@@ -292,8 +297,11 @@ export default function WorkoutForm({
                     previous={last && sameStep ? hardSets(last.entry).map((x) => x.reps) : undefined}
                     suffix={suffix}
                     onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
-                    done={done[e.slotKey] ?? []}
-                    onDoneChange={(d) => setDone((all) => ({ ...all, [e.slotKey]: d }))}
+                    done={e.sets.map((_, k) => timer.ticks[setKey(e.slotKey, k)] !== undefined)}
+                    onToggle={(k) => toggleSet(i, k)}
+                    onRemove={(k) => removeSet(i, k)}
+                    gaps={Object.fromEntries(e.sets.map((_, k) => [k, rests[setKey(e.slotKey, k)] ?? e.sets[k].rest]).filter(([, v]) => v !== undefined))}
+                    resting={resting?.ref.entryIndex === i ? { index: resting.ref.setIndex, from: resting.from } : undefined}
                   />
 
                   <div className="mt-3 flex items-center justify-between">

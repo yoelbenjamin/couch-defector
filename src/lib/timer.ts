@@ -2,33 +2,39 @@ import { useEffect, useState } from 'react'
 import type { Entry } from '../types'
 
 /**
- * The workout clock is a chain of alternating stretches: work a set, rest, work the next, rest again.
- * Every stretch is stored as an absolute timestamp rather than a running count, so a backgrounded tab,
- * a throttled timer or a reload all come back with the right elapsed time instead of a clock that
- * stopped while nobody was looking.
+ * The workout clock, driven entirely by ticking sets off.
+ *
+ * One tap per set is the whole interaction, which means one timestamp per set, which means the only
+ * thing that can honestly be measured is the gap from finishing one set to finishing the next. That
+ * gap is the rest plus the set that follows it; separating the two would need a second tap per set
+ * to mark where rest ends and work begins. Rest is what matters here and it dominates the gap, so
+ * the gap is what gets recorded, and the code says so rather than pretending to measure pure rest.
+ *
+ * Timestamps are absolute, so a backgrounded tab, a throttled timer or a reload all come back with
+ * the right elapsed time instead of a clock that stopped while nobody was looking.
  */
-export type Phase = 'idle' | 'work' | 'rest'
-
 export interface TimerState {
-  phase: Phase
-  /** Start of the workout. Null before the first set begins. */
+  /** When the workout began. Null until it is started or the first set is ticked. */
   startedAt: number | null
-  /** Start of the current stretch of work or rest. */
-  phaseStartedAt: number | null
+  /** When each set was ticked off, keyed by `slotKey:setIndex`. Lives in the draft, never saved. */
+  ticks: Record<string, number>
 }
 
-export const IDLE_TIMER: TimerState = { phase: 'idle', startedAt: null, phaseStartedAt: null }
+export const IDLE_TIMER: TimerState = { startedAt: null, ticks: {} }
+
+export const setKey = (slotKey: string, setIndex: number) => `${slotKey}:${setIndex}`
 
 export function isTimerState(x: unknown): x is TimerState {
   if (!x || typeof x !== 'object') return false
   const t = x as TimerState
-  return (t.phase === 'idle' || t.phase === 'work' || t.phase === 'rest') && (t.startedAt === null || typeof t.startedAt === 'number')
+  return (t.startedAt === null || typeof t.startedAt === 'number') && !!t.ticks && typeof t.ticks === 'object'
 }
 
 /** One set in the workout's running order, with where it sits in `entries`. */
 export interface SetRef {
   entryIndex: number
   setIndex: number
+  key: string
   /** Exercise name. */
   name: string
   /** "Warm-up" or "Set 3", counted within its own exercise. */
@@ -41,33 +47,49 @@ export function runningOrder(entries: Entry[]): SetRef[] {
     e.sets.map((s, setIndex) => ({
       entryIndex,
       setIndex,
+      key: setKey(e.slotKey, setIndex),
       name: e.name,
       label: s.warmup ? 'Warm-up' : `Set ${e.sets.slice(0, setIndex).filter((y) => !y.warmup).length + 1}`,
     })),
   )
 }
 
-/** The next set to work: the first that has not been timed. Null once every set has a time on it. */
-export function nextSet(entries: Entry[]): SetRef | null {
-  return runningOrder(entries).find((r) => entries[r.entryIndex].sets[r.setIndex].work === undefined) ?? null
+/**
+ * Seconds between finishing each set and finishing the one before it, keyed by set.
+ * The first set ticked has nothing to measure against, so it gets no interval.
+ */
+export function restsFromTicks(entries: Entry[], ticks: Record<string, number>): Record<string, number> {
+  const out: Record<string, number> = {}
+  let prev: number | null = null
+  for (const ref of runningOrder(entries)) {
+    const at = ticks[ref.key]
+    if (at === undefined) continue
+    if (prev !== null) out[ref.key] = Math.max(0, Math.round((at - prev) / 1000))
+    prev = at
+  }
+  return out
 }
 
-/** The set currently being worked, which is the same cursor: it gets its time only when it ends. */
-export const currentSet = nextSet
+/** The most recent tick anywhere in the workout, which is where the live rest clock counts from. */
+export function lastTickAt(ticks: Record<string, number>): number | null {
+  const all = Object.values(ticks)
+  return all.length === 0 ? null : Math.max(...all)
+}
+
+/**
+ * The set the live rest clock belongs to: the next one not yet ticked, counting from the last tick.
+ * Null before the first tick, or once every set is done.
+ */
+export function liveRest(entries: Entry[], ticks: Record<string, number>): { ref: SetRef; from: number } | null {
+  const from = lastTickAt(ticks)
+  if (from === null) return null
+  const ref = runningOrder(entries).find((r) => ticks[r.key] === undefined)
+  return ref ? { ref, from } : null
+}
 
 export function elapsedSec(from: number | null, now: number) {
   if (from === null) return 0
   return Math.max(0, Math.round((now - from) / 1000))
-}
-
-/**
- * The workout's running time. Once the last set is done the clock freezes at that moment, so the
- * total measures the workout rather than however long it takes to tidy up and press Finish.
- */
-export function totalSec(entries: Entry[], timer: TimerState, now: number) {
-  if (timer.startedAt === null) return 0
-  const finished = nextSet(entries) === null && timer.phase === 'rest'
-  return elapsedSec(timer.startedAt, finished ? (timer.phaseStartedAt ?? now) : now)
 }
 
 /** m:ss, or h:mm:ss once it runs past an hour. */
@@ -80,7 +102,7 @@ export function fmtClock(totalSec: number) {
   return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`
 }
 
-/** A set's own time: seconds while it is short, m:ss once it runs past a minute. */
+/** A gap between sets: seconds while it is short, m:ss once it runs past a minute. */
 export function fmtShort(sec: number) {
   const s = Math.max(0, Math.round(sec))
   return s < 60 ? `${s}s` : fmtClock(s)

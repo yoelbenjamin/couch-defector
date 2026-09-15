@@ -198,7 +198,17 @@ export default function TrifectaForm({
                     previous={prev ? hardSets(prev).map((x) => x.reps) : undefined}
                     onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
                     done={done[e.slotKey] ?? []}
-                    onDoneChange={(d) => setDone((all) => ({ ...all, [e.slotKey]: d }))}
+                    onToggle={(k) =>
+                      setDone((all) => {
+                        const arr = [...(all[e.slotKey] ?? [])]
+                        arr[k] = !arr[k]
+                        return { ...all, [e.slotKey]: arr }
+                      })
+                    }
+                    onRemove={(k) => {
+                      update(i, (x) => ({ ...x, sets: x.sets.filter((_, j) => j !== k) }))
+                      setDone((all) => ({ ...all, [e.slotKey]: (all[e.slotKey] ?? []).filter((_, j) => j !== k) }))
+                    }}
                   />
                   <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                     <Button
