@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Check, X } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { elapsedSec, fmtShort, useNow } from '@/lib/timer'
 import Stepper from '@/components/Stepper'
+import SwipeRow from '@/components/SwipeRow'
 import { Button } from '@/components/ui/button'
 import type { SetEntry } from '@/types'
 
@@ -47,8 +48,8 @@ function RestClock({ from }: { from: number }) {
 }
 
 /**
- * The sets of one exercise as a checklist: remove on the left, label, last time, the reps, and a tick on the right.
- * Tap the number to adjust just that set. Ticking a set off is also what drives the clock, so under each row sits
+ * The sets of one exercise as a checklist: label, last time, the reps, and a tick on the right.
+ * Tap the number to adjust just that set, and drag a row left to uncover its delete. Ticking a set off is also what drives the clock, so under each row sits
  * the gap since the set before it, live while you are resting and fixed once the next set is ticked.
  */
 export default function SetEditor({ sets, previous, suffix, onChange, done, onToggle, onRemove, noun = 'Set', gaps, resting }: Props) {
@@ -62,11 +63,8 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
         const gap = gaps?.[k]
         const live = resting?.index === k
         return (
-          <div key={k}>
+          <SwipeRow key={k} label={`Remove ${label(sets, k, noun).toLowerCase()}`} onDelete={() => onRemove(k)}>
             <div className="flex items-center gap-3 py-1.5">
-              <Button type="button" variant="ghost" size="icon-sm" className="-ml-2 text-muted-foreground" onClick={() => onRemove(k)} aria-label="remove set">
-                <X />
-              </Button>
               <button type="button" onClick={() => toggleWarmup(k)} className={cn('w-14 text-left text-xs font-semibold', s.warmup && 'text-muted-foreground')}>
                 {label(sets, k, noun)}
               </button>
@@ -93,7 +91,7 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
                 aria-label={done[k] ? 'mark not done' : 'mark done'}
                 onClick={() => onToggle(k)}
                 className={cn(
-                  'ml-auto flex size-7 shrink-0 items-center justify-center rounded-full border',
+                  'mr-0.5 ml-auto flex size-7 shrink-0 items-center justify-center rounded-full border',
                   done[k] && 'border-foreground bg-foreground text-background',
                 )}
               >
@@ -101,11 +99,11 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
               </button>
             </div>
             {(live || gap !== undefined) && (
-              <div className="-mt-0.5 pb-1 pl-[38px] text-xs text-muted-foreground">
+              <div className="-mt-0.5 pb-1 text-xs text-muted-foreground">
                 {live ? <RestClock from={resting.from} /> : <span className="tabular-nums">Rested {fmtShort(gap!)}</span>}
               </div>
             )}
-          </div>
+          </SwipeRow>
         )
       })}
     </div>

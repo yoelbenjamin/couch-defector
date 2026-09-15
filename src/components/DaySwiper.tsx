@@ -147,6 +147,8 @@ const DaySwiper = forwardRef<DaySwiperHandle, Props>(function DaySwiper(
 
   const onPointerDown = (e: RPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return
+    // Rows that swipe for themselves own the gesture, so the two do not race to claim it.
+    if ((e.target as HTMLElement | null)?.closest?.('[data-no-day-swipe]')) return
     stop()
     drag.current = { id: e.pointerId, x0: e.clientX - x.current, y0: e.clientY, decided: false, active: false, samples: [{ t: e.timeStamp, x: e.clientX }] }
   }
