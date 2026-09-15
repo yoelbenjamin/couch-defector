@@ -27,7 +27,10 @@ const CONFIG = {
 }
 const COL_BASE: [number, number, number] = [0.051, 0.051, 0.051]
 const COL_CREAM: [number, number, number] = [0.894, 0.863, 0.835]
-const MAX_DPR = 2
+// The field is soft noise and the screen lives under a second, so full retina buys nothing and
+// costs an older phone a lot: every fragment runs three simplex-noise evaluations, and the wordmark
+// texture is uploaded at the same size.
+const MAX_DPR = 1.5
 const WORDMARK = 'Couch Defector'
 
 const VERT = `
@@ -321,6 +324,9 @@ function mountShader(host: HTMLDivElement) {
  * quickly and eases out, so it feels fast without snapping. The app underneath mounts as soon as
  * the data lands, so it is already painted by the time the dark screen clears.
  */
+const SPLASH_BG = '#0d0d0d'
+/** Kept in step with the theme-color in index.html and the manifest. */
+const APP_THEME = '#fafafa'
 const MIN_VISIBLE_MS = 320
 const EXIT_MS = 420
 /** Quick off the mark, long settle. Snappier than ease-out without the jerk of a linear tail. */
@@ -335,11 +341,32 @@ export default function LoadingScreen({ done = false }: { done?: boolean }) {
   const [fallback, setFallback] = useState(false)
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+  // iOS paints the status bar strip from theme-color, so a light one leaves a pale band above a dark
+  // splash. Borrow it for as long as the splash is up, then hand it back.
   useEffect(() => {
-    if (!host.current) return
-    const cleanup = mountShader(host.current)
-    if (!cleanup) setFallback(true)
-    return cleanup ?? undefined
+    const meta = document.querySelector('meta[name="theme-color"]')
+    const original = meta?.getAttribute('content') ?? null
+    meta?.setAttribute('content', SPLASH_BG)
+    return () => {
+      if (original !== null) meta?.setAttribute('content', original)
+    }
+  }, [])
+
+  useEffect(() => {
+    let cleanup: (() => void) | null = null
+    let cancelled = false
+    // Compile after the first paint. The dark ground is plain CSS and is already on screen, so an
+    // older phone spends its first frames showing the splash rather than blocking on GLSL.
+    const id = requestAnimationFrame(() => {
+      if (cancelled || !host.current) return
+      cleanup = mountShader(host.current)
+      if (!cleanup) setFallback(true)
+    })
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(id)
+      cleanup?.()
+    }
   }, [])
 
   // Start leaving once the data is in and the floor has elapsed, whichever is later.
@@ -352,6 +379,7 @@ export default function LoadingScreen({ done = false }: { done?: boolean }) {
   // Unmount only after the exit has actually played, so the shader is never torn down mid-fade.
   useEffect(() => {
     if (phase !== 'leaving') return
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', APP_THEME)
     const id = window.setTimeout(() => setPhase('gone'), reduced ? 160 : EXIT_MS)
     return () => window.clearTimeout(id)
   }, [phase, reduced])
@@ -368,7 +396,7 @@ export default function LoadingScreen({ done = false }: { done?: boolean }) {
         position: 'fixed',
         inset: 0,
         zIndex: 100,
-        background: '#0d0d0d',
+        background: SPLASH_BG,
         overflow: 'hidden',
         opacity: leaving ? 0 : 1,
         // The lift: the screen pulls back a touch as it clears, so it reads as leaving rather than blinking.
