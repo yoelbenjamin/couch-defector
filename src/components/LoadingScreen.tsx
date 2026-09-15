@@ -327,8 +327,9 @@ function mountShader(host: HTMLDivElement) {
 const SPLASH_BG = '#0d0d0d'
 /** Kept in step with the theme-color in index.html and the manifest. */
 const APP_THEME = '#fafafa'
-const MIN_VISIBLE_MS = 320
-const EXIT_MS = 420
+/** Long enough to read as a splash rather than a flicker, short enough not to feel like waiting. */
+const MIN_VISIBLE_MS = 180
+const EXIT_MS = 240
 /** Quick off the mark, long settle. Snappier than ease-out without the jerk of a linear tail. */
 const EXIT_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)'
 
@@ -380,7 +381,7 @@ export default function LoadingScreen({ done = false }: { done?: boolean }) {
   useEffect(() => {
     if (phase !== 'leaving') return
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', APP_THEME)
-    const id = window.setTimeout(() => setPhase('gone'), reduced ? 160 : EXIT_MS)
+    const id = window.setTimeout(() => setPhase('gone'), reduced ? 120 : EXIT_MS)
     return () => window.clearTimeout(id)
   }, [phase, reduced])
 
@@ -402,7 +403,7 @@ export default function LoadingScreen({ done = false }: { done?: boolean }) {
         // The lift: the screen pulls back a touch as it clears, so it reads as leaving rather than blinking.
         transform: leaving && !reduced ? 'scale(1.03)' : 'scale(1)',
         transformOrigin: 'center center',
-        transition: reduced ? 'opacity 160ms linear' : `opacity ${EXIT_MS}ms ${EXIT_EASE}, transform ${EXIT_MS}ms ${EXIT_EASE}`,
+        transition: reduced ? 'opacity 120ms linear' : `opacity ${EXIT_MS}ms ${EXIT_EASE}, transform ${EXIT_MS}ms ${EXIT_EASE}`,
         willChange: 'opacity, transform',
         pointerEvents: leaving ? 'none' : 'auto',
       }}
