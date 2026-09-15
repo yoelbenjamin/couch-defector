@@ -6,8 +6,29 @@ export type IdeaDef =
   | { kind: 'toggle'; area: string; label: string; description: string; default: boolean }
   | { kind: 'choice'; area: string; label: string; description: string; options: readonly string[]; default: string }
 
-/** Empty for now: every idea so far has been decided and folded into the app. */
-export const IDEAS: Record<string, IdeaDef> = {}
+export const IDEAS: Record<string, IdeaDef> = {
+  gridTray: {
+    kind: 'toggle',
+    area: 'Grid',
+    label: 'Sit the grid in a tray',
+    description: 'The same recessed well the cards live in, at a tighter radius. Empty cells read as tiles resting in it.',
+    default: false,
+  },
+  gridCellMaterial: {
+    kind: 'toggle',
+    area: 'Grid',
+    label: 'Trained cells borrow the button material',
+    description: 'A one-pixel light edge along the top of each dark cell, the same top-light the primary button has.',
+    default: false,
+  },
+  gridCellShadow: {
+    kind: 'toggle',
+    area: 'Grid',
+    label: 'Lift every empty cell',
+    description: "Each white cell gets the inset card's faint shadow, so it reads as a miniature raised tile.",
+    default: false,
+  },
+}
 
 export type IdeaKey = string
 export type IdeaValue = boolean | string

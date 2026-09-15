@@ -1,6 +1,7 @@
 import { useMemo, type CSSProperties } from 'react'
 import { dayKey } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
+import { useIdea } from '@/dev/proto'
 import type { Session } from '@/types'
 
 const DAY = 86400000
@@ -39,6 +40,12 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
   const now = new Date()
   const today = dayKey(now)
   const start = weekStart(now) - (weeks - 1) * 7 * DAY
+  // Depth treatments under trial from the prototype controller. See src/dev/ideas.ts.
+  const tray = Boolean(useIdea('gridTray'))
+  const material = Boolean(useIdea('gridCellMaterial'))
+  const lift = Boolean(useIdea('gridCellShadow'))
+  // Inside the tray the ground under a ring is the tray's grey, not the page.
+  const offset = tray ? 'ring-offset-[#ebebeb]' : 'ring-offset-background'
 
   const { counts, mobility } = useMemo(() => {
     const counts = new Map<number, number>()
@@ -62,43 +69,50 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
     }
   }
 
+  // Concentric corners: the tray's radius is the cell radius plus the tray's own padding, 2 + 10.
   return (
-    <div
-      className={cn('grid grid-flow-col gap-[3px]', className)}
-      style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` }}
-      role="group"
-      aria-label={`Training activity, last ${weeks} weeks`}
-    >
-      {cells.map((c) => {
-        // Days ahead stay invisible even when they are the day being viewed.
-        const isSelected = selected === c.key && !c.future
-        const col = Math.floor(cells.indexOf(c) / 7)
-        const style = { '--shimmer-delay': loading ? `${col * 45}ms` : `${Math.round(Math.max(0, c.delay))}ms` } as CSSProperties
-        const cls = cn(
-          'aspect-square rounded-[2px]',
-          loading ? !c.future && 'heat-cell heat-cell--loop' : c.delay >= 0 && !c.future && 'heat-cell',
-          c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/85' : c.mob ? 'bg-foreground/35' : 'bg-white',
-          c.isToday && c.count === 0 && !c.mob && !isSelected && 'ring-1 ring-foreground/40 ring-offset-1 ring-offset-background',
-          // Selected: a focus ring around the cell. The fill stays what it was; dark means trained, nothing else.
-          isSelected && 'ring-2 ring-foreground ring-offset-1 ring-offset-background',
-        )
-        // Every past day is tappable; only days ahead are inert.
-        if (c.future || !onSelect) return <div key={c.key} className={cls} style={style} data-filled={c.count > 0 ? '' : undefined} />
-        const label = new Date(c.key).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
-        const what = c.count > 0 ? `${c.count} session${c.count === 1 ? '' : 's'}` : c.mob ? 'Trifecta' : c.isToday ? 'today' : 'nothing logged'
-        return (
-          <button
-            key={c.key}
-            type="button"
-            style={{ ...style, appearance: 'none', padding: 0, margin: 0, border: 0, display: 'block', font: 'inherit' }}
-            aria-label={`${label}, ${what}`}
-            aria-pressed={isSelected}
-            onClick={() => onSelect(c.isToday || isSelected ? null : c.key)}
-            className={cls}
-            data-filled=""
-          />
-        )
-      })}
+    <div className={cn(tray && 'ws-tray rounded-[12px]', className)}>
+      <div
+        className="grid grid-flow-col gap-[3px]"
+        style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` }}
+        role="group"
+        aria-label={`Training activity, last ${weeks} weeks`}
+      >
+        {cells.map((c) => {
+          // Days ahead stay invisible even when they are the day being viewed.
+          const isSelected = selected === c.key && !c.future
+          const col = Math.floor(cells.indexOf(c) / 7)
+          const style = { '--shimmer-delay': loading ? `${col * 45}ms` : `${Math.round(Math.max(0, c.delay))}ms` } as CSSProperties
+          const cls = cn(
+            'aspect-square rounded-[2px]',
+            loading ? !c.future && 'heat-cell heat-cell--loop' : c.delay >= 0 && !c.future && 'heat-cell',
+            c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/85' : c.mob ? 'bg-foreground/35' : 'bg-white',
+            // Button material: the primary button's top-light, scaled to a cell.
+            material && !c.future && (c.count > 0 || c.mob) && 'inset-shadow-[0_1px_0] inset-shadow-white/30',
+            // Lift: the inset card's faint shadow on each empty tile.
+            lift && !c.future && c.count === 0 && !c.mob && 'shadow-[0_1px_2px_rgba(0,0,0,0.06)]',
+            c.isToday && c.count === 0 && !c.mob && !isSelected && cn('ring-1 ring-foreground/40 ring-offset-1', offset),
+            // Selected: a focus ring around the cell. The fill stays what it was; dark means trained, nothing else.
+            isSelected && cn('ring-2 ring-foreground ring-offset-1', offset),
+          )
+          // Every past day is tappable; only days ahead are inert.
+          if (c.future || !onSelect) return <div key={c.key} className={cls} style={style} data-filled={c.count > 0 ? '' : undefined} />
+          const label = new Date(c.key).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+          const what = c.count > 0 ? `${c.count} session${c.count === 1 ? '' : 's'}` : c.mob ? 'Trifecta' : c.isToday ? 'today' : 'nothing logged'
+          return (
+            <button
+              key={c.key}
+              type="button"
+              style={{ ...style, appearance: 'none', padding: 0, margin: 0, border: 0, display: 'block', font: 'inherit' }}
+              aria-label={`${label}, ${what}`}
+              aria-pressed={isSelected}
+              onClick={() => onSelect(c.isToday || isSelected ? null : c.key)}
+              className={cls}
+              data-filled=""
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }
