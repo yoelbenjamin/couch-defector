@@ -28,7 +28,8 @@ interface Props {
 }
 
 /**
- * A row you drag left to trade one control for a delete, the way a mail list works. A short pull
+ * A row you drag left to trade one control for a delete, the way a mail list works. Also wraps the
+ * note card, where there is nothing to trade and the delete simply appears. A short pull
  * parks the delete in place so it can be tapped, a long pull deletes on release, and a tap anywhere
  * else on the row puts things back. Nothing in the row moves, so the label and the reps stay put and
  * only the control on the right changes hands.
@@ -51,6 +52,8 @@ export default function SwipeRow({ onDelete, children }: Props) {
 
   const onPointerDown = (e: RPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return
+    // Dragging inside a text field is selecting text, not swiping the row.
+    if ((e.target as HTMLElement).closest('textarea, input, select, [contenteditable]')) return
     drag.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, base: open.current ? TRAVEL : 0, decided: false, active: false }
   }
 

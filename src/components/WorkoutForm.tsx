@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Info, NotebookPen, Plus, RotateCcw } from 'lucide-react'
+import { Info, NotebookPen, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
 import { getStep, PROGRESSIONS } from '@/data/progressions'
@@ -8,6 +8,7 @@ import { dayKey } from '@/lib/schedule'
 import { IDLE_TIMER, isTimerState, liveRest, restsFromTicks, setKey, type TimerState } from '@/lib/timer'
 import { newId, useStore } from '@/lib/store'
 import SetEditor from '@/components/SetEditor'
+import SwipeRow from '@/components/SwipeRow'
 import TechniqueSheet from '@/components/TechniqueSheet'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -351,19 +352,40 @@ export default function WorkoutForm({
         })}
 
         {showNote || note ? (
-          <Card variant="inset">
-            <CardContent>
-              <label className="text-xs font-semibold text-muted-foreground">Note</label>
-              <Textarea
-                autoFocus={showNote && !note}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={2}
-                placeholder="How did it feel? Anything to change next time?"
-                className="mt-1 resize-none"
-              />
-            </CardContent>
-          </Card>
+          <SwipeRow
+            onDelete={() => {
+              setNote('')
+              setShowNote(false)
+            }}
+          >
+            {({ show, remove }) => (
+              <Card variant="inset">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-muted-foreground">Note</label>
+                    <button
+                      data-swipe-action=""
+                      type="button"
+                      aria-label="Remove note"
+                      onClick={remove}
+                      style={show}
+                      className="flex size-7 items-center justify-center rounded-full bg-foreground text-background"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                  <Textarea
+                    autoFocus={showNote && !note}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    rows={2}
+                    placeholder="How did it feel? Anything to change next time?"
+                    className="mt-1 resize-none"
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </SwipeRow>
         ) : null}
       </Tray>
 
