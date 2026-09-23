@@ -1,5 +1,6 @@
 import { getStep, REP_BAND } from '../data/progressions'
-import type { Entry, ProgressionId, Session, Standard, Step, Unit } from '../types'
+import { dayKey, isRest, weekdayIndex } from './schedule'
+import type { Entry, Program, ProgressionId, Session, Standard, Step, Unit } from '../types'
 
 export function hardSets(e: Entry) {
   return e.sets.filter((s) => !s.warmup && s.reps > 0)
@@ -96,29 +97,10 @@ export function fmtSets(e: Entry) {
   return all.map((r) => `${r}${unit}`).join(' / ')
 }
 
-function weekKey(d: Date) {
-  const t = new Date(d)
-  t.setDate(t.getDate() - ((t.getDay() + 6) % 7)) // Monday
-  return new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime()
-}
-
-/** Consecutive calendar weeks with at least one workout, ending this week. The current week may still be pending. */
-export function streakWeeks(sessions: Session[], now = new Date()) {
-  const weeks = new Set(sessions.filter((s) => s.kind !== 'mobility').map((s) => weekKey(new Date(s.date))))
-  let cursor = weekKey(now)
-  if (!weeks.has(cursor)) cursor -= 7 * 86400000 // this week is not over yet; last week keeps the streak alive
-  let n = 0
-  while (weeks.has(cursor)) {
-    n++
-    cursor -= 7 * 86400000
-  }
-  return n
-}
-
 export type StreakTier = 'graphite' | 'steel' | 'silver' | 'gold'
 
 export interface StreakInfo {
-  /** Days since the first workout of the current unbroken run of weeks, inclusive. 0 when there is no streak. */
+  /** Calendar days in the current unbroken run, from its first workout through the last day that is safely in it. */
   days: number
   /** "3 days", "2 weeks", "4 months" */
   label: string
@@ -126,26 +108,40 @@ export interface StreakInfo {
   tier: StreakTier
 }
 
-/** The streak as a run of days, labelled in the unit that fits, with its metal. */
-export function streakInfo(sessions: Session[], now = new Date()): StreakInfo | null {
-  const weeks = streakWeeks(sessions, now)
-  if (weeks === 0) return null
-  const startWeek =
-    weekKey(now) - (weeks - 1 + (sessions.some((s) => s.kind !== 'mobility' && weekKey(new Date(s.date)) === weekKey(now)) ? 0 : 1)) * 7 * 86400000
-  const first = sessions
-    .filter((s) => s.kind !== 'mobility' && weekKey(new Date(s.date)) === startWeek)
-    .map((s) => new Date(s.date))
-    .sort((a, b) => a.getTime() - b.getTime())[0]
-  if (!first) return null
-  // Today only counts once today's workout is logged; until then the run ends yesterday.
-  const todayKey = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-  const trainedToday = sessions.some((s) => {
-    if (s.kind === 'mobility') return false
-    const d = new Date(s.date)
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() === todayKey
-  })
-  const end = trainedToday ? todayKey : todayKey - 86400000
-  const days = Math.max(1, Math.round((end - new Date(first.getFullYear(), first.getMonth(), first.getDate()).getTime()) / 86400000) + 1)
+/** The day before a day key, stepped through Date so a DST change does not shift it. */
+function prevDay(k: number) {
+  const d = new Date(k)
+  d.setDate(d.getDate() - 1)
+  return dayKey(d)
+}
+
+/**
+ * The streak: every scheduled training day worked, in a row. A scheduled day that passes with nothing
+ * logged breaks it, so the badge goes away the day after a miss. Rest days on the program never count
+ * against you, and a workout on a rest day still counts for you. The Trifecta is mobility and does
+ * not keep a streak alive.
+ *
+ * Today only counts once today's workout is logged. Until then the run is measured through yesterday,
+ * so the badge shows what you have banked, and ticks up when you finish, not when you wake up.
+ */
+export function streakInfo(sessions: Session[], program: Program, now = new Date()): StreakInfo | null {
+  const trained = new Set(sessions.filter((s) => s.kind !== 'mobility').map((s) => dayKey(new Date(s.date))))
+  if (trained.size === 0) return null
+  const earliest = Math.min(...trained)
+  const scheduled = (k: number) => !isRest(program.cycle[weekdayIndex(new Date(k))])
+
+  const today = dayKey(now)
+  const pendingToday = scheduled(today) && !trained.has(today)
+  const end = pendingToday ? prevDay(today) : today
+
+  let first: number | null = null
+  for (let cursor = end; cursor >= earliest; cursor = prevDay(cursor)) {
+    if (trained.has(cursor)) first = cursor
+    else if (scheduled(cursor)) break // a training day with nothing logged: the run ends here
+  }
+  if (first === null) return null
+
+  const days = Math.max(1, Math.round((end - first) / 86400000) + 1)
   const months = Math.floor(days / 30.44)
   const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`
   if (days < 7) return { days, label: plural(days, 'day'), tier: 'graphite' }

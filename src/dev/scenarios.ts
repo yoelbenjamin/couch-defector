@@ -172,6 +172,13 @@ export const SCENARIOS: Scenario[] = [
     build: () => history({ programId: 'solitary-confinement', weeks: 4, daysSinceLast: 1 }),
   },
   {
+    id: 'missed-day',
+    group: 'Lifecycle',
+    name: 'Missed a day',
+    description: 'Solitary Confinement, trained for weeks, then skipped yesterday. The streak badge is gone until a new run starts.',
+    build: () => history({ programId: 'solitary-confinement', weeks: 4, daysSinceLast: 2 }),
+  },
+  {
     id: 'long-break',
     group: 'Lifecycle',
     name: 'Long break',

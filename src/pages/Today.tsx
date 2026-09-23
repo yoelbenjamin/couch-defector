@@ -46,7 +46,7 @@ export default function Today() {
   const { data, cloud, deleteSession } = useStore()
   const program = getProgram(data.programId)
   const plan = planToday(program, data.sessions)
-  const streak = streakInfo(data.sessions)
+  const streak = streakInfo(data.sessions, program)
   const now = new Date()
   const today = dayKey(now)
   const tomorrow = scheduled(program, addDays(today, 1))
