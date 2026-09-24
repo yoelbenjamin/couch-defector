@@ -91,21 +91,29 @@ function writeDraft(key: string, d: Draft) {
 export default function WorkoutForm({
   dayIndex,
   editing = null,
+  date,
   onSaved,
   onCancel,
 }: {
   dayIndex: number
   editing?: Session | null
+  /**
+   * Day key of a past day to log for, when filling in a day that was missed (or a workout that ran past
+   * midnight). The session is dated to that day, the clock is off since the work is already done, and
+   * the draft is kept per day rather than discarded at midnight.
+   */
+  date?: number
   onSaved?: (s: Session) => void
-  /** Editing in place: shown as a Cancel button next to Reset; drops the edit draft. */
+  /** Editing in place or logging a past day: shown as a Cancel button; drops the draft. */
   onCancel?: () => void
 }) {
   const { data, saveSession, setStep } = useStore()
   const program = getProgram(data.programId)
   const cycleDay = program.cycle[dayIndex]
   const day = cycleDay && !('rest' in cycleDay && cycleDay.rest) ? cycleDay.day : null
-  const draftKey = editing ? `draft:${program.id}:edit:${editing.id}` : `draft:${program.id}:${dayIndex}`
-  const draft = useMemo(() => readDraft(draftKey, !editing), [draftKey, editing])
+  const backfill = date !== undefined && !editing
+  const draftKey = editing ? `draft:${program.id}:edit:${editing.id}` : backfill ? `draft:${program.id}:day:${date}` : `draft:${program.id}:${dayIndex}`
+  const draft = useMemo(() => readDraft(draftKey, !editing && !backfill), [draftKey, editing, backfill])
   // "Last time" should not point at the session being edited.
   const others = useMemo(() => (editing ? data.sessions.filter((x) => x.id !== editing.id) : data.sessions), [data.sessions, editing])
 
@@ -126,8 +134,9 @@ export default function WorkoutForm({
 
   // The clock's numbers are derived, never stored on the sets while editing, so ticking and
   // unticking stay reversible and the sets only take their gaps at save time.
-  const rests = useMemo(() => restsFromTicks(entries, timer.ticks), [entries, timer.ticks])
-  const resting = useMemo(() => liveRest(entries, timer.ticks), [entries, timer.ticks])
+  // After the fact there is nothing to time: ticks are a checklist only, and no gaps are recorded.
+  const rests = useMemo(() => (backfill ? {} : restsFromTicks(entries, timer.ticks)), [entries, timer.ticks, backfill])
+  const resting = useMemo(() => (backfill ? null : liveRest(entries, timer.ticks)), [entries, timer.ticks, backfill])
 
   const lastBySlot = useMemo(() => {
     const m = new Map<string, ReturnType<typeof lastEntryForSlot>>()
@@ -215,7 +224,9 @@ export default function WorkoutForm({
         ? { ...editing, entries: kept }
         : {
             id: newId(),
-            date: new Date().toISOString(),
+            // A past day is dated to its local noon: the day is what counts, and noon keeps the
+            // stored instant inside that day in every zone and on either side of a DST change.
+            date: backfill ? new Date(date + 12 * 3600 * 1000).toISOString() : new Date().toISOString(),
             programId: program.id,
             dayIndex,
             dayName: day.name,
@@ -224,7 +235,7 @@ export default function WorkoutForm({
       if (trimmed) session.note = trimmed
       else delete session.note
       // Only a workout that was actually ticked through has a length worth keeping.
-      const ran = timer.startedAt === null ? 0 : Math.round((Date.now() - timer.startedAt) / 1000)
+      const ran = timer.startedAt === null || backfill ? 0 : Math.round((Date.now() - timer.startedAt) / 1000)
       if (ran > 0 && Object.keys(timer.ticks).length > 0) session.durationSec = ran
       else delete session.durationSec
       await saveSession(session)
@@ -240,13 +251,13 @@ export default function WorkoutForm({
 
   const started = timer.startedAt !== null
   const primary =
-    !editing && !started ? (
+    !editing && !backfill && !started ? (
       <Button size="lg" className="h-12 flex-1" onClick={() => setTimer((t) => ({ ...t, startedAt: Date.now() }))}>
         Start workout
       </Button>
     ) : (
       <Button size="lg" className="h-12 flex-1" disabled={saving} onClick={finish}>
-        {saving ? 'Saving…' : editing ? 'Save changes' : 'Finish workout'}
+        {saving ? 'Saving…' : editing ? 'Save changes' : backfill ? 'Save workout' : 'Finish workout'}
       </Button>
     )
 
@@ -391,7 +402,7 @@ export default function WorkoutForm({
 
       <TechniqueSheet entry={info === null ? null : (entries[info] ?? null)} open={info !== null} onOpenChange={(o) => !o && setInfo(null)} />
 
-      {editing && onCancel && (
+      {(editing || backfill) && onCancel && (
         <div className="flex justify-center">
           <Button variant="ghost" className="h-11 px-8 text-muted-foreground" onClick={cancel}>
             Cancel

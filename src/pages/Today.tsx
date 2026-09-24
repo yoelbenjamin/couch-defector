@@ -57,6 +57,8 @@ export default function Today() {
   const [editMobility, setEditMobility] = useState(false)
   /** Session being edited in place, under the day it belongs to. */
   const [editingId, setEditingId] = useState<string | null>(null)
+  /** A past day being filled in, by day key. */
+  const [logDay, setLogDay] = useState<number | null>(null)
   const viewing = selectedDay ?? today
   const viewDate = new Date(viewing)
   const weekday = viewDate.toLocaleDateString(undefined, { weekday: 'long' })
@@ -111,7 +113,12 @@ export default function Today() {
   const renderDay = (key: number) => {
     if (key !== today) {
       const sessions = data.sessions.filter((x) => dayKey(new Date(x.date)) === key)
-      return sessions.length > 0 ? detailOrEdit(sessions) : <DayEmpty day={scheduled(program, key)} />
+      if (sessions.length > 0) return detailOrEdit(sessions)
+      if (logDay === key)
+        return (
+          <WorkoutForm key={`log:${key}`} dayIndex={weekdayIndex(new Date(key))} date={key} onSaved={() => setLogDay(null)} onCancel={() => setLogDay(null)} />
+        )
+      return <DayEmpty day={scheduled(program, key)} onLog={() => setLogDay(key)} />
     }
     return (
       <>
@@ -212,9 +219,18 @@ export default function Today() {
 
 /* ---------- other days ---------- */
 
-function DayEmpty({ day }: { day: WorkoutDay | null }) {
+/** A past day with nothing on it. A scheduled day can still be logged after the fact. */
+function DayEmpty({ day, onLog }: { day: WorkoutDay | null; onLog?: () => void }) {
   return (
-    <Tray>
+    <Tray
+      action={
+        day && onLog ? (
+          <Button size="lg" variant="secondary" className="h-12 w-full" onClick={onLog}>
+            Log this workout
+          </Button>
+        ) : undefined
+      }
+    >
       <Card variant="inset">
         <CardContent>
           <div className="text-xs text-muted-foreground">{day ? 'Scheduled' : 'Rest day'}</div>
