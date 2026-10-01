@@ -66,6 +66,12 @@ export interface SetEntry {
   reps: number
   warmup?: boolean
   /**
+   * Warm-ups only: the ladder step this set was done on, when it differs from the entry's working step.
+   * The book draws warm-ups from earlier steps of the same ladder, e.g. crow stands before wall handstands.
+   * Absent means the entry's own step. Its unit follows the step, so a rep warm-up can precede a hold.
+   */
+  step?: number
+  /**
    * Seconds from finishing the set before this one to finishing this one: the rest plus this set.
    * Ticking sets off is the only signal, so pure rest is not separable. Absent on the first set.
    */

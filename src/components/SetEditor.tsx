@@ -5,7 +5,8 @@ import { elapsedSec, fmtShort, useNow } from '@/lib/timer'
 import Stepper from '@/components/Stepper'
 import SwipeRow from '@/components/SwipeRow'
 import { Button } from '@/components/ui/button'
-import type { SetEntry } from '@/types'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { SetEntry, Step } from '@/types'
 
 /** Lead-in before a hold starts counting: time to get into position after you tap. */
 const COUNTDOWN_MS = 3000
@@ -29,6 +30,10 @@ interface Props {
   gaps?: Record<number, number>
   /** The set the rest clock is counting for, and the timestamp it counts from. */
   resting?: { index: number; from: number }
+  /** The exercise's ladder, when it has one. Warm-up rows can then sit on an earlier rung of it. */
+  ladder?: Step[]
+  /** The working step on that ladder. */
+  step?: number
 }
 
 function label(sets: SetEntry[], k: number, noun = 'Set') {
@@ -60,12 +65,46 @@ function RestClock({ from }: { from: number }) {
  * counts up live. Tap stop and the seconds held become the set's value and the set is ticked. Tapping
  * during the lead-in cancels. The stopwatch runs on timestamps, so a throttled tab still reads true.
  */
-export default function SetEditor({ sets, previous, suffix, onChange, done, onToggle, onRemove, noun = 'Set', gaps, resting }: Props) {
+export default function SetEditor({ sets, previous, suffix, onChange, done, onToggle, onRemove, noun = 'Set', gaps, resting, ladder, step }: Props) {
   const setReps = (k: number, v: number) => onChange(sets.map((y, j) => (j === k ? { ...y, reps: Math.max(0, v) } : y)))
-  const toggleWarmup = (k: number) => onChange(sets.map((y, j) => (j === k ? { ...y, warmup: !y.warmup } : y)))
+  // A working set always sits on the working step, so turning a warm-up back into one drops its rung.
+  const toggleWarmup = (k: number) =>
+    onChange(
+      sets.map((y, j) => {
+        if (j !== k) return y
+        const next: SetEntry = { ...y }
+        if (next.warmup) {
+          delete next.warmup
+          delete next.step
+        } else next.warmup = true
+        return next
+      }),
+    )
   const [open, setOpen] = useState<number | null>(null)
 
-  const timed = suffix === 's'
+  /** The rung a row was done on: a warm-up's own, otherwise the working step. */
+  const rowStep = (s: SetEntry) => (s.warmup && s.step ? s.step : step)
+  /** A row's unit follows its rung, so a rep warm-up and a hold can share one exercise. */
+  const rowSuffix = (s: SetEntry) => {
+    const n = rowStep(s)
+    const st = ladder && n ? ladder[n - 1] : undefined
+    return st ? (st.unit === 'seconds' ? 's' : undefined) : suffix
+  }
+  /** Move a warm-up to another rung. The amount resets to that rung's beginner standard, since the unit may change. */
+  const setRowStep = (k: number, n: number) => {
+    const st = ladder?.[n - 1]
+    if (!st) return
+    onChange(
+      sets.map((y, j) => {
+        if (j !== k) return y
+        const next: SetEntry = { ...y, reps: st.beginner.reps }
+        if (n === step) delete next.step
+        else next.step = n
+        return next
+      }),
+    )
+  }
+
   const [hold, setHold] = useState<{ index: number; startedAt: number } | null>(null)
   const now = useNow(hold !== null)
   const holdMs = hold ? now - hold.startedAt : 0
@@ -89,6 +128,9 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
         const gap = gaps?.[k]
         const live = resting?.index === k
         const holding = hold?.index === k
+        const rs = rowSuffix(s)
+        const timed = rs === 's'
+        const pick = s.warmup && ladder && step && step > 1 ? rowStep(s) : undefined
         return (
           <SwipeRow key={k} onDelete={() => onRemove(k)}>
             {({ hide, show, remove }) => (
@@ -103,7 +145,7 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
                   </button>
                   <Prev prev={prevFor(sets, k, previous)} className="w-6 text-right" />
                   {open === k ? (
-                    <Stepper value={s.reps} suffix={suffix} onChange={(v) => setReps(k, v)} />
+                    <Stepper value={s.reps} suffix={rs} onChange={(v) => setReps(k, v)} />
                   ) : holding ? (
                     // The lead-in counts 3, 2, 1 in the number's place, then the seconds held count up.
                     <span className={cn('text-lg font-semibold tabular-nums', countingDown && 'text-muted-foreground')} aria-live="polite">
@@ -116,7 +158,7 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
                       className={cn('text-lg font-semibold tabular-nums', done[k] && 'text-muted-foreground line-through')}
                     >
                       {s.reps}
-                      {suffix}
+                      {rs}
                     </button>
                   )}
                   {open === k && (
@@ -164,6 +206,23 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
                     </button>
                   </div>
                 </div>
+                {pick !== undefined && ladder && step && (
+                  // Which rung the warm-up was done on. The book draws warm-ups from earlier steps.
+                  <div className="-mt-1 pb-1">
+                    <Select value={String(pick)} onValueChange={(v) => setRowStep(k, Number(v))}>
+                      <SelectTrigger variant="bare" aria-label="Warm-up exercise" className="text-xs text-muted-foreground [&_svg]:size-3">
+                        <SelectValue>{ladder[pick - 1]?.name}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ladder.slice(0, step).map((st) => (
+                          <SelectItem key={st.n} value={String(st.n)}>
+                            {st.n}. {st.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 {(live || gap !== undefined) && (
                   <div className="-mt-0.5 pb-1 text-xs text-muted-foreground">
                     {live ? <RestClock from={resting.from} /> : <span className="tabular-nums">Rested {fmtShort(gap!)}</span>}

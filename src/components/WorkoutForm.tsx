@@ -24,6 +24,11 @@ function setsForStep(progression: ProgressionId, stepN: number, sessions: Sessio
   const hard: SetEntry[] = last
     ? last.entry.sets.filter((s) => !s.warmup).map((s) => ({ reps: s.reps }))
     : Array.from({ length: step.beginner.sets }, () => ({ reps: step.beginner.reps }))
+  // Warm-ups: whatever you warmed up with last time on this step, rungs and all. With nothing to go on,
+  // the book's rule: warm up on an earlier step of the same ladder, here the one just below.
+  const lastWarm = last?.entry.sets.filter((s) => s.warmup).map((s) => ({ ...s })) ?? []
+  if (lastWarm.length > 0) return [...lastWarm, ...hard]
+  if (stepN > 1) return [{ reps: getStep(progression, stepN - 1).beginner.reps, warmup: true, step: stepN - 1 }, ...hard]
   if (step.unit !== 'reps') return hard
   return [{ reps: Math.max(1, Math.round((hard[0]?.reps ?? step.beginner.reps) / 2)), warmup: true }, ...hard]
 }
@@ -329,6 +334,8 @@ export default function WorkoutForm({
                     onRemove={(k) => removeSet(i, k)}
                     gaps={Object.fromEntries(e.sets.map((_, k) => [k, rests[setKey(e.slotKey, k)] ?? e.sets[k].rest]).filter(([, v]) => v !== undefined))}
                     resting={resting?.ref.entryIndex === i ? { index: resting.ref.setIndex, from: resting.from } : undefined}
+                    ladder={e.progression ? PROGRESSIONS[e.progression].steps : undefined}
+                    step={e.step}
                   />
 
                   <div className="mt-3 flex items-center justify-between">
