@@ -2,8 +2,12 @@ import { getStep, REP_BAND } from '../data/progressions'
 import { dayKey, isRest, weekdayIndex } from './schedule'
 import type { Entry, Program, ProgressionId, Session, Standard, Step, Unit } from '../types'
 
+/**
+ * Working sets on the entry's working step. A working set on another rung, a drop back, is logged but
+ * does not count toward that step's standards or last-time comparisons.
+ */
 export function hardSets(e: Entry) {
-  return e.sets.filter((s) => !s.warmup && s.reps > 0)
+  return e.sets.filter((s) => !s.warmup && s.reps > 0 && (s.step === undefined || s.step === e.step))
 }
 export function bestSet(e: Entry) {
   return hardSets(e).reduce((m, s) => Math.max(m, s.reps), 0)

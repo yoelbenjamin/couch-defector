@@ -13,7 +13,6 @@ import TechniqueSheet from '@/components/TechniqueSheet'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, Tray } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { Entry, Program, ProgressionId, Session, SetEntry, Slot, UserData } from '@/types'
 
@@ -153,18 +152,27 @@ export default function WorkoutForm({
 
   const update = (i: number, fn: (e: Entry) => Entry) => setEntries((list) => list.map((e, k) => (k === i ? fn(e) : e)))
 
-  const changeStep = async (i: number, stepN: number) => {
+  /**
+   * New sets for one exercise. On a ladder, each set may name its own rung, and the working step is the
+   * highest rung any working set reached: that is the step you were on, and lower working sets are drop
+   * backs. Sets on the working step stop naming a rung, so the data stays as it was before rungs existed.
+   * When the working step moves, so does your current step on that ladder, as the old heading picker did.
+   */
+  const setSets = (i: number, sets: SetEntry[]) => {
     const e = entries[i]
-    if (!e.progression) return
-    await setStep(e.progression, stepN)
-    const step = getStep(e.progression, stepN)
-    update(i, (x) => ({
-      ...x,
-      step: stepN,
-      name: step.name,
-      unit: step.unit,
-      sets: setsForStep(e.progression!, stepN, data.sessions),
-    }))
+    if (!e?.progression || !e.step) return update(i, (x) => ({ ...x, sets }))
+    const current = e.step
+    const working = sets.filter((x) => !x.warmup).reduce((m, x) => Math.max(m, x.step ?? current), 0) || current
+    const normal = sets.map((x) => {
+      const next: SetEntry = { ...x }
+      const rung = x.step ?? current
+      if (rung === working) delete next.step
+      else next.step = rung
+      return next
+    })
+    const st = getStep(e.progression, working)
+    update(i, (x) => ({ ...x, sets: normal, step: working, name: st.name, unit: st.unit }))
+    if (working !== current) void setStep(e.progression, working)
   }
 
   /** Ticking a set off is the clock. The first tick starts the workout if the button has not. */
@@ -295,22 +303,8 @@ export default function WorkoutForm({
               <Card variant="inset">
                 <CardContent>
                   <div className="mb-3 flex min-w-0 items-center justify-between gap-2">
-                    {e.progression ? (
-                      <Select value={String(e.step)} onValueChange={(v) => changeStep(i, Number(v))}>
-                        <SelectTrigger variant="bare" className="min-w-0 flex-1 text-xl font-bold [&>svg]:size-5">
-                          <SelectValue>{step?.name ?? e.name}</SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PROGRESSIONS[e.progression].steps.map((s) => (
-                            <SelectItem key={s.n} value={String(s.n)}>
-                              {s.n}. {s.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <h2 className="min-w-0 flex-1 truncate text-xl font-bold">{e.name}</h2>
-                    )}
+                    {/* The movement, not the rung: each set names the rung it was done on. */}
+                    <h2 className="min-w-0 flex-1 truncate text-xl font-bold">{e.progression ? PROGRESSIONS[e.progression].name : e.name}</h2>
                     {e.progression && step && (
                       <Button
                         type="button"
@@ -328,7 +322,7 @@ export default function WorkoutForm({
                     sets={e.sets}
                     previous={last && sameStep ? hardSets(last.entry).map((x) => x.reps) : undefined}
                     suffix={suffix}
-                    onChange={(sets) => update(i, (x) => ({ ...x, sets }))}
+                    onChange={(sets) => setSets(i, sets)}
                     done={e.sets.map((_, k) => timer.ticks[setKey(e.slotKey, k)] !== undefined)}
                     onToggle={(k) => toggleSet(i, k)}
                     onRemove={(k) => removeSet(i, k)}

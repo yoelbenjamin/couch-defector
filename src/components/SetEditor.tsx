@@ -5,7 +5,7 @@ import { elapsedSec, fmtShort, useNow } from '@/lib/timer'
 import Stepper from '@/components/Stepper'
 import SwipeRow from '@/components/SwipeRow'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { SetEntry, Step } from '@/types'
 
 /** Lead-in before a hold starts counting: time to get into position after you tap. */
@@ -30,9 +30,9 @@ interface Props {
   gaps?: Record<number, number>
   /** The set the rest clock is counting for, and the timestamp it counts from. */
   resting?: { index: number; from: number }
-  /** The exercise's ladder, when it has one. Warm-up rows can then sit on an earlier rung of it. */
+  /** The exercise's ladder, when it has one. Each row's label is then a picker for the rung it was done on. */
   ladder?: Step[]
-  /** The working step on that ladder. */
+  /** The working step on that ladder: the rung for any row that does not name its own. */
   step?: number
 }
 
@@ -46,8 +46,8 @@ function prevFor(sets: SetEntry[], k: number, previous?: number[]) {
 
 /** Last time's reps for this set, as a small muted number beside the current one. */
 function Prev({ prev, className }: { prev?: number; className?: string }) {
-  if (prev === undefined) return null
-  return <span className={cn('text-xs text-muted-foreground tabular-nums', className)}>{prev}</span>
+  // Always takes its column, empty or not, so the reps line up across every row.
+  return <span className={cn('shrink-0 text-xs text-muted-foreground tabular-nums', className)}>{prev ?? ''}</span>
 }
 
 /** The rest running right now, counting up from the last set you ticked off. */
@@ -82,25 +82,29 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
     )
   const [open, setOpen] = useState<number | null>(null)
 
-  /** The rung a row was done on: a warm-up's own, otherwise the working step. */
-  const rowStep = (s: SetEntry) => (s.warmup && s.step ? s.step : step)
+  /** The rung a row was done on: its own when it names one, otherwise the working step. */
+  const rowStep = (s: SetEntry) => s.step ?? step
   /** A row's unit follows its rung, so a rep warm-up and a hold can share one exercise. */
   const rowSuffix = (s: SetEntry) => {
     const n = rowStep(s)
     const st = ladder && n ? ladder[n - 1] : undefined
     return st ? (st.unit === 'seconds' ? 's' : undefined) : suffix
   }
-  /** Move a warm-up to another rung. The amount resets to that rung's beginner standard, since the unit may change. */
+  /**
+   * Move a row to another rung. The amount resets to that rung's beginner standard, since the unit may change.
+   * Moving a working set carries the working sets after it that were on the same rung, so changing the first
+   * set moves the whole exercise up, and changing only the last is a drop back. Warm-ups move alone.
+   * The parent works out the working step from the result.
+   */
   const setRowStep = (k: number, n: number) => {
     const st = ladder?.[n - 1]
     if (!st) return
+    const from = rowStep(sets[k])
+    const warm = !!sets[k].warmup
     onChange(
       sets.map((y, j) => {
-        if (j !== k) return y
-        const next: SetEntry = { ...y, reps: st.beginner.reps }
-        if (n === step) delete next.step
-        else next.step = n
-        return next
+        const moves = j === k || (!warm && j > k && !y.warmup && rowStep(y) === from)
+        return moves ? { ...y, reps: st.beginner.reps, step: n } : y
       }),
     )
   }
@@ -122,6 +126,10 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
     if (!done[hold.index]) onToggle(hold.index)
   }
 
+  // The last-time column only exists when some row has a last time; otherwise its width goes to the labels.
+  // Either way it is decided per exercise, so the reps line up down the card.
+  const hasPrev = sets.some((_, k) => prevFor(sets, k, previous) !== undefined)
+
   return (
     <div className="divide-y">
       {sets.map((s, k) => {
@@ -130,20 +138,47 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
         const holding = hold?.index === k
         const rs = rowSuffix(s)
         const timed = rs === 's'
-        const pick = s.warmup && ladder && step && step > 1 ? rowStep(s) : undefined
+        const pick = ladder && step ? rowStep(s) : undefined
         return (
           <SwipeRow key={k} onDelete={() => onRemove(k)}>
             {({ hide, show, remove }) => (
               <>
-                <div className="flex items-center gap-3 py-1.5">
-                  <button
-                    type="button"
-                    onClick={() => toggleWarmup(k)}
-                    className={cn('w-14 text-left text-xs font-semibold', s.warmup && 'text-muted-foreground')}
-                  >
-                    {label(sets, k, noun)}
-                  </button>
-                  <Prev prev={prevFor(sets, k, previous)} className="w-6 text-right" />
+                <div className="flex items-center gap-2 py-1.5">
+                  {pick !== undefined && ladder ? (
+                    // The rung the set was done on, as its label. A fixed column that truncates, so the reps line
+                    // up down the card. Warm-ups read muted; the last item turns a row into the other kind.
+                    <Select value={String(pick)} onValueChange={(v) => (v === 'toggle' ? toggleWarmup(k) : setRowStep(k, Number(v)))}>
+                      <SelectTrigger
+                        variant="bare"
+                        aria-label={`${label(sets, k, noun)} exercise`}
+                        className={cn(
+                          'shrink-0 text-xs font-semibold [&_svg]:size-3',
+                          hasPrev ? 'w-32' : 'w-[10rem]',
+                          s.warmup && 'font-medium text-muted-foreground',
+                        )}
+                      >
+                        <SelectValue>{ladder[pick - 1]?.name}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ladder.map((st) => (
+                          <SelectItem key={st.n} value={String(st.n)}>
+                            {st.n}. {st.name}
+                          </SelectItem>
+                        ))}
+                        <SelectSeparator />
+                        <SelectItem value="toggle">{s.warmup ? 'Make it a working set' : 'Make it a warm-up'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => toggleWarmup(k)}
+                      className={cn('w-14 shrink-0 text-left text-xs font-semibold', s.warmup && 'text-muted-foreground')}
+                    >
+                      {label(sets, k, noun)}
+                    </button>
+                  )}
+                  {hasPrev && <Prev prev={prevFor(sets, k, previous)} className="w-6 text-right" />}
                   {open === k ? (
                     <Stepper value={s.reps} suffix={rs} onChange={(v) => setReps(k, v)} />
                   ) : holding ? (
@@ -206,23 +241,6 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
                     </button>
                   </div>
                 </div>
-                {pick !== undefined && ladder && step && (
-                  // Which rung the warm-up was done on. The book draws warm-ups from earlier steps.
-                  <div className="-mt-1 pb-1">
-                    <Select value={String(pick)} onValueChange={(v) => setRowStep(k, Number(v))}>
-                      <SelectTrigger variant="bare" aria-label="Warm-up exercise" className="text-xs text-muted-foreground [&_svg]:size-3">
-                        <SelectValue>{ladder[pick - 1]?.name}</SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ladder.slice(0, step).map((st) => (
-                          <SelectItem key={st.n} value={String(st.n)}>
-                            {st.n}. {st.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
                 {(live || gap !== undefined) && (
                   <div className="-mt-0.5 pb-1 text-xs text-muted-foreground">
                     {live ? <RestClock from={resting.from} /> : <span className="tabular-nums">Rested {fmtShort(gap!)}</span>}
