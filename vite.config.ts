@@ -5,6 +5,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
 export default defineConfig({
+  // Listen on every interface: Vite's default binds only the IPv6 loopback, so a browser that resolves
+  // localhost to 127.0.0.1 gets connection refused. This also lets a phone on the same Wi-Fi open it.
+  server: { host: true },
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
   plugins: [
     react(),
