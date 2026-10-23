@@ -640,7 +640,7 @@ button {
     isolation: isolate;
     font-weight: 900;
     color: var(--metal-fg);
-    text-shadow: var(--metal-text-shadow);
+    text-shadow: none;
     background-image: var(--ws-noise), var(--metal-fill);
     background-blend-mode: screen, normal;
     background-size:
@@ -666,7 +666,6 @@ button {
   }
   .metal--silver {
     --metal-fg: rgba(0, 0, 0, 0.5);
-    --metal-text-shadow: rgba(255, 255, 255, 0.15) 0px 0.5px 0px;
     --metal-fill: linear-gradient(118.53deg, rgb(221, 223, 226) 17.3%, rgb(232, 233, 235) 37.34%, rgb(193, 195, 199) 68.18%, rgb(160, 164, 170) 84.24%);
     --metal-rim:
       conic-gradient(
@@ -694,7 +693,6 @@ button {
   }
   .metal--gold {
     --metal-fg: rgba(0, 0, 0, 0.6);
-    --metal-text-shadow: rgba(255, 255, 255, 0.15) 0px 0.5px 0px;
     --metal-fill: linear-gradient(
       117.58deg,
       rgb(229, 227, 223) -2.35%,
@@ -727,7 +725,6 @@ button {
   }
   .metal--graphite {
     --metal-fg: rgb(255, 255, 255);
-    --metal-text-shadow: rgba(0, 0, 0, 0.35) 0px 0.25px 0px;
     --metal-fill: linear-gradient(99.27deg, rgb(122, 122, 122) 7.62%, rgb(56, 56, 56) 53.53%, rgb(46, 46, 46) 92.27%);
     --metal-rim: conic-gradient(
       from 173.54deg at 50% 50%,
@@ -753,7 +750,6 @@ button {
   }
   .metal--steel {
     --metal-fg: rgb(255, 255, 255);
-    --metal-text-shadow: rgba(0, 0, 0, 0.25) 0px 0.25px 0px;
     --metal-fill: linear-gradient(112.9deg, rgb(69, 92, 104) 26.07%, rgb(162, 178, 186) 93.62%);
     --metal-rim:
       conic-gradient(
