@@ -86,7 +86,7 @@ export default function ActivityHeatmap({ sessions, weeks = 26, className, selec
           const cls = cn(
             'aspect-square rounded-[2px]',
             loading ? !c.future && 'heat-cell heat-cell--loop' : c.delay >= 0 && !c.future && 'heat-cell',
-            c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/85' : c.mob ? 'bg-foreground/35' : 'bg-white',
+            c.future ? 'bg-transparent' : c.count > 0 ? 'bg-foreground/85' : c.mob ? 'bg-foreground/35' : 'bg-[#f2f2f2]',
             // Button material: the primary button's top-light, scaled to a cell.
             material && !c.future && (c.count > 0 || c.mob) && 'inset-shadow-[0_1px_0] inset-shadow-white/30',
             // Lift: the inset card's faint shadow on each empty tile.
