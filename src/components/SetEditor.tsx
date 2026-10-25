@@ -1,10 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Check, Play, Square, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { elapsedSec, fmtShort, useNow } from '@/lib/timer'
 import Stepper from '@/components/Stepper'
 import SwipeRow from '@/components/SwipeRow'
-import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { SetEntry, Step } from '@/types'
 
@@ -81,6 +80,16 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
       }),
     )
   const [open, setOpen] = useState<number | null>(null)
+  // The open stepper closes on a tap anywhere outside it, so it needs no Done button taking up the row.
+  const openEl = useRef<HTMLSpanElement>(null)
+  useEffect(() => {
+    if (open === null) return
+    const onDown = (e: PointerEvent) => {
+      if (openEl.current && !openEl.current.contains(e.target as Node)) setOpen(null)
+    }
+    document.addEventListener('pointerdown', onDown, true)
+    return () => document.removeEventListener('pointerdown', onDown, true)
+  }, [open])
 
   /** The rung a row was done on: its own when it names one, otherwise the working step. */
   const rowStep = (s: SetEntry) => s.step ?? step
@@ -152,7 +161,9 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
                         variant="bare"
                         aria-label={`${label(sets, k, noun)} exercise`}
                         className={cn(
-                          'shrink-0 text-xs font-semibold [&_svg]:size-3',
+                          // The open row's label gives up width to the stepper; every other row keeps the fixed column.
+                          open === k ? 'min-w-0 shrink' : 'shrink-0',
+                          'text-xs font-semibold [&_svg]:size-3',
                           hasPrev ? 'w-32' : 'w-[10rem]',
                           s.warmup && 'font-medium text-muted-foreground',
                         )}
@@ -180,7 +191,9 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
                   )}
                   {hasPrev && <Prev prev={prevFor(sets, k, previous)} className="w-6 text-right" />}
                   {open === k ? (
-                    <Stepper value={s.reps} suffix={rs} onChange={(v) => setReps(k, v)} />
+                    <span ref={openEl} className="shrink-0">
+                      <Stepper value={s.reps} suffix={rs} onChange={(v) => setReps(k, v)} />
+                    </span>
                   ) : holding ? (
                     // The lead-in counts 3, 2, 1 in the number's place, then the seconds held count up.
                     <span className={cn('text-lg font-semibold tabular-nums', countingDown && 'text-muted-foreground')} aria-live="polite">
@@ -195,11 +208,6 @@ export default function SetEditor({ sets, previous, suffix, onChange, done, onTo
                       {s.reps}
                       {rs}
                     </button>
-                  )}
-                  {open === k && (
-                    <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setOpen(null)}>
-                      Done
-                    </Button>
                   )}
                   {timed && open !== k && (
                     <button
