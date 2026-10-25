@@ -1,10 +1,10 @@
 name: Reminder sweep
 
-# Free, hourly, and coarse: GitHub may start this a few minutes late, which is why the endpoint
-# matches on the hour and sends once per device per day rather than at an exact minute.
+# Free, every half hour, and coarse: GitHub may start a run a few minutes late. The endpoint sends from
+# each user's chosen time, every half hour, until they log the workout or their day ends.
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0,30 * * * *'
   workflow_dispatch:
 
 jobs:

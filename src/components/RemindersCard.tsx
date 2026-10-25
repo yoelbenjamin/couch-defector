@@ -53,7 +53,7 @@ export default function RemindersCard() {
     <Card variant="inset" className="gap-3">
       <CardHeader>
         <CardTitle className="text-xs text-muted-foreground">Reminders</CardTitle>
-        <CardDescription className="text-xs">A nudge on days your program schedules a workout, unless you have already logged something.</CardDescription>
+        <CardDescription className="text-xs">From the time you pick, on days your program has a workout, a reminder every half hour until you log it.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         {permission === 'unsupported' ? (
@@ -94,12 +94,12 @@ export default function RemindersCard() {
               {!canPush
                 ? 'Push needs an account. Sign in and the reminder arrives even when the app is closed; until then it only fires while Couch Defector is open.'
                 : push === 'ok'
-                  ? 'Delivered by push, so it arrives within that hour even with the app closed. On iPhone the app has to be on your Home Screen.'
+                  ? 'Delivered by push, so it arrives with the app closed. It repeats every half hour until midnight or until you log the workout. On iPhone the app has to be on your Home Screen.'
                   : push === 'unsupported'
                     ? 'This browser cannot receive push. Add Couch Defector to your Home Screen and turn this on from there.'
                     : push === 'failed'
                       ? 'Could not register this device for push. Turn it off and on again to retry; until then it fires only while the app is open.'
-                      : 'Arrives within the hour you pick, even with the app closed, once this device is registered.'}
+                      : 'Arrives with the app closed once this device is registered, then every half hour until you log the workout.'}
             </CardDescription>
           </>
         )}

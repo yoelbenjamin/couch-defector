@@ -5,15 +5,14 @@ import webpush from 'web-push'
 // Explicit .js: the app is ESM, and Node refuses extensionless relative imports at load time.
 import { getProgram } from '../src/data/programs.js'
 import { isRest } from '../src/lib/schedule.js'
+import { clockSaysDue, localParts, reminderMinutes, slotKey } from './_nag.js'
 
 /**
- * The reminder sweep. Runs every hour (GitHub Actions cron hits it with the shared secret) and, for
- * each signed-in user with reminders on, checks each of their devices: is it their chosen hour in
- * that device's time zone, is today a training day on their program, is nothing logged yet, and
- * has this device not been nudged today. One push per device per day, and a dead subscription is
- * dropped the first time the push service rejects it.
- *
- * Precision is the hour, not the minute: free cron is coarse, and that is the honest trade.
+ * The reminder sweep. GitHub Actions cron hits it on the hour and the half hour with the shared secret.
+ * For each signed-in user with reminders on, and each of their devices: once that device's clock reaches
+ * the time they picked, on a day their program has a workout, it sends a reminder every half hour until
+ * the workout is logged. The day is the device's own, so the run stops at its midnight. A dead
+ * subscription is dropped the first time the push service rejects it.
  */
 
 function firestore(): Firestore {
@@ -23,32 +22,6 @@ function firestore(): Firestore {
     initializeApp({ credential: cert(JSON.parse(raw)) })
   }
   return getFirestore()
-}
-
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] // Monday first, matching Program.cycle
-
-/** Wall clock in a time zone: hour, Monday-first weekday, and a yyyy-mm-dd key for "today". */
-function localParts(at: Date, tz: string) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: tz,
-    hour: 'numeric',
-    hour12: false,
-    weekday: 'short',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(at)
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
-  return {
-    hour: Number(get('hour')) % 24,
-    weekday: WEEKDAYS.indexOf(get('weekday')),
-    day: `${get('year')}-${get('month')}-${get('day')}`,
-  }
-}
-
-function reminderHour(time: unknown) {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(typeof time === 'string' ? time : '')
-  return m ? Number(m[1]) : 18
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -71,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   for (const u of users.docs) {
     const profile = u.data()
-    const hour = reminderHour(profile.reminder?.time)
+    const start = reminderMinutes(profile.reminder?.time)
     const program = getProgram(profile.programId)
     const devices = await u.ref.collection('push').get()
 
@@ -81,12 +54,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const tz = typeof dev.tz === 'string' ? dev.tz : 'UTC'
       const local = localParts(now, tz)
 
-      if (local.hour !== hour) {
-        skip('not the hour')
-        continue
-      }
-      if (dev.lastSent === local.day) {
-        skip('already today')
+      const wait = clockSaysDue(local.day, local.minuteOfDay, start, dev.lastSlot)
+      if (wait) {
+        skip(wait)
         continue
       }
       if (local.weekday < 0 || isRest(program.cycle[local.weekday])) {
@@ -110,8 +80,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         continue
       }
       try {
-        await webpush.sendNotification(dev.subscription, JSON.stringify({ title: 'Training day', body: `${dayName}. Nothing logged yet.`, url: '/' }))
-        await d.ref.set({ lastSent: local.day }, { merge: true })
+        // The first of the day says what is due; after that it is a nudge. Each has its own tag, so every
+        // one alerts rather than silently replacing the last.
+        const again = dev.lastSent === local.day
+        await webpush.sendNotification(
+          dev.subscription,
+          JSON.stringify({
+            title: again ? 'Still on for today' : 'Training day',
+            body: again ? `${dayName} is not logged yet.` : `${dayName}. Nothing logged yet.`,
+            tag: `couch-defector-${local.day}-${local.minuteOfDay}`,
+            url: '/',
+          }),
+        )
+        await d.ref.set({ lastSent: local.day, lastSlot: slotKey(local.day, local.minuteOfDay, start), lastSentAt: now.toISOString() }, { merge: true })
         report.sent++
       } catch (e) {
         const status = (e as { statusCode?: number }).statusCode
