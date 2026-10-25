@@ -2,8 +2,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getFirestore, type Firestore } from 'firebase-admin/firestore'
 import webpush from 'web-push'
-import { getProgram } from '../src/data/programs'
-import { isRest } from '../src/lib/schedule'
+// Explicit .js: the app is ESM, and Node refuses extensionless relative imports at load time.
+import { getProgram } from '../src/data/programs.js'
+import { isRest } from '../src/lib/schedule.js'
 
 /**
  * The reminder sweep. Runs every hour (GitHub Actions cron hits it with the shared secret) and, for

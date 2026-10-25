@@ -12,4 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Hit the reminder endpoint
-        run: curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" https://couch-defector.vercel.app/api/remind
+        # A block scalar: unquoted, the "Authorization: Bearer" colon made the whole file fail to parse.
+        run: |
+          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" https://couch-defector.vercel.app/api/remind
