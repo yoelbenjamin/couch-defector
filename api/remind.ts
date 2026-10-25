@@ -5,7 +5,7 @@ import webpush from 'web-push'
 // Explicit .js: the app is ESM, and Node refuses extensionless relative imports at load time.
 import { getProgram } from '../src/data/programs.js'
 import { isRest } from '../src/lib/schedule.js'
-import { clockSaysDue, localParts, reminderMinutes, slotKey } from './_nag.js'
+import { clockSaysDue, localParts, reminderMinutes, slotKey, workoutInProgress } from './_nag.js'
 
 /**
  * The reminder sweep. GitHub Actions cron hits it on the hour and the half hour with the shared secret.
@@ -57,6 +57,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const wait = clockSaysDue(local.day, local.minuteOfDay, start, dev.lastSlot)
       if (wait) {
         skip(wait)
+        continue
+      }
+      if (workoutInProgress(now, profile.workoutStartedAt)) {
+        skip('workout in progress')
         continue
       }
       if (local.weekday < 0 || isRest(program.cycle[local.weekday])) {

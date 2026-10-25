@@ -117,6 +117,11 @@ export interface Profile {
   customNames: Record<string, string>
   /** Daily nudge on training days. Whether the browser will actually show it is the browser's business. */
   reminder?: Reminder
+  /**
+   * When the workout in progress was started, so reminders hold off while you train. Cleared on reset.
+   * The server treats it as stale after a couple of hours, so an abandoned workout cannot mute a day.
+   */
+  workoutStartedAt?: string | null
   createdAt: string
 }
 

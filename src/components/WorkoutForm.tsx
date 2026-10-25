@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Info, NotebookPen, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProgram } from '@/data/programs'
@@ -111,7 +111,7 @@ export default function WorkoutForm({
   /** Editing in place or logging a past day: shown as a Cancel button; drops the draft. */
   onCancel?: () => void
 }) {
-  const { data, saveSession, setStep } = useStore()
+  const { data, saveSession, setStep, setWorkoutStarted } = useStore()
   const program = getProgram(data.programId)
   const cycleDay = program.cycle[dayIndex]
   const day = cycleDay && !('rest' in cycleDay && cycleDay.rest) ? cycleDay.day : null
@@ -135,6 +135,17 @@ export default function WorkoutForm({
   useEffect(() => {
     writeDraft(draftKey, { date: dayKey(new Date()), entries, note, timer })
   }, [entries, note, timer, draftKey])
+
+  // Reminders pause while you train: starting today's workout tells the server, and resetting it takes that
+  // back. Only changes are sent, so opening the app does not write anything. Past days and edits are not
+  // today's workout, so they leave it alone.
+  const startedAt = timer.startedAt
+  const lastStarted = useRef(startedAt)
+  useEffect(() => {
+    if (editing || backfill || lastStarted.current === startedAt) return
+    lastStarted.current = startedAt
+    void setWorkoutStarted(startedAt === null ? null : new Date(startedAt).toISOString())
+  }, [startedAt, editing, backfill, setWorkoutStarted])
 
   // The clock's numbers are derived, never stored on the sets while editing, so ticking and
   // unticking stay reversible and the sets only take their gaps at save time.

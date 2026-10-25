@@ -27,6 +27,8 @@ export interface StoreApi {
   setHoldStep: (h: HoldId, step: number) => Promise<void>
   setCustomName: (key: string, name: string) => Promise<void>
   setReminder: (patch: Partial<Reminder>) => Promise<void>
+  /** Mark a workout as started (an ISO time) or not (null), so reminders pause while you train. */
+  setWorkoutStarted: (at: string | null) => Promise<void>
   saveSession: (s: Session) => Promise<void>
   deleteSession: (id: string) => Promise<void>
   exportJson: () => string
@@ -171,6 +173,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setHoldStep: (h, step) => writeProfile({ holdSteps: { ...(data.holdSteps ?? {}), [h]: step } }),
     setCustomName: (key, name) => writeProfile({ customNames: { ...data.customNames, [key]: name } }),
     setReminder: (patch) => writeProfile({ reminder: { ...DEFAULT_REMINDER, ...(data.reminder ?? {}), ...patch } }),
+    setWorkoutStarted: (at) => writeProfile({ workoutStartedAt: at }),
     saveSession: async (s) => {
       if (!sandbox && liveCloud && db && user) {
         await setDoc(doc(db, 'users', user.uid, 'sessions', s.id), s)

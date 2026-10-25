@@ -42,6 +42,17 @@ export function reminderMinutes(time: unknown) {
 
 export type Wait = 'before the reminder time' | 'sent recently'
 
+/** How long a started workout holds reminders off. Long enough for a session, short enough that an abandoned one cannot mute the day. */
+export const PAUSE_MINUTES = 120
+
+/** Whether a workout started recently enough that it is probably still going. */
+export function workoutInProgress(now: Date, startedAt: unknown) {
+  const at = typeof startedAt === 'string' ? Date.parse(startedAt) : NaN
+  if (Number.isNaN(at)) return false
+  const ago = now.getTime() - at
+  return ago >= 0 && ago < PAUSE_MINUTES * 60 * 1000
+}
+
 /**
  * Which half-hour slot of today this is, counting from the picked time. Each slot gets exactly one
  * reminder, so a run that starts late still counts for its own slot, and a doubled run sends nothing.
